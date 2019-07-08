@@ -1,0 +1,7 @@
+repos:
+-   repo: https://github.com/keybase/pre-commit-golang.git
+    rev: b8194ff9d85455a702480677ada13ac4dbe94146
+    hooks:
+    -   id: go-fmt
+    -   id: go-vet
+    -   id: go-lint
