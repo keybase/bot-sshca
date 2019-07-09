@@ -30,11 +30,13 @@ func main() {
 		provisionNewKey(configs[0], keyPath)
 		runSSHWithKey(keyPath)
 	} else {
-		// TODO: Not implemented yet
+		// TODO: Not implemented yet. In the future this will support selecting a default config and an optional flag
+		// to use an alternate config
 		panic("It is currently only supported to use kssh within one team!")
 	}
 }
 
+// Returns whether or not the cert at the given path is a valid unexpired certificate
 func isValidCert(keyPath string) bool {
 	_, err1 := os.Stat(keyPath)
 	_, err2 := os.Stat(shared.KeyPathToPubKey(keyPath))
@@ -60,6 +62,7 @@ func isValidCert(keyPath string) bool {
 	return time.Now().After(validAfter) && time.Now().Before(validBefore)
 }
 
+// Provision a new signed SSH key with the given config
 func provisionNewKey(config kssh.ConfigFile, keyPath string) {
 	err := sshutils.GenerateNewSSHKey(keyPath, true, false)
 	if err != nil {
@@ -94,6 +97,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) {
 	}
 }
 
+// Run SSH with the given key. Calls os.Exit if SSH returns
 func runSSHWithKey(keyPath string) {
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
 	argumentList = append(argumentList, os.Args[1:]...)
@@ -102,6 +106,9 @@ func runSSHWithKey(keyPath string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		os.Exit(1)
+	}
 	os.Exit(0)
 }

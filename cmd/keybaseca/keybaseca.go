@@ -34,6 +34,11 @@ func main() {
 		{
 			Name:  "generate",
 			Usage: "Generate a new CA key",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "overwrite-existing-key",
+				},
+			},
 			Action: func(c *cli.Context) error {
 				configFilename := c.GlobalString("config")
 				if _, err := os.Stat(configFilename); os.IsNotExist(err) {
@@ -52,11 +57,6 @@ func main() {
 					return fmt.Errorf("Failed to write the client config!")
 				}
 				return nil
-			},
-			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name: "overwrite-existing-key",
-				},
 			},
 		},
 		{
@@ -90,6 +90,8 @@ func main() {
 	}
 }
 
+// Write a kssh config file to /keybase/team/teamname.ssh/kssh-client.config. kssh will automatically pick up
+// and use this config
 func writeClientConfig(conf config.Config) error {
 	filename := filepath.Join("/keybase/team/", conf.GetTeamName(), shared.ConfigFilename)
 	username, err := bot.GetUsername(conf)

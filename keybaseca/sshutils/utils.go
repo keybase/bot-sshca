@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Generate a new SSH key. Places the private key at filename and the public key at filename.pub. If `overwrite`,
+// it will overwrite the existing key. If `printPubKey` it will print out the generated public key to stdout.
 func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error {
 	if _, err := os.Stat(filename); err == nil {
 		if overwrite {
@@ -47,6 +49,7 @@ func Generate(conf config.Config, overwrite bool, printPubKey bool) error {
 	return err
 }
 
+// Get a temporary filename that starts with pattern using ioutil.TempFile
 func getTempFilename(pattern string) (string, error) {
 	f, err := ioutil.TempFile("", pattern)
 	if err != nil {
@@ -110,6 +113,7 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 	return shared.SignatureResponse{SignedKey: string(data), UUID: sr.UUID}, nil
 }
 
+// Get the principals that should be placed in the signed certificate
 func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, error) {
 	return conf.GetSSHUser(), nil
 }

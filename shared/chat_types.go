@@ -6,11 +6,13 @@ import (
 	"strings"
 )
 
+// The body of signature request messages sent over KB chat
 type SignatureRequest struct {
 	SSHPublicKey string `json:"ssh_public_key"`
 	UUID         string `json:"uuid"`
 }
 
+// The preamble used at the start of signature request messages
 var SignatureRequestPreamble = "Signature_Request:"
 
 func ParseSignatureRequest(body string) (SignatureRequest, error) {
@@ -24,11 +26,13 @@ func ParseSignatureRequest(body string) (SignatureRequest, error) {
 	return sr, err
 }
 
+// The body of signature response messages sent over KB chat
 type SignatureResponse struct {
 	SignedKey string `json:"signed_key"`
 	UUID      string `json:"uuid"`
 }
 
+// The preamble used at the start of signature response messages
 var SignatureResponsePreamble = "Signature_Response:"
 
 func ParseSignatureResponse(body string) (SignatureResponse, error) {

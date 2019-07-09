@@ -19,6 +19,7 @@ func GetKBChat(conf config.Config) (*kbchat.API, error) {
 	return kbchat.Start(runOptions)
 }
 
+// Get the username of the user that the keybaseca bot is running as
 func GetUsername(conf config.Config) (string, error) {
 	kbChat, err := GetKBChat(conf)
 	if err != nil {
@@ -27,6 +28,7 @@ func GetUsername(conf config.Config) (string, error) {
 	return kbChat.GetUsername(), nil
 }
 
+// Start the keybaseca bot in an infinite loop. Does not return unless it encounters an error.
 func StartBot(conf config.Config) error {
 	kbc, err := GetKBChat(conf)
 	if err != nil {
@@ -56,6 +58,7 @@ func StartBot(conf config.Config) error {
 		messageBody := msg.Message.Content.Text.Body
 
 		if messageBody == shared.AckRequest {
+			// Ack any AckRequests so that kssh can determine whether it has fully connected
 			err = kbc.SendMessage(msg.Message.Channel, shared.Ack)
 			if err != nil {
 				LogError(msg, err)
@@ -92,6 +95,7 @@ func LogError(message kbchat.SubscriptionMessage, err error) {
 	fmt.Printf("Got error while processing a message: %v\n", err)
 }
 
+// Whether the given channel is one of the specified channels in the config
 func isConfiguredChannel(conf config.Config, channelName string) bool {
 	return conf.GetTeamName() == channelName
 }
