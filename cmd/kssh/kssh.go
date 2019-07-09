@@ -16,8 +16,10 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+var CachedSignedKeyLocation = libca.ExpandPathWithTilde("~/.ssh/keybase-signed-key")
+
 func main() {
-	keyPath := libca.ExpandPathWithTilde("~/.ssh/keybase-signed-key")
+	keyPath := CachedSignedKeyLocation
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath)
 	}
