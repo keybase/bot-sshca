@@ -54,7 +54,7 @@ func main() {
 				}
 				err = writeClientConfig(conf)
 				if err != nil {
-					return fmt.Errorf("Failed to write the client config!")
+					return fmt.Errorf("Failed to write the client config: %v", err)
 				}
 				return nil
 			},
@@ -73,7 +73,7 @@ func main() {
 				}
 				err = writeClientConfig(conf)
 				if err != nil {
-					return fmt.Errorf("Failed to write the client config!")
+					return fmt.Errorf("Failed to write the client config: %v", err)
 				}
 				err = bot.StartBot(conf)
 				if err != nil {

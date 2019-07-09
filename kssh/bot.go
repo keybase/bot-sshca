@@ -84,6 +84,8 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 				fmt.Printf("Failed to parse a message from the bot: %s\n", messageBody)
 				return empty, err
 			}
+			// A UUID mismatch just means there is a race condition and we are reading the CA bot's reply to
+			// someone else's signature request
 			if resp.UUID == request.UUID {
 				return resp, nil
 			}

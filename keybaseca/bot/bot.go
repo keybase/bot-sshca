@@ -59,7 +59,7 @@ func StartBot(conf config.Config) error {
 
 		if messageBody == shared.AckRequest {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
-			err = kbc.SendMessage(msg.Message.Channel, shared.Ack)
+			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.Ack)
 			if err != nil {
 				LogError(msg, err)
 				continue
@@ -81,7 +81,7 @@ func StartBot(conf config.Config) error {
 				LogError(msg, err)
 				continue
 			}
-			err = kbc.SendMessage(msg.Message.Channel, shared.SignatureResponsePreamble+string(response))
+			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.SignatureResponsePreamble+string(response))
 			if err != nil {
 				LogError(msg, err)
 				continue
