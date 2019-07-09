@@ -19,10 +19,37 @@ binaries.
 
 `kssh` is the replacement SSH binary. It automatically pulls config files from KBFS. 
 
-# Example
+# Getting Started (local environment)
 
-```bash
-go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config generate
-go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config service
-go run cmd/kssh/kssh.go root@165.22.176.193
+In all of these directions, replace `{USER}` with your username and `{TEAM}` with the name of the team that you wish to 
+configure this bot for. 
+
+Create a new subteam, `{TEAM}.ssh`. Anyone that is added to this subteam will be granted SSH access. 
+
+Create a new Keybase user named `{TEAM}sshca`. This user will be the bot user that provisions new SSH certificates. 
+Export a paper key for this user. Now create a config file at `~/keybaseca.config`:
+
 ```
+# The ssh user you want to use
+user: root
+# The name of the subteam used for granting SSH access
+teamname: {TEAM}.ssh
+
+# Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
+# Mainly useful for dev work
+use_alternate_account: true
+keybase_home_dir: /tmp/keybase/
+keybase_paper_key: "{Put the paper key here}"
+keybase_username: {TEAM}sshca
+```
+
+Now run `go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config generate`. This will output the public key for the CA. 
+For each server that you wish to make accessible to the CA bot:
+
+1. Place the public key in `/etc/ssh/ca.pub` 
+2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
+3. Restart ssh `service ssh restart`
+
+Now start the chatbot itself: `go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config service` and leave it running.
+
+Now you just run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. 
