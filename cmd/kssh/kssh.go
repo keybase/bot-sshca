@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	keyPath := libca.ExpandPathWithTilde("~/.ssh/keybase-ca-key")
+	keyPath := libca.ExpandPathWithTilde("~/.ssh/keybase-signed-key")
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath)
 	}
