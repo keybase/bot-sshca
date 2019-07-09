@@ -7,9 +7,10 @@ ca_key_location: ~/keybase-ca-key
 # How long signed keys are valid for. Defaults to 1 hour. Valid formats are +1h, +5h, +1d, +3d, +1w, etc
 key_expiration: "+2h"
 # The ssh user
-user: root
+ssh_user: root
 # The name of the subteam used for granting SSH access
-teamname: my_team.ssh
+teams:
+- my_team.ssh
 
 # Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
 # Mainly useful for dev work
@@ -23,15 +24,16 @@ keybase_username: username_for_the_bot
 package config
 
 import (
+	"fmt"
+	"github.com/keybase/bot-ssh-ca/shared"
 	"io/ioutil"
-
-	"github.com/keybase/bot-ssh-ca/keybaseca/libca"
+	"strings"
 
 	"github.com/go-yaml/yaml"
 )
 
 // Used by the CLI argument parsing code
-var DefaultConfigLocation = libca.ExpandPathWithTilde("~/keybaseca.config")
+var DefaultConfigLocation = shared.ExpandPathWithTilde("~/keybaseca.config")
 
 // Represents a loaded config for keybaseca
 type Config interface {
@@ -42,7 +44,7 @@ type Config interface {
 	GetKeybaseUsername() string
 	GetKeyExpiration() string
 	GetSSHUser() string
-	GetTeamName() string
+	GetTeams() []string
 }
 
 // Load a yaml config file from the given filename. See the top of this file for an example yaml config file.
@@ -56,27 +58,55 @@ func LoadConfig(filename string) (Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = validateConfig(cf)
+	if err != nil {
+		return nil, err
+	}
 	return &cf, nil
 }
 
+func validateConfig(cf ConfigFile) error {
+	if len(cf.Teams) == 0 {
+		return fmt.Errorf("must specify at least one team in the config file")
+	}
+	if cf.SSHUser == "" && cf.UseSubteamAsPrincipal == false {
+		return fmt.Errorf("must specify either a ssh_user or use_subteam_as_principal")
+	}
+	if cf.SSHUser != "" && cf.UseSubteamAsPrincipal == true {
+		return fmt.Errorf("cannot specify both a ssh_user and use_subteam_as_principal")
+	}
+	if cf.UseAlternateAccount && (cf.KeybaseHomeDir == "" || cf.KeybasePaperKey == "" || cf.KeybaseUsername == "") {
+		return fmt.Errorf("Must specify keybase_home_dir, keybase_paper_key, and keybase_username if use_alternate_account is set")
+	}
+	if !cf.UseAlternateAccount && (cf.KeybaseHomeDir != "" || cf.KeybasePaperKey != "" || cf.KeybaseUsername != "") {
+		return fmt.Errorf("keybase_home_dir, keybase_paper_key, and keybase_username cannot be set if use_alternate_account is not set")
+	}
+	if cf.KeyExpiration != "" && !strings.HasPrefix(cf.KeyExpiration, "+") {
+		// Only a basic check for this since ssh will error out later on if it is bogus
+		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
+	}
+	return nil
+}
+
 type ConfigFile struct {
-	CAKeyLocation       string `yaml:"ca_key_location"`
-	UseAlternateAccount bool   `yaml:"use_alternate_account"`
-	KeybaseHomeDir      string `yaml:"keybase_home_dir"`
-	KeybasePaperKey     string `yaml:"keybase_paper_key"`
-	KeybaseUsername     string `yaml:"keybase_username"`
-	KeyExpiration       string `yaml:"key_expiration"`
-	SSHUser             string `yaml:"user"`
-	TeamName            string `yaml:"teamname"`
+	CAKeyLocation         string   `yaml:"ca_key_location"`
+	UseAlternateAccount   bool     `yaml:"use_alternate_account"`
+	KeybaseHomeDir        string   `yaml:"keybase_home_dir"`
+	KeybasePaperKey       string   `yaml:"keybase_paper_key"`
+	KeybaseUsername       string   `yaml:"keybase_username"`
+	KeyExpiration         string   `yaml:"key_expiration"`
+	SSHUser               string   `yaml:"ssh_user"`
+	Teams                 []string `yaml:"teams"`
+	UseSubteamAsPrincipal bool     `yaml:"use_subteam_as_principal"`
 }
 
 var _ Config = (*ConfigFile)(nil)
 
 func (cf *ConfigFile) GetCAKeyLocation() string {
 	if cf.CAKeyLocation != "" {
-		return libca.ExpandPathWithTilde(cf.CAKeyLocation)
+		return shared.ExpandPathWithTilde(cf.CAKeyLocation)
 	}
-	return libca.ExpandPathWithTilde("~/keybase-ca-key")
+	return shared.ExpandPathWithTilde("~/keybase-ca-key")
 }
 
 func (cf *ConfigFile) GetUseAlternateAccount() bool {
@@ -106,6 +136,6 @@ func (cf *ConfigFile) GetSSHUser() string {
 	return cf.SSHUser
 }
 
-func (cf *ConfigFile) GetTeamName() string {
-	return cf.TeamName
+func (cf *ConfigFile) GetTeams() []string {
+	return cf.Teams
 }

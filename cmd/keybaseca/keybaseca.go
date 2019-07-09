@@ -76,13 +76,15 @@ func main() {
 // Write a kssh config file to /keybase/team/teamname.ssh/kssh-client.config. kssh will automatically pick up
 // and use this config
 func writeClientConfig(conf config.Config) error {
-	filename := filepath.Join("/keybase/team/", conf.GetTeamName(), shared.ConfigFilename)
+	// We only write the client config into the first team since that is enough for kssh to find it. This means
+	// kssh will talk to the bot in the first team that is listed in the config file
+	filename := filepath.Join("/keybase/team/", conf.GetTeams()[0], shared.ConfigFilename)
 	username, err := bot.GetUsername(conf)
 	if err != nil {
 		return err
 	}
 
-	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeamName(), BotName: username})
+	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username})
 
 	return ioutil.WriteFile(filename, content, 0600)
 }

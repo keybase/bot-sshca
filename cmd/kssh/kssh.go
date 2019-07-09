@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/keybase/bot-ssh-ca/keybaseca/libca"
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
 	"github.com/keybase/bot-ssh-ca/kssh"
 	"github.com/keybase/bot-ssh-ca/shared"
@@ -17,22 +17,84 @@ import (
 )
 
 func main() {
-	keyPath := libca.ExpandPathWithTilde("~/.ssh/keybase-ca-key")
-	if isValidCert(keyPath) {
-		runSSHWithKey(keyPath)
-	}
-	configs, err := kssh.LoadConfigs()
+	team, remainingArgs, err := handleArgs(os.Args)
 	if err != nil {
-		fmt.Printf("Failed to load config file(s): %v\n", err)
+		fmt.Printf("Failed to parse arguments: %v\n", err)
 		return
 	}
-	if len(configs) == 1 {
-		provisionNewKey(configs[0], keyPath)
-		runSSHWithKey(keyPath)
+	keyPath := shared.ExpandPathWithTilde("~/.ssh/keybase-ca-key")
+	if isValidCert(keyPath) {
+		runSSHWithKey(keyPath, remainingArgs)
+	}
+	config, err := getConfig(team)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+	provisionNewKey(config, keyPath)
+	runSSHWithKey(keyPath, remainingArgs)
+}
+
+func handleArgs(args []string) (string, []string, error) {
+	if len(args) > 1 {
+		if args[1] == "--team" {
+			if len(args) == 2 {
+				return "", nil, fmt.Errorf("Got --team argument with no value!")
+			}
+			return args[2], args[3:], nil
+		}
+		if args[1] == "--set-default-team" {
+			if len(args) == 2 {
+				return "", nil, fmt.Errorf("Got --set-default-team argument with no value!")
+			}
+			err := kssh.SetDefaultTeam(args[2])
+			if err != nil {
+				return "", nil, err
+			}
+			return "", args[3:], nil
+		}
+	}
+	return "", args[1:], nil
+}
+
+func getConfig(team string) (kssh.ConfigFile, error) {
+	empty := kssh.ConfigFile{}
+
+	// They specified a team via `kssh --team teamname.ssh ...`
+	if team != "" {
+		conf, err := kssh.LoadConfig(fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename))
+		if err != nil {
+			return empty, fmt.Errorf("Failed to load config file for team=%s: %v", team, err)
+		}
+		return conf, nil
+	}
+
+	// They set a default team
+	defaultTeam, err := kssh.GetDefaultTeam()
+	if err != nil {
+		return empty, err
+	}
+	if defaultTeam != "" {
+		conf, err := kssh.LoadConfig(fmt.Sprintf("/keybase/team/%s/%s", defaultTeam, shared.ConfigFilename))
+		if err != nil {
+			return empty, fmt.Errorf("Failed to load config file for team=%s: %v", defaultTeam, err)
+		}
+		return conf, nil
+	}
+
+	// No specified team and no default team, fallback and load all the configs
+	configs, teams, err := kssh.LoadConfigs()
+	if err != nil {
+		return empty, fmt.Errorf("Failed to load config file(s): %v\n", err)
+	}
+	if len(configs) == 0 {
+		return empty, fmt.Errorf("Did not find any config files in KBFS (is `keybaseca service` running?)")
+	} else if len(configs) == 1 {
+		return configs[0], nil
 	} else {
-		// TODO: Not implemented yet. In the future this will support selecting a default config and an optional flag
-		// to use an alternate config
-		panic("It is currently only supported to use kssh within one team!")
+		noDefaultTeamMessage := fmt.Sprintf("Found %v config files (%s). No default team is configured. \n"+
+			"Either specify a team via `kssh --team teamname.ssh` or set a default team via `kssh --set-default-team teamname.ssh`", len(configs), strings.Join(teams, ", "))
+		return empty, fmt.Errorf(noDefaultTeamMessage)
 	}
 }
 
@@ -98,9 +160,9 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) {
 }
 
 // Run SSH with the given key. Calls os.Exit if SSH returns
-func runSSHWithKey(keyPath string) {
+func runSSHWithKey(keyPath string, remainingArgs []string) {
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
-	argumentList = append(argumentList, os.Args[1:]...)
+	argumentList = append(argumentList, remainingArgs...)
 
 	cmd := exec.Command("ssh", argumentList...)
 	cmd.Stdout = os.Stdout

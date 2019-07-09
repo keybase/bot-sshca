@@ -10,6 +10,7 @@ import (
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 
+// TODO: Add a timeout or something here
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
 
