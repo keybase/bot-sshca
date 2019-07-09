@@ -95,7 +95,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) {
 }
 
 func runSSHWithKey(keyPath string) {
-	argumentList := []string{"-i", keyPath}
+	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
 	argumentList = append(argumentList, os.Args[1:]...)
 
 	cmd := exec.Command("ssh", argumentList...)

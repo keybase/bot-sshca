@@ -24,7 +24,7 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 		}
 	}
 
-	cmd := exec.Command("ssh-keygen", "-t", "ecdsa", "-f", filename, "-m", "PEM", "-N", "")
+	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", filename, "-m", "PEM", "-N", "")
 	err := cmd.Run()
 	if err != nil {
 		return err
