@@ -30,6 +30,9 @@ import (
 	"github.com/go-yaml/yaml"
 )
 
+// Used by the CLI argument parsing code
+var DefaultConfigLocation = libca.ExpandPathWithTilde("~/keybaseca.config")
+
 // Represents a loaded config for keybaseca
 type Config interface {
 	GetCAKeyLocation() string

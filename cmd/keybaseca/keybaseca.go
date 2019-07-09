@@ -10,7 +10,6 @@ import (
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/bot"
 	"github.com/keybase/bot-ssh-ca/keybaseca/config"
-	"github.com/keybase/bot-ssh-ca/keybaseca/libca"
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
 	"github.com/keybase/bot-ssh-ca/kssh"
 	"github.com/keybase/bot-ssh-ca/shared"
@@ -26,7 +25,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
-			Value: libca.ExpandPathWithTilde("~/keybaseca.config"),
+			Value: config.DefaultConfigLocation,
 			Usage: "Load configuration from `FILE`",
 		},
 	}
@@ -40,21 +39,13 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				configFilename := c.GlobalString("config")
-				if _, err := os.Stat(configFilename); os.IsNotExist(err) {
-					return fmt.Errorf("Config file at %s does not exist", configFilename)
-				}
-				conf, err := config.LoadConfig(configFilename)
+				conf, err := loadServerConfigAndWriteClientConfig(c.GlobalString("config"))
 				if err != nil {
-					return fmt.Errorf("Failed to parse config file: %v", err)
+					return err
 				}
 				err = sshutils.Generate(conf, c.Bool("overwrite-existing-key"), true)
 				if err != nil {
 					return fmt.Errorf("Failed to generate a new key: %v", err)
-				}
-				err = writeClientConfig(conf)
-				if err != nil {
-					return fmt.Errorf("Failed to write the client config: %v", err)
 				}
 				return nil
 			},
@@ -63,17 +54,9 @@ func main() {
 			Name:  "service",
 			Usage: "Start the CA service in the foreground",
 			Action: func(c *cli.Context) error {
-				configFilename := c.GlobalString("config")
-				if _, err := os.Stat(configFilename); os.IsNotExist(err) {
-					return fmt.Errorf("Config file at %s does not exist", configFilename)
-				}
-				conf, err := config.LoadConfig(configFilename)
+				conf, err := loadServerConfigAndWriteClientConfig(c.GlobalString("config"))
 				if err != nil {
-					return fmt.Errorf("Failed to parse config file: %v", err)
-				}
-				err = writeClientConfig(conf)
-				if err != nil {
-					return fmt.Errorf("Failed to write the client config: %v", err)
+					return err
 				}
 				err = bot.StartBot(conf)
 				if err != nil {
@@ -102,4 +85,19 @@ func writeClientConfig(conf config.Config) error {
 	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeamName(), BotName: username})
 
 	return ioutil.WriteFile(filename, content, 0600)
+}
+
+func loadServerConfigAndWriteClientConfig(configFilename string) (config.Config, error) {
+	if _, err := os.Stat(configFilename); os.IsNotExist(err) {
+		return nil, fmt.Errorf("Config file at %s does not exist", configFilename)
+	}
+	conf, err := config.LoadConfig(configFilename)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse config file: %v", err)
+	}
+	err = writeClientConfig(conf)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to write the client config: %v", err)
+	}
+	return conf, nil
 }
