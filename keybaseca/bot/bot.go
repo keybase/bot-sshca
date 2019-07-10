@@ -13,8 +13,11 @@ import (
 
 func GetKBChat(conf config.Config) (*kbchat.API, error) {
 	runOptions := kbchat.RunOptions{}
-	if conf.GetUseAlternateAccount() {
-		runOptions = kbchat.RunOptions{HomeDir: conf.GetKeybaseHomeDir(), Oneshot: &kbchat.OneshotOptions{PaperKey: conf.GetKeybasePaperKey(), Username: conf.GetKeybaseUsername()}}
+	if conf.GetKeybaseHomeDir() != "" {
+		runOptions.HomeDir = conf.GetKeybaseHomeDir()
+	}
+	if conf.GetKeybasePaperKey() != "" && conf.GetKeybaseUsername() != "" {
+		runOptions.Oneshot = &kbchat.OneshotOptions{PaperKey: conf.GetKeybasePaperKey(), Username: conf.GetKeybaseUsername()}
 	}
 	return kbchat.Start(runOptions)
 }

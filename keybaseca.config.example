@@ -4,7 +4,6 @@ user: root
 teamname: teamname.ssh
 
 # Mainly useful for dev work
-use_alternate_account: true
 keybase_home_dir: /tmp/keybase/
 keybase_paper_key: "{Put the paper key here}"
 keybase_username: teamname-sshca

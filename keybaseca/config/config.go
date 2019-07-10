@@ -36,7 +36,6 @@ var DefaultConfigLocation = libca.ExpandPathWithTilde("~/keybaseca.config")
 // Represents a loaded config for keybaseca
 type Config interface {
 	GetCAKeyLocation() string
-	GetUseAlternateAccount() bool
 	GetKeybaseHomeDir() string
 	GetKeybasePaperKey() string
 	GetKeybaseUsername() string
@@ -60,14 +59,13 @@ func LoadConfig(filename string) (Config, error) {
 }
 
 type ConfigFile struct {
-	CAKeyLocation       string `yaml:"ca_key_location"`
-	UseAlternateAccount bool   `yaml:"use_alternate_account"`
-	KeybaseHomeDir      string `yaml:"keybase_home_dir"`
-	KeybasePaperKey     string `yaml:"keybase_paper_key"`
-	KeybaseUsername     string `yaml:"keybase_username"`
-	KeyExpiration       string `yaml:"key_expiration"`
-	SSHUser             string `yaml:"user"`
-	TeamName            string `yaml:"teamname"`
+	CAKeyLocation   string `yaml:"ca_key_location"`
+	KeybaseHomeDir  string `yaml:"keybase_home_dir"`
+	KeybasePaperKey string `yaml:"keybase_paper_key"`
+	KeybaseUsername string `yaml:"keybase_username"`
+	KeyExpiration   string `yaml:"key_expiration"`
+	SSHUser         string `yaml:"user"`
+	TeamName        string `yaml:"teamname"`
 }
 
 var _ Config = (*ConfigFile)(nil)
@@ -77,10 +75,6 @@ func (cf *ConfigFile) GetCAKeyLocation() string {
 		return libca.ExpandPathWithTilde(cf.CAKeyLocation)
 	}
 	return libca.ExpandPathWithTilde("~/keybase-ca-key")
-}
-
-func (cf *ConfigFile) GetUseAlternateAccount() bool {
-	return cf.UseAlternateAccount
 }
 
 func (cf *ConfigFile) GetKeybaseHomeDir() string {
