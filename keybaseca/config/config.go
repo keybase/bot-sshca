@@ -45,6 +45,7 @@ type Config interface {
 	GetKeyExpiration() string
 	GetSSHUser() string
 	GetTeams() []string
+	GetUseSubteamAsPrincipal() bool
 }
 
 // Load a yaml config file from the given filename. See the top of this file for an example yaml config file.
@@ -127,4 +128,8 @@ func (cf *ConfigFile) GetSSHUser() string {
 
 func (cf *ConfigFile) GetTeams() []string {
 	return cf.Teams
+}
+
+func (cf *ConfigFile) GetUseSubteamAsPrincipal() bool {
+	return cf.UseSubteamAsPrincipal
 }

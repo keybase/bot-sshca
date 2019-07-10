@@ -77,6 +77,7 @@ func StartBot(conf config.Config) error {
 				LogError(msg, err)
 				continue
 			}
+			signatureRequest.Username = msg.Message.Sender.Username
 			signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
 			if err != nil {
 				LogError(msg, err)

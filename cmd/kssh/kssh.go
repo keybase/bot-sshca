@@ -25,6 +25,7 @@ func main() {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		return
 	}
+	// TODO: What happens with the cached key and the validity check when switching teams?
 	keyPath := CachedSignedKeyLocation
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath, remainingArgs)
