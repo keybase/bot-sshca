@@ -1,0 +1,10 @@
+# The ssh user you want to use
+ssh_user: root
+# The name of the subteam used for granting SSH access
+teams:
+- teamname.ssh
+
+# Mainly useful for dev work
+keybase_home_dir: /tmp/keybase/
+keybase_paper_key: "{Put the paper key here}"
+keybase_username: teamname-sshca

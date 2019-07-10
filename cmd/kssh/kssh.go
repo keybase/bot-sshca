@@ -16,13 +16,16 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// CachedSignedKeyLocation is where in the FS the signed key is stored
+var CachedSignedKeyLocation = shared.ExpandPathWithTilde("~/.ssh/keybase-signed-key")
+
 func main() {
 	team, remainingArgs, err := handleArgs(os.Args)
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		return
 	}
-	keyPath := shared.ExpandPathWithTilde("~/.ssh/keybase-ca-key")
+	keyPath := CachedSignedKeyLocation
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath, remainingArgs)
 	}

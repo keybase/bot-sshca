@@ -25,9 +25,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/keybase/bot-ssh-ca/shared"
 	"io/ioutil"
 	"strings"
+
+	"github.com/keybase/bot-ssh-ca/shared"
 
 	"github.com/go-yaml/yaml"
 )
@@ -38,7 +39,6 @@ var DefaultConfigLocation = shared.ExpandPathWithTilde("~/keybaseca.config")
 // Represents a loaded config for keybaseca
 type Config interface {
 	GetCAKeyLocation() string
-	GetUseAlternateAccount() bool
 	GetKeybaseHomeDir() string
 	GetKeybasePaperKey() string
 	GetKeybaseUsername() string
@@ -75,12 +75,6 @@ func validateConfig(cf ConfigFile) error {
 	if cf.SSHUser != "" && cf.UseSubteamAsPrincipal == true {
 		return fmt.Errorf("cannot specify both a ssh_user and use_subteam_as_principal")
 	}
-	if cf.UseAlternateAccount && (cf.KeybaseHomeDir == "" || cf.KeybasePaperKey == "" || cf.KeybaseUsername == "") {
-		return fmt.Errorf("Must specify keybase_home_dir, keybase_paper_key, and keybase_username if use_alternate_account is set")
-	}
-	if !cf.UseAlternateAccount && (cf.KeybaseHomeDir != "" || cf.KeybasePaperKey != "" || cf.KeybaseUsername != "") {
-		return fmt.Errorf("keybase_home_dir, keybase_paper_key, and keybase_username cannot be set if use_alternate_account is not set")
-	}
 	if cf.KeyExpiration != "" && !strings.HasPrefix(cf.KeyExpiration, "+") {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
@@ -90,7 +84,6 @@ func validateConfig(cf ConfigFile) error {
 
 type ConfigFile struct {
 	CAKeyLocation         string   `yaml:"ca_key_location"`
-	UseAlternateAccount   bool     `yaml:"use_alternate_account"`
 	KeybaseHomeDir        string   `yaml:"keybase_home_dir"`
 	KeybasePaperKey       string   `yaml:"keybase_paper_key"`
 	KeybaseUsername       string   `yaml:"keybase_username"`
@@ -107,10 +100,6 @@ func (cf *ConfigFile) GetCAKeyLocation() string {
 		return shared.ExpandPathWithTilde(cf.CAKeyLocation)
 	}
 	return shared.ExpandPathWithTilde("~/keybase-ca-key")
-}
-
-func (cf *ConfigFile) GetUseAlternateAccount() bool {
-	return cf.UseAlternateAccount
 }
 
 func (cf *ConfigFile) GetKeybaseHomeDir() string {

@@ -38,7 +38,6 @@ teams:
 
 # Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
 # Mainly useful for dev work
-use_alternate_account: true
 keybase_home_dir: /tmp/keybase/
 keybase_paper_key: "{Put the paper key here}"
 keybase_username: {TEAM}sshca
@@ -51,7 +50,7 @@ For each server that you wish to make accessible to the CA bot:
 2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
 3. Restart ssh `service ssh restart`
 
-Now start the chatbot itself: `go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config service` and leave it running.
+Now start the chatbot itself: `keybase --home /tmp/keybase service & go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config service` and leave it running.
 
 Now you just run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
 also run that command in order to ssh into the server.

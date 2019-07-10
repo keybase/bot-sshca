@@ -33,6 +33,8 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 	// We implement this with a terminatable goroutine that just sends acks and a while(true) loop that looks for responses
 	terminateRoutineCh := make(chan interface{})
 	go func() {
+		// Make the AckRequests send less often over time by tracking how many we've sent
+		numberSent := 0
 		for {
 			select {
 			case <-terminateRoutineCh:
@@ -44,13 +46,18 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)
 			}
-			time.Sleep(100 * time.Millisecond)
+			numberSent++
+			time.Sleep(time.Duration(100+(10*numberSent)) * time.Millisecond)
 		}
 	}()
 
 	fmt.Println("Waiting for a response from the CA....")
 	hasBeenAcked := false
+	startTime := time.Now()
 	for {
+		if time.Since(startTime) > 5*time.Second {
+			return empty, fmt.Errorf("timed out while waiting for a response from the CA")
+		}
 		msg, err := sub.Read()
 		if err != nil {
 			return empty, fmt.Errorf("failed to read message: %v", err)
@@ -85,11 +92,13 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 				fmt.Printf("Failed to parse a message from the bot: %s\n", messageBody)
 				return empty, err
 			}
-			// A UUID mismatch just means there is a race condition and we are reading the CA bot's reply to
-			// someone else's signature request
-			if resp.UUID == request.UUID {
-				return resp, nil
+
+			if resp.UUID != request.UUID {
+				// A UUID mismatch just means there is a race condition and we are reading the CA bot's reply to
+				// someone else's signature request
+				continue
 			}
+			return resp, nil
 		}
 	}
 }
