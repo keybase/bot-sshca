@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// CachedSignedKeyLocation is where in the FS the signed key is stored
 var CachedSignedKeyLocation = libca.ExpandPathWithTilde("~/.ssh/keybase-signed-key")
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 		runSSHWithKey(keyPath)
 	} else {
 		// TODO: Not implemented yet. In the future this will support selecting a default config and an optional flag
-		// to use an alternate config
+		// to use an alternate config. This will be dealt with in the next PR.
 		panic("It is currently only supported to use kssh within one team!")
 	}
 }

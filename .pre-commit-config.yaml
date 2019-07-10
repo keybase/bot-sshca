@@ -1,7 +1,12 @@
 repos:
--   repo: https://github.com/keybase/pre-commit-golang.git
-    rev: b8194ff9d85455a702480677ada13ac4dbe94146
+-   repo: https://github.com/troian/pre-commit-golang
+    rev: ab57c5db44bbeeae1031a2e9c2889367f8387d59
     hooks:
     -   id: go-fmt
     -   id: go-vet
     -   id: go-lint
+    -   id: go-imports
+-   repo: https://github.com/syntaqx/git-hooks
+    rev: f16f18866390cba642e8af6073ed59504aeada5c
+    hooks:
+    -   id: go-mod-tidy
