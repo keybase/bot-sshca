@@ -54,7 +54,8 @@ func LoadConfig(filename string) (Config, error) {
 		return nil, err
 	}
 	var cf ConfigFile
-	err = yaml.Unmarshal(contents, &cf)
+	// UnmarshalStrict will error out if there is an unexpected field in the yaml data
+	err = yaml.UnmarshalStrict(contents, &cf)
 	if err != nil {
 		return nil, err
 	}

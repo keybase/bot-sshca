@@ -16,16 +16,16 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// CachedSignedKeyLocation is where in the FS the signed key is stored
-var CachedSignedKeyLocation = shared.ExpandPathWithTilde("~/.ssh/keybase-signed-key")
-
 func main() {
 	team, remainingArgs, err := handleArgs(os.Args)
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		return
 	}
-	keyPath := CachedSignedKeyLocation
+	// cachedSignedKeyLocation is where in the FS the signed key is stored. It is a constant plus the team name.
+	// It is necessary to include the teamname in the file so that the switch team flow works properly with the reusing
+	// key flow.
+	keyPath, err := getSignedKeyLocation(team)
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath, remainingArgs)
 	}
@@ -38,6 +38,23 @@ func main() {
 	runSSHWithKey(keyPath, remainingArgs)
 }
 
+// getSignedKeyLocation returns the path of where the signed SSH key should be stored. team is the name of the team
+// specified via --team if specified.
+func getSignedKeyLocation(team string) (string, error) {
+	signedKeyLocation := shared.ExpandPathWithTilde("~/.ssh/keybase-signed-key--")
+	if team != "" {
+		return signedKeyLocation + team, nil
+	}
+	defaultTeam, err := kssh.GetDefaultTeam()
+	if err != nil {
+		return "", err
+	}
+	return signedKeyLocation + defaultTeam, nil
+}
+
+// handleArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
+// any other CLI argument parsing library) since we want to have custom arguments and access any other arguments.
+// handleArgs returns (theDefaultTeam, theRemainingArguments, err)
 func handleArgs(args []string) (string, []string, error) {
 	if len(args) > 1 {
 		if args[1] == "--team" {
@@ -60,6 +77,7 @@ func handleArgs(args []string) (string, []string, error) {
 	return "", args[1:], nil
 }
 
+// Get the kssh.ConfigFile. team is the team specified via --team if one was specified, otherwise the empty string
 func getConfig(team string) (kssh.ConfigFile, error) {
 	empty := kssh.ConfigFile{}
 
