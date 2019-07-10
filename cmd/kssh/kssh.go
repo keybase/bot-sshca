@@ -22,9 +22,6 @@ func main() {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		return
 	}
-	// cachedSignedKeyLocation is where in the FS the signed key is stored. It is a constant plus the team name.
-	// It is necessary to include the teamname in the file so that the switch team flow works properly with the reusing
-	// key flow.
 	keyPath, err := getSignedKeyLocation(team)
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath, remainingArgs)
@@ -39,7 +36,8 @@ func main() {
 }
 
 // getSignedKeyLocation returns the path of where the signed SSH key should be stored. team is the name of the team
-// specified via --team if specified.
+// specified via --team if specified. It is necessary to include the team in the filename in order to properly
+// handle how the switch team flow interacts with the isValidCert function
 func getSignedKeyLocation(team string) (string, error) {
 	signedKeyLocation := shared.ExpandPathWithTilde("~/.ssh/keybase-signed-key--")
 	if team != "" {

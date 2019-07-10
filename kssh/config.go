@@ -11,12 +11,13 @@ import (
 	"github.com/keybase/bot-ssh-ca/shared"
 )
 
-// A ConfigFile that is provided by the keybaseca server process and lives in kssh
+// A ConfigFile that is provided by the keybaseca server process and lives in kbfs
 type ConfigFile struct {
 	TeamName string `json:"teamname"`
 	BotName  string `json:"botname"`
 }
 
+// LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfTeamNames, err)
 func LoadConfigs() ([]ConfigFile, []string, error) {
 	matches, _ := filepath.Glob("/keybase/team/*/" + shared.ConfigFilename)
 	var configs []ConfigFile
@@ -45,11 +46,14 @@ func LoadConfig(filename string) (ConfigFile, error) {
 	return cf, err
 }
 
-var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh.config")
-
+// A LocalConfigFile is a file that lives on the FS of the computer running kssh. It is only used if the user is
+// in multiple teams that are running the CA bot and they set a default team via `kssh --set-default-team foo`
 type LocalConfigFile struct {
 	DefaultTeam string `json:"default_team"`
 }
+
+// Where to store the local config file. Just stash it in ~/.ssh
+var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh.config")
 
 func SetDefaultTeam(team string) error {
 	bytes, err := json.Marshal(&LocalConfigFile{DefaultTeam: team})
