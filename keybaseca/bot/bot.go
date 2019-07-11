@@ -27,7 +27,7 @@ func GetKBChat(conf config.Config) (*kbchat.API, error) {
 func GetUsername(conf config.Config) (string, error) {
 	kbChat, err := GetKBChat(conf)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to start Keybase chat: %v", err)
 	}
 	username := kbChat.GetUsername()
 	if username == "" {

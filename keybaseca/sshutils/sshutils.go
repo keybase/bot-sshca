@@ -123,6 +123,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 		var principals []string
 		for _, team := range conf.GetTeams() {
 			members, err := getMembers(team)
+			fmt.Printf("team '%s': '%s'\n", team, strings.Join(members, ", "))
 			if err != nil {
 				return "", err
 			}
@@ -138,16 +139,18 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	return conf.GetSSHUser(), nil
 }
 
+// Get the members of the given team
 func getMembers(team string) ([]string, error) {
 	cmd := exec.Command("keybase", "team", "list-members", team)
 	data, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(string(data))
 	var users []string
 	for _, line := range strings.Split(string(data), "\n") {
-		if strings.Contains(line, "writer") {
-			users = append(users, strings.Split(line, " ")[1])
+		if strings.Contains(line, "writer") || strings.Contains(line, "admin") {
+			users = append(users, strings.Fields(line)[2])
 		}
 	}
 	return users, nil
