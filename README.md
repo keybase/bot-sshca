@@ -24,6 +24,35 @@ binaries.
 This project contains integration tests that can be run via `./integrationTest.sh`. Note that prior to running
 the integration tests you need to fill in the file in `tests/env.sh`. 
 
+# Getting Started (docker)
+
+```bash
+mkdir ~/keybaseca-volume
+export SUBTEAM="teamname.subteam_for_ssh"
+export KEYBASE_USERNAME="username_of_ca_bot"
+export PAPERKEY="paper key for the ca bot"
+cd docker/
+cat keybaseca.config.gen | envsubst > keybaseca.config
+docker build -t ca -f Dockerfile-ca ..
+docker run -e KEYBASE_USERNAME -e PAPERKEY -v ~/keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+```
+
+This will output the public key for the CA. 
+For each server that you wish to make accessible to the CA bot:
+
+1. Place the public key in `/etc/ssh/ca.pub` 
+2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
+3. Restart ssh `service ssh restart`
+
+Now start the chatbot itself:
+
+```bash
+docker run -e KEYBASE_USERNAME -e PAPERKEY -v ~/keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
+```
+
+Now you just run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
+also run that command in order to ssh into the server.
+
 # Getting Started (local environment)
 
 In all of these directions, replace `{USER}` with your username and `{TEAM}` with the name of the team that you wish to 

@@ -18,7 +18,7 @@ USER keybase
 USER root
 RUN add-apt-repository ppa:gophers/archive -y
 RUN apt-get update
-RUN apt-get install golang-1.11-go git -y
+RUN apt-get install golang-1.11-go git sudo -y
 USER keybase
 
 # Install go dependencies (speeds up future builds)
@@ -29,3 +29,5 @@ RUN /usr/lib/go-1.11/bin/go mod download
 COPY --chown=keybase ./ /home/keybase/
 RUN /usr/lib/go-1.11/bin/go build -o bin/keybaseca cmd/keybaseca/keybaseca.go
 RUN /usr/lib/go-1.11/bin/go build -o bin/kssh cmd/kssh/kssh.go
+
+USER root
