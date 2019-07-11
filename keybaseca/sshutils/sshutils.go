@@ -2,7 +2,6 @@ package sshutils
 
 import (
 	"fmt"
-	"github.com/keybase/bot-ssh-ca/keybaseca/bot"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -29,9 +28,9 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 	}
 
 	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", filename, "-m", "PEM", "-N", "")
-	err := cmd.Run()
+	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("ssh-keygen failed: %s (%v)", string(bytes), err)
 	}
 	if printPubKey {
 		bytes, err := ioutil.ReadFile(shared.KeyPathToPubKey(filename))
@@ -123,7 +122,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 		// if the user is in that subteam
 		var principals []string
 		for _, team := range conf.GetTeams() {
-			members, err := bot.GetMembers(conf, team)
+			members, err := getMembers(team)
 			if err != nil {
 				return "", err
 			}
@@ -135,7 +134,21 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 			}
 		}
 		return strings.Join(principals, ","), nil
-	} else {
-		return conf.GetSSHUser(), nil
 	}
+	return conf.GetSSHUser(), nil
+}
+
+func getMembers(team string) ([]string, error) {
+	cmd := exec.Command("keybase", "team", "list-members", team)
+	data, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+	var users []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.Contains(line, "writer") {
+			users = append(users, strings.Split(line, " ")[1])
+		}
+	}
+	return users, nil
 }
