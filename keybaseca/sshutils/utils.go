@@ -27,9 +27,9 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 	}
 
 	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", filename, "-m", "PEM", "-N", "")
-	err := cmd.Run()
+	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("ssh-keygen failed: %s (%v)", string(bytes), err)
 	}
 	if printPubKey {
 		bytes, err := ioutil.ReadFile(shared.KeyPathToPubKey(filename))

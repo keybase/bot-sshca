@@ -1,4 +1,4 @@
-# SSHCA Bot
+# SSH CA Bot
 
 This repo contains a work in progress SSH CA bot built on top of Keybase. This project is not yet complete and is not 
 ready to be used. 
@@ -18,6 +18,11 @@ binaries.
 ## kssh
 
 `kssh` is the replacement SSH binary. It automatically pulls config files from KBFS. 
+
+# Integration Tests
+
+This project contains integration tests that can be run via `./integrationTest.sh`. Note that prior to running
+the integration tests you need to fill in the file in `tests/env.sh`. 
 
 # Getting Started (local environment)
 

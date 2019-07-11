@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/bot"
 	"github.com/keybase/bot-ssh-ca/keybaseca/config"
@@ -86,7 +87,17 @@ func writeClientConfig(conf config.Config) error {
 
 	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username})
 
-	return ioutil.WriteFile(filename, content, 0600)
+	return KBFSWrite(filename, string(content))
+}
+
+func KBFSWrite(filename string, contents string) error {
+	cmd := exec.Command("keybase", "fs", "write", filename)
+	cmd.Stdin = strings.NewReader(string(contents))
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Failed to write to file at %s: %s (%v)", filename, string(bytes), err)
+	}
+	return nil
 }
 
 func loadServerConfigAndWriteClientConfig(configFilename string) (config.Config, error) {
