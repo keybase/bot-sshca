@@ -22,7 +22,7 @@ binaries.
 # Integration Tests
 
 This project contains integration tests that can be run via `./integrationTest.sh`. Note that prior to running
-the integration tests you need to fill in the file in `tests/env.sh`. 
+the integration tests you need to fill in the file in `tests/simple/env.sh`. 
 
 # Getting Started (docker)
 

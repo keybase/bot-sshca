@@ -1,8 +1,10 @@
 version: '3'
 services:
   ca-bot:
+    image: ca-bot
+    container_name: ca-bot
     build:
-      context: ../
+      context: ../..
       dockerfile: "docker/Dockerfile-ca"
     environment:
       - PAPERKEY=${BOT_PAPERKEY}
@@ -10,10 +12,12 @@ services:
     volumes:
       - app-volume:/mnt/
     user: root
-    command: "sh -c 'chown keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
+    command: "sh -c 'chown keybase:keybase /mnt && su keybase -c \"bash tests/simple/bot-entrypoint.sh\"'"
   kssh:
+    image: kssh
+    container_name: kssh
     build:
-      context: ../
+      context: ../..
       dockerfile: "docker/Dockerfile-ca"
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
@@ -23,14 +27,16 @@ services:
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/kssh-entrypoint.sh"
+    command: "bash tests/simple/kssh-entrypoint.sh"
     depends_on:
       - sshd
       - ca-bot
   sshd:
+    image: sshd
+    container_name: sshd
     build:
-      context: .
-      dockerfile: Dockerfile-sshd
+      context: ..
+      dockerfile: simple/Dockerfile-sshd
     volumes:
       - app-volume:/mnt/
     depends_on:

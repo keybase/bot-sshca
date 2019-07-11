@@ -10,7 +10,7 @@ NC='\033[0m'
 # A function used to indent the log output from the tests
 indent() { sed 's/^/    /'; }
 
-cd tests/
+cd tests/simple/
 source env.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
@@ -18,9 +18,9 @@ docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
 docker-compose up -d
 
-TEST_EXIT_CODE=`docker wait tests_kssh_1`
+TEST_EXIT_CODE=`docker wait kssh`
 
-docker logs tests_kssh_1 | indent
+docker logs kssh | indent
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
