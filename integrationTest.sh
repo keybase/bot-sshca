@@ -18,9 +18,9 @@ docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
 docker-compose up -d
 
-TEST_EXIT_CODE=`docker wait docker_kssh_1`
+TEST_EXIT_CODE=`docker wait tests_kssh_1`
 
-docker logs docker_kssh_1 | indent
+docker logs tests_kssh_1 | indent
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
