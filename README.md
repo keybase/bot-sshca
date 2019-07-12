@@ -60,7 +60,7 @@ bin/kssh root@server
 Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
 
 # Getting Started (local environment)
-###### Recommended for development work
+###### Recommended only for development work
 In all of these directions, replace `{USER}` with your username and `{TEAM}` with the name of the team that you wish to 
 configure this bot for. 
 
