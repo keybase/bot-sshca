@@ -40,7 +40,7 @@ docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
 docker-compose up -d
 
-TEST_EXIT_CODE=`docker wait kssh && (docker logs kssh | python ../integrationTestUtils.py count 6)`
+TEST_EXIT_CODE=`docker wait kssh && (docker logs kssh | python ../integrationTestUtils.py count 10)`
 
 docker logs kssh | indent
 

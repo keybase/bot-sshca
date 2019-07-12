@@ -52,21 +52,21 @@ timeout 0.5 bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh p
 clear_keys && mv tests/testFiles/expired ~/.ssh/keybase-signed-key-- && mv tests/testFiles/expired.pub ~/.ssh/keybase-signed-key--.pub && mv tests/testFiles/expired-cert.pub ~/.ssh/keybase-signed-key---cert.pub
 bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 6: Renew expired keys'"
 
-## The next series of tests are about what happens when there are multiple teams configured. So we create a kssh-client.config
-## file in $SUBTEAM_SECONDARY in order to make kssh think that there are two active teams with CA bots.
-#keybase fs cp /keybase/team/$SUBTEAM/kssh-client.config /keybase/team/$SUBTEAM_SECONDARY/kssh-client.config
-#! (clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd) > /dev/null
-#clear_keys
-#OUTPUT=`bin/kssh -o StrictHostKeyChecking=no root@sshd || true`
-#if [[ $OUTPUT == *"Found 2 config files"* ]]; then
-#    echo 'kssh passed test 4: Rejects multiple teams'
-#else
-#    exit 1
-#fi
-#clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 5: Works with specified --team flag'"
-#clear_keys && bin/kssh --set-default-team $SUBTEAM
-#clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 6: Uses the default team'"
-#clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY
-#clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 7: --team overrides the default team'"
-#
-#cleanup
+# The next series of tests are about what happens when there are multiple teams configured. So we create a kssh-client.config
+# file in $SUBTEAM_SECONDARY in order to make kssh think that there are two active teams with CA bots.
+keybase fs cp /keybase/team/$SUBTEAM.ssh.staging/kssh-client.config /keybase/team/$SUBTEAM_SECONDARY/kssh-client.config
+! (clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd-prod) > /dev/null
+clear_keys
+OUTPUT=`bin/kssh -o StrictHostKeyChecking=no root@sshd-prod || true`
+if [[ $OUTPUT == *"Found 2 config files"* ]]; then
+    echo 'kssh passed test 7: Rejects multiple teams'
+else
+    exit 1
+fi
+clear_keys && bin/kssh --team $SUBTEAM.ssh.staging -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 8: Works with specified --team flag'"
+clear_keys && bin/kssh --set-default-team $SUBTEAM.ssh.staging
+clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 9: Uses the default team'"
+clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY.ssh.staging
+clear_keys && bin/kssh --team $SUBTEAM.ssh.staging -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 10: --team overrides the default team'"
+
+cleanup
