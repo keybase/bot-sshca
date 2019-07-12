@@ -36,8 +36,14 @@ func KBFSDelete(filename string) error {
 	return nil
 }
 
-func KBFSWrite(filename string, contents string) error {
-	cmd := exec.Command("keybase", "fs", "write", filename)
+func KBFSWrite(filename string, contents string, appendToFile bool) error {
+	var cmd *exec.Cmd
+	if appendToFile {
+		cmd = exec.Command("keybase", "fs", "write", "--append")
+	} else {
+		cmd = exec.Command("keybase", "fs", "write")
+	}
+
 	cmd.Stdin = strings.NewReader(string(contents))
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/keybase/bot-ssh-ca/shared"
@@ -23,6 +24,8 @@ type Config interface {
 	GetSSHUser() string
 	GetTeams() []string
 	GetUseSubteamAsPrincipal() bool
+	GetLogLocation() string
+	GetStrictLogging() bool
 }
 
 // Load a yaml config file from the given filename. See the top of this file for an example yaml config file.
@@ -58,7 +61,43 @@ func validateConfig(cf ConfigFile) error {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
+	if cf.LogLocation != "" && !isValidPath(cf.LogLocation) {
+		return fmt.Errorf("log_location '%s' is not a valid path", cf.LogLocation)
+	}
 	return nil
+}
+
+func isValidPath(path string) bool {
+	if strings.HasPrefix(path, "/keybase/") {
+		// If it exists it is valid
+		exists, err := shared.KBFSFileExists(path)
+		if err != nil {
+			return false
+		}
+		if exists {
+			return true
+		}
+
+		// Otherwise try to write to it
+		err = shared.KBFSWrite(path, "", false)
+		if err != nil {
+			return false
+		}
+		shared.KBFSDelete(path)
+		return true
+	}
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+
+	var d []byte
+	err = ioutil.WriteFile(path, d, 0600)
+	if err != nil {
+		return false
+	}
+	os.Remove(path)
+	return true
 }
 
 type ConfigFile struct {
@@ -70,6 +109,8 @@ type ConfigFile struct {
 	SSHUser               string   `yaml:"ssh_user"`
 	Teams                 []string `yaml:"teams"`
 	UseSubteamAsPrincipal bool     `yaml:"use_subteam_as_principal"`
+	LogLocation           string   `yaml:"log_location"`
+	StrictLogging         bool     `yaml:"strict_logging"`
 }
 
 var _ Config = (*ConfigFile)(nil)
@@ -110,4 +151,12 @@ func (cf *ConfigFile) GetTeams() []string {
 
 func (cf *ConfigFile) GetUseSubteamAsPrincipal() bool {
 	return cf.UseSubteamAsPrincipal
+}
+
+func (cf *ConfigFile) GetLogLocation() string {
+	return cf.LogLocation
+}
+
+func (cf *ConfigFile) GetStrictLogging() bool {
+	return cf.StrictLogging
 }

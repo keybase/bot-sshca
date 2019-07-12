@@ -120,7 +120,7 @@ func writeClientConfig(conf config.Config) error {
 
 	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username})
 
-	return shared.KBFSWrite(filename, string(content))
+	return shared.KBFSWrite(filename, string(content), false)
 }
 
 // Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale

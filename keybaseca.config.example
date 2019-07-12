@@ -28,6 +28,14 @@ ca_key_location: /path/to/where/the/ca/key/is/stored
 # The key expiration field for signed keys. By default signed keys expire after one hour. It is recommended
 # to keep the key expiration window to a relatively short period of time. Valid formats are +1h, +5h, +1d, +3d, +1w, etc
 key_expiration: "+3d"
+# This is the location where logs from the CA bot will be stored. It is recommended to store these logs in a
+# secure location for audit purposes. One potential option is storing logs in a KBFS subteam dedicated to admins.
+# If not set, logs go to stdout.
+log_location: /path/to/keybaseca.log
+# It is possible for logging operations to fail. By default, if the CA bot fails to write a log to a file it will
+# simply send it to stdout. If it is critical to maintain correct audit logs, the strict_logging option will cause
+# the CA bot to panic and shutdown if it is unable to save logs.
+strict_logging: true
 
 # Mainly useful for dev work. For security reasons, it is recommended to always run a production CA chat bot on an
 # isolated machine. These options make it possible to run a CA chat bot on a machine where you currently are logged
