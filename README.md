@@ -27,13 +27,13 @@ the integration tests you need to `cp tests/env.sh.example tests/env.sh` and fil
 # Getting Started (docker)
 
 ```bash
-export SUBTEAM="teamname.subteam_for_ssh"
-export KEYBASE_USERNAME="username_of_ca_bot"
-export PAPERKEY="paper key for the ca bot"
 cd docker/
-cat keybaseca.config.gen | envsubst > keybaseca.config
-docker build -t ca -f Dockerfile-ca ..
-docker run -e KEYBASE_USERNAME -e PAPERKEY -v example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+cp env.sh.example env.sh
+keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
+keybase paperkey    # Generate a new paper key
+# Create a new Keybase subteam that this user is in along with anyone else you wish to grant SSH access to
+nano env.sh         # Fill in the values including the just generated paper key
+make generate
 ```
 
 This will output the public key for the CA. 
@@ -46,14 +46,21 @@ For each server that you wish to make accessible to the CA bot:
 Now start the chatbot itself:
 
 ```bash
-docker run -e KEYBASE_USERNAME -e PAPERKEY -v ~/keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
+make serve
 ```
 
-Now you just run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
-also run that command in order to ssh into the server.
+Now build kssh and start SSHing!
+
+```bash
+go build -o bin/kssh cmd/kssh/kssh.go
+sudo cp bin/kssh /usr/local/bin/        # Optional
+bin/kssh root@server
+```
+
+Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
 
 # Getting Started (local environment)
-
+###### Recommended for development work
 In all of these directions, replace `{USER}` with your username and `{TEAM}` with the name of the team that you wish to 
 configure this bot for. 
 
@@ -85,5 +92,5 @@ For each server that you wish to make accessible to the CA bot:
 
 Now start the chatbot itself: `keybase --home /tmp/keybase service & go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config service` and leave it running.
 
-Now you just run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
+Now you run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
 also run that command in order to ssh into the server.
