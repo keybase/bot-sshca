@@ -10,5 +10,5 @@ sudo -i -u keybase bash << EOF
 nohup bash -c "run_keybase -g &"
 sleep 3
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
-bin/keybaseca -c docker/keybaseca.config service
+bin/keybaseca -c /mnt/keybaseca.config service
 EOF
