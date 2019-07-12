@@ -29,11 +29,12 @@ Create a new subteam, `{TEAM}.ssh`. Anyone that is added to this subteam will be
 Create a new Keybase user named `{TEAM}sshca`. This user will be the bot user that provisions new SSH certificates. 
 Export a paper key for this user. Now create a config file at `~/keybaseca.config`:
 
-```
+```yaml
 # The ssh user you want to use
-user: root
+ssh_user: root
 # The name of the subteam used for granting SSH access
-teamname: {TEAM}.ssh
+teams: 
+- {TEAM}.ssh
 
 # Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
 # Mainly useful for dev work

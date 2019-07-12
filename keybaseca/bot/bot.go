@@ -28,7 +28,11 @@ func GetUsername(conf config.Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return kbChat.GetUsername(), nil
+	username := kbChat.GetUsername()
+	if username == "" {
+		return "", fmt.Errorf("failed to get a username from kbChat, got an empty string")
+	}
+	return username, nil
 }
 
 // Start the keybaseca bot in an infinite loop. Does not return unless it encounters an error.
@@ -100,5 +104,10 @@ func LogError(message kbchat.SubscriptionMessage, err error) {
 
 // Whether the given channel is one of the specified channels in the config
 func isConfiguredChannel(conf config.Config, channelName string) bool {
-	return conf.GetTeamName() == channelName
+	for _, team := range conf.GetTeams() {
+		if team == channelName {
+			return true
+		}
+	}
+	return false
 }

@@ -1,7 +1,8 @@
 # The ssh user you want to use
-user: root
+ssh_user: root
 # The name of the subteam used for granting SSH access
-teamname: teamname.ssh
+teams:
+- teamname.ssh
 
 # Mainly useful for dev work
 keybase_home_dir: /tmp/keybase/
