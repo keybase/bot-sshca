@@ -1,0 +1,7 @@
+# Note that you do not need to edit this file. It is used with env.sh and envsubst in order to generate a config file
+ca_key_location: /mnt/keybase-ca-key
+key_expiration: "+1h"
+teams: [$SUBTEAMS]
+keybase_paper_key: $PAPERKEY
+keybase_username: $KEYBASE_USERNAME
+use_subteam_as_principal: true
