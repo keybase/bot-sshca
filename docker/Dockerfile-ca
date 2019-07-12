@@ -32,4 +32,5 @@ RUN /usr/lib/go-1.11/bin/go build -o bin/kssh cmd/kssh/kssh.go
 
 USER root
 
+# Set up mount so it has the correct permissions for the keybase user to access it
 RUN rm -rf /mnt && mkdir /mnt && chown -R keybase:keybase /mnt

@@ -24,7 +24,7 @@ generatekey-advanced:
 	source env-advanced.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 
 clean:
-    # Sudo since it is likely owned by another use since it was written from a docker container
+	# Sudo since it is likely owned by another use since it was written from a docker container
 	sudo rm -rf ../example-keybaseca-volume/keybaseca*
 	sudo rm -rf ../example-keybaseca-volume/keybase-ca*
 	sudo chown -R $$USER ../example-keybaseca-volume/

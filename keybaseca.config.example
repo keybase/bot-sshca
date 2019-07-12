@@ -1,10 +1,37 @@
+##################################
+##### Example 1: Simple Mode #####
+##################################
+# This config file configures a simple CA bot that grants root access to anyone in the listed team
+
 # The ssh user you want to use
 ssh_user: root
 # The name of the subteam used for granting SSH access
 teams:
 - teamname.ssh
 
-# Mainly useful for dev work
+####################################
+##### Example 2: Advanced Mode #####
+####################################
+# See README.md for a description of how advanced mode works. This config file grants places `staging`,
+# `production`, or `root_everywhere` into the principals field of the signed certificate.
+teams:
+- teamname.ssh.staging
+- teamname.ssh.production
+- teamname.ssh.root_everywhere
+
+####################################
+########## Other Options ###########
+####################################
+
+# It is possible to configure a specific location for where the CA key should be stored
+ca_key_location: /path/to/where/the/ca/key/is/stored
+# The key expiration field for signed keys. By default signed keys expire after one hour. It is recommended
+# to keep the key expiration window to a relatively short period of time. Valid formats are +1h, +5h, +1d, +3d, +1w, etc
+key_expiration: "+3d"
+
+# Mainly useful for dev work. For security reasons, it is recommended to always run a production CA chat bot on an
+# isolated machine. These options make it possible to run a CA chat bot on a machine where you currently are logged
+# into another account
 keybase_home_dir: /tmp/keybase/
 keybase_paper_key: "{Put the paper key here}"
 keybase_username: teamname-sshca

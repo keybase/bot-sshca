@@ -140,8 +140,6 @@ ssh_user: root
 teams: 
 - {TEAM}.ssh
 
-# Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
-# Mainly useful for dev work
 keybase_home_dir: /tmp/keybase/
 keybase_paper_key: "{Put the paper key here}"
 keybase_username: {TEAM}sshca

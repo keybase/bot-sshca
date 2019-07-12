@@ -1,26 +1,3 @@
-/*
-A keybaseca config file looks like
-
-```
-# The location of the CA key file. Defaults to ~/keybaseca.config
-ca_key_location: ~/keybase-ca-key
-# How long signed keys are valid for. Defaults to 1 hour. Valid formats are +1h, +5h, +1d, +3d, +1w, etc
-key_expiration: "+2h"
-# The ssh user
-ssh_user: root
-# The name of the subteam used for granting SSH access
-teams:
-- my_team.ssh
-
-# Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
-# Mainly useful for dev work
-use_alternate_account: true
-keybase_home_dir: /tmp/keybase/
-keybase_paper_key: "paper key goes here"
-keybase_username: username_for_the_bot
-```
-*/
-
 package config
 
 import (
