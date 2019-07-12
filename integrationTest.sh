@@ -23,9 +23,9 @@ TEST_EXIT_CODE=`docker wait kssh && (docker logs kssh | python ../integrationTes
 docker logs kssh | indent
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
-  printf "${RED}Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
+  printf "${RED}Simple Mode Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  printf "${GREEN}Tests Passed${NC}\n"
+  printf "${GREEN}Simple Mode Tests Passed${NC}\n"
 fi
 
 docker-compose stop 2>&1 > /dev/null
@@ -45,9 +45,9 @@ TEST_EXIT_CODE=`docker wait kssh && (docker logs kssh | python ../integrationTes
 docker logs kssh | indent
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
-  printf "${RED}Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
+  printf "${RED}Advanced Mode Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  printf "${GREEN}Tests Passed${NC}\n"
+  printf "${GREEN}Advanced Mode Tests Passed${NC}\n"
 fi
 
 docker-compose stop 2>&1 > /dev/null
