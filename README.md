@@ -27,14 +27,13 @@ the integration tests you need to `cp tests/env.sh.example tests/env.sh` and fil
 # Getting Started (docker)
 
 ```bash
-mkdir ~/keybaseca-volume
 export SUBTEAM="teamname.subteam_for_ssh"
 export KEYBASE_USERNAME="username_of_ca_bot"
 export PAPERKEY="paper key for the ca bot"
 cd docker/
 cat keybaseca.config.gen | envsubst > keybaseca.config
 docker build -t ca -f Dockerfile-ca ..
-docker run -e KEYBASE_USERNAME -e PAPERKEY -v ~/keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+docker run -e KEYBASE_USERNAME -e PAPERKEY -v example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 ```
 
 This will output the public key for the CA. 
