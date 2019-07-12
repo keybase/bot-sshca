@@ -27,7 +27,7 @@ clear_keys() {
 }
 
 nohup bash -c "run_keybase -g &"
-sleep 5
+sleep 15
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 echo "========================= Launched Keybase, starting tests... ========================="
 

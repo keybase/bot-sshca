@@ -62,7 +62,8 @@ func getSignedKeyLocation(team string) (string, error) {
 // handleArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
 // any other CLI argument parsing library) since we want to have custom arguments and access any other remaining
 // arguments. This function calls os.Exit(0) if it finds and handles a --set-default-team CLI flag.
-// handleArgs returns (theDefaultTeam, theRemainingArguments, err)
+// handleArgs returns (theDefaultTeam, theRemainingArguments, err). See this Github discussion for a longer
+// discussion of why this is implemented this way: https://github.com/keybase/bot-sshca/pull/3#discussion_r302740696
 func handleArgs(args []string) (string, []string, error) {
 	// TODO: Provide a way to clear default teams or at least a better message if there is a bad value there
 	if len(args) > 1 {

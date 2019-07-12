@@ -26,12 +26,9 @@ clear_keys() {
 }
 
 nohup bash -c "run_keybase -g &"
-sleep 5
+sleep 15
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 echo "========================= Launched Keybase, starting tests... ========================="
-
-    keybase fs rm /keybase/team/$SUBTEAM_SECONDARY/kssh-client.config || true
-
 
 # Test 1: kssh works
 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 1: It works!'"

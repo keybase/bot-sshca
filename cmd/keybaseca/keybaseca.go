@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
@@ -31,6 +29,11 @@ func main() {
 			Name:  "config, c",
 			Value: config.DefaultConfigLocation,
 			Usage: "Load configuration from `FILE`",
+		},
+		cli.BoolFlag{
+			Name:   "wipe-all-configs",
+			Hidden: true,
+			Usage:  "Used in the integration tests to clean all client configs from KBFS",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -75,6 +78,29 @@ func main() {
 			Flags: []cli.Flag{},
 		},
 	}
+	app.Action = func(c *cli.Context) error {
+		if c.Bool("wipe-all-configs") {
+			teams, err := shared.KBFSList("/keybase/team/")
+			if err != nil {
+				return err
+			}
+
+			semaphore := make(chan interface{}, len(teams))
+			for _, team := range teams {
+				go func(team string) {
+					err = shared.KBFSDelete(fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename))
+					if err != nil {
+						fmt.Printf("%v\n", err)
+					}
+					semaphore <- 0
+				}(team)
+			}
+			for i := 0; i < len(teams); i++ {
+				<-semaphore
+			}
+		}
+		return nil
+	}
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
@@ -94,14 +120,14 @@ func writeClientConfig(conf config.Config) error {
 
 	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username})
 
-	return KBFSWrite(filename, string(content))
+	return shared.KBFSWrite(filename, string(content))
 }
 
 // Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale
 // client config files
 func deleteClientConfig(conf config.Config) error {
 	filename := filepath.Join("/keybase/team/", conf.GetTeams()[0], shared.ConfigFilename)
-	return KBFSDelete(filename)
+	return shared.KBFSDelete(filename)
 }
 
 func captureControlCToDeleteClientConfig(conf config.Config) {
@@ -132,23 +158,4 @@ func loadServerConfigAndWriteClientConfig(configFilename string) (config.Config,
 		return nil, fmt.Errorf("Failed to write the client config: %v", err)
 	}
 	return conf, nil
-}
-
-func KBFSDelete(filename string) error {
-	cmd := exec.Command("keybase", "fs", "rm", filename)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Failed to delete the file at %s: %s (%v)", filename, string(bytes), err)
-	}
-	return nil
-}
-
-func KBFSWrite(filename string, contents string) error {
-	cmd := exec.Command("keybase", "fs", "write", filename)
-	cmd.Stdin = strings.NewReader(string(contents))
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Failed to write to file at %s: %s (%v)", filename, string(bytes), err)
-	}
-	return nil
 }
