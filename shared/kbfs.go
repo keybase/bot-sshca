@@ -39,9 +39,9 @@ func KBFSDelete(filename string) error {
 func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	var cmd *exec.Cmd
 	if appendToFile {
-		cmd = exec.Command("keybase", "fs", "write", "--append")
+		cmd = exec.Command("keybase", "fs", "write", "--append", filename)
 	} else {
-		cmd = exec.Command("keybase", "fs", "write")
+		cmd = exec.Command("keybase", "fs", "write", filename)
 	}
 
 	cmd.Stdin = strings.NewReader(string(contents))

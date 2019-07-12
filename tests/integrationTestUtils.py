@@ -11,10 +11,10 @@ def count_running_tests(expectedNumber):
     for i in range(1, expectedNumber + 1):
         test_str = "kssh passed test %s" % i
         if test_str not in all_stdin:
-            print("Did not find '%s' in logs: Missing test success!" % test_str)
+            print("Did not find '%s' in logs: Missing test success!" % test_str, file=sys.stderr)
             exit(42)
     if "kssh passed test %s" % (expectedNumber + 1) in all_stdin:
-        print('kssh logs report passing test #%s, did you remember to update integrationTest.sh to increment the test count?')
+        print('kssh logs report passing test #%s, did you remember to update integrationTest.sh to increment the test count?', file=sys.stderr)
         exit(42)
     exit(0)
 

@@ -18,14 +18,18 @@ docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
 docker-compose up -d
 
-TEST_EXIT_CODE=`docker wait kssh && (docker logs kssh | python ../integrationTestUtils.py count 7)`
+TEST_EXIT_CODE=`docker wait kssh`
 
 docker logs kssh | indent
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Simple Mode Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  printf "${GREEN}Simple Mode Tests Passed${NC}\n"
+  if (docker logs kssh | python3 ../integrationTestUtils.py count 7) ; then
+    printf "${GREEN}Simple Mode Tests Passed${NC}\n"
+  else
+    printf "${RED}Simple Mode Tests Missing Output${NC}\n"
+  fi
 fi
 
 docker-compose stop 2>&1 > /dev/null
@@ -40,14 +44,18 @@ docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
 docker-compose up -d
 
-TEST_EXIT_CODE=`docker wait kssh && (docker logs kssh | python ../integrationTestUtils.py count 10)`
+TEST_EXIT_CODE=`docker wait kssh`
 
 docker logs kssh | indent
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Advanced Mode Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  printf "${GREEN}Advanced Mode Tests Passed${NC}\n"
+  if (docker logs kssh | python3 ../integrationTestUtils.py count 10) ; then
+    printf "${GREEN}Advanced Mode Tests Passed${NC}\n"
+  else
+    printf "${RED}Advanced Mode Tests Missing Output${NC}\n"
+  fi
 fi
 
 docker-compose stop 2>&1 > /dev/null
