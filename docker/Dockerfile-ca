@@ -31,3 +31,5 @@ RUN /usr/lib/go-1.11/bin/go build -o bin/keybaseca cmd/keybaseca/keybaseca.go
 RUN /usr/lib/go-1.11/bin/go build -o bin/kssh cmd/kssh/kssh.go
 
 USER root
+
+RUN rm -rf /mnt && mkdir /mnt && chown -R keybase:keybase /mnt

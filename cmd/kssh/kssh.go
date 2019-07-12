@@ -199,7 +199,7 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	cmd.Stdin = os.Stdin
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("SSH exited with err: %v", err)
+		fmt.Printf("SSH exited with err: %v\n", err)
 		os.Exit(1)
 	}
 	os.Exit(0)

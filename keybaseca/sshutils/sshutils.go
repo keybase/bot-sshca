@@ -74,7 +74,6 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 	if err != nil {
 		return
 	}
-	fmt.Println("Using principals: ", principals)
 
 	tempFilename, err := getTempFilename("keybase-ca-signed-key")
 	if err != nil {
@@ -123,7 +122,6 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 		var principals []string
 		for _, team := range conf.GetTeams() {
 			members, err := getMembers(team)
-			fmt.Printf("team '%s': '%s'\n", team, strings.Join(members, ", "))
 			if err != nil {
 				return "", err
 			}
@@ -146,7 +144,6 @@ func getMembers(team string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(data))
 	var users []string
 	for _, line := range strings.Split(string(data), "\n") {
 		if strings.Contains(line, "writer") || strings.Contains(line, "admin") {

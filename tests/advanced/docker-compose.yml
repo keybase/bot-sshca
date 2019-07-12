@@ -11,8 +11,8 @@ services:
       - KEYBASE_USERNAME=${BOT_USERNAME}
     volumes:
       - app-volume:/mnt/
-    user: root
-    command: "sh -c 'chown -R keybase /mnt && su keybase -c \"bash tests/simple/bot-entrypoint.sh\"'"
+    user: keybase
+    command: "bash tests/advanced/bot-entrypoint.sh"
   kssh:
     image: kssh
     container_name: kssh
@@ -27,16 +27,31 @@ services:
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/simple/kssh-entrypoint.sh"
+    command: "bash tests/advanced/kssh-entrypoint.sh"
     depends_on:
-      - sshd
+      - sshd-staging
+      - sshd-prod
       - ca-bot
-  sshd:
-    image: sshd
-    container_name: sshd
+  sshd-staging:
+    image: sshd-staging
+    container_name: sshd-staging
     build:
       context: ..
-      dockerfile: simple/Dockerfile-sshd
+      dockerfile: advanced/Dockerfile-sshd
+      args:
+        allowed_principal: staging
+    volumes:
+      - app-volume:/mnt/
+    depends_on:
+      - ca-bot
+  sshd-prod:
+    image: sshd-prod
+    container_name: sshd-prod
+    build:
+      context: ..
+      dockerfile: advanced/Dockerfile-sshd
+      args:
+        allowed_principal: prod
     volumes:
       - app-volume:/mnt/
     depends_on:

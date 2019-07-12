@@ -15,6 +15,7 @@ trap 'err_report $LINENO' ERR
 # Ensure that we always run cleanup on test exit. Note that the cleanup function should be idempotent since it may be
 # run multiple times
 cleanup() {
+    keybase fs rm /keybase/team/$SUBTEAM/kssh-client.config || true
     keybase fs rm /keybase/team/$SUBTEAM_SECONDARY/kssh-client.config || true
 }
 trap cleanup EXIT
@@ -29,7 +30,8 @@ sleep 5
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 echo "========================= Launched Keybase, starting tests... ========================="
 
-cleanup
+    keybase fs rm /keybase/team/$SUBTEAM_SECONDARY/kssh-client.config || true
+
 
 # Test 1: kssh works
 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 1: It works!'"
