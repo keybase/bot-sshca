@@ -88,7 +88,7 @@ func getConfig(team string) (kssh.ConfigFile, error) {
 		return conf, nil
 	}
 
-	// They set a default team
+	// Check if they set a default team and retrieve the config for that team if so
 	defaultTeam, err := kssh.GetDefaultTeam()
 	if err != nil {
 		return empty, err
