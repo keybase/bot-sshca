@@ -10,11 +10,11 @@ services:
     volumes:
       - app-volume:/mnt/
     user: root
-    command: "sh -c 'chown keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
+    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
   kssh:
     build:
       context: ../
-      dockerfile: "docker/Dockerfile-ca"
+      dockerfile: "tests/Dockerfile-kssh"
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
       - KEYBASE_USERNAME=${KSSH_USERNAME}
