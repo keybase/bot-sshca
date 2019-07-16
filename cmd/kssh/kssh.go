@@ -20,7 +20,7 @@ func main() {
 	team, remainingArgs, err := handleArgs(os.Args)
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
-		return
+		os.Exit(1)
 	}
 	keyPath, err := getSignedKeyLocation(team)
 	if isValidCert(keyPath) {
@@ -29,7 +29,7 @@ func main() {
 	config, err := getConfig(team)
 	if err != nil {
 		fmt.Printf("%v\n", err)
-		return
+		os.Exit(1)
 	}
 	provisionNewKey(config, keyPath)
 	runSSHWithKey(keyPath, remainingArgs)
@@ -51,9 +51,11 @@ func getSignedKeyLocation(team string) (string, error) {
 }
 
 // handleArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
-// any other CLI argument parsing library) since we want to have custom arguments and access any other arguments.
+// any other CLI argument parsing library) since we want to have custom arguments and access any other remaining
+// arguments. This function calls os.Exit(0) if it finds and handles a --set-default-team CLI flag.
 // handleArgs returns (theDefaultTeam, theRemainingArguments, err)
 func handleArgs(args []string) (string, []string, error) {
+	// TODO: Provide a way to clear default teams or at least a better message if there is a bad value there
 	if len(args) > 1 {
 		if args[1] == "--team" {
 			if len(args) == 2 {
@@ -65,11 +67,13 @@ func handleArgs(args []string) (string, []string, error) {
 			if len(args) == 2 {
 				return "", nil, fmt.Errorf("Got --set-default-team argument with no value!")
 			}
+			// We exit immediately after setting the default team
 			err := kssh.SetDefaultTeam(args[2])
 			if err != nil {
-				return "", nil, err
+				fmt.Printf("Failed to set the default team: %v", err)
+				os.Exit(1)
 			}
-			return "", args[3:], nil
+			os.Exit(0)
 		}
 	}
 	return "", args[1:], nil
@@ -189,6 +193,7 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	cmd.Stdin = os.Stdin
 	err := cmd.Run()
 	if err != nil {
+		fmt.Printf("SSH exited with err: %v", err)
 		os.Exit(1)
 	}
 	os.Exit(0)

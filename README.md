@@ -1,7 +1,17 @@
-# SSHCA Bot
+# SSH CA Bot
 
-This repo contains a work in progress SSH CA bot built on top of Keybase. This project is not yet complete and is not 
-ready to be used. 
+The idea here is to control SSH access to servers (without needing to install anything on them) based simply on cryptographically provable membership in Keybase teams. 
+
+SSH supports a concept of certificate authorities (CAs) where you can place a single public key on the server, and the SSH server will allow any connections with keys signed by the CA cert. This is how a lot of large companies manage SSH access securely; users can be granted SSH access to servers without having to change the keys that are deployed on the server. 
+
+This repo provides the pieces for anyone to build this workflow:
+1. generation scripts and a guide to set up the Keybase team and server ssh configuration
+2. a wrapper around ssh (`kssh`) for any end user to get authenticated using the certificate authority
+3. a chatbot (`keybaseca`) which listens in a Keybase team for `kssh` requests. If the requester is in the team, the bot will sign the request with an expiring signature (e.g. 1 hour), and then the provisioned server should authenticate as usual. 
+
+Removing a user's ability to access a server is as simple as removing them from the Keybase team. 
+
+This code is currently a work in progress and this project is not yet complete and is not ready to be used. 
 
 # Design
 
@@ -19,8 +29,48 @@ binaries.
 
 `kssh` is the replacement SSH binary. It automatically pulls config files from KBFS. 
 
-# Getting Started (local environment)
+# Integration Tests
 
+This project contains integration tests that can be run via `./integrationTest.sh`. Note that prior to running
+the integration tests you need to `cp tests/env.sh.example tests/env.sh` and fill in `tests/env.sh`. 
+
+# Getting Started (docker)
+
+```bash
+cd docker/
+cp env.sh.example env.sh
+keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
+keybase paperkey    # Generate a new paper key
+# Create a new Keybase subteam that this user is in along with anyone else you wish to grant SSH access to
+nano env.sh         # Fill in the values including the just generated paper key
+make generate
+```
+
+This will output the public key for the CA. 
+For each server that you wish to make accessible to the CA bot:
+
+1. Place the public key in `/etc/ssh/ca.pub` 
+2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
+3. Restart ssh `service ssh restart`
+
+Now start the chatbot itself:
+
+```bash
+make serve
+```
+
+Now build kssh and start SSHing!
+
+```bash
+go build -o bin/kssh cmd/kssh/kssh.go
+sudo cp bin/kssh /usr/local/bin/        # Optional
+bin/kssh root@server
+```
+
+Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
+
+# Getting Started (local environment)
+###### Recommended only for development work
 In all of these directions, replace `{USER}` with your username and `{TEAM}` with the name of the team that you wish to 
 configure this bot for. 
 
@@ -52,5 +102,5 @@ For each server that you wish to make accessible to the CA bot:
 
 Now start the chatbot itself: `keybase --home /tmp/keybase service & go run cmd/keybaseca/keybaseca.go -c ~/keybaseca.config service` and leave it running.
 
-Now you just run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
+Now you run `go run cmd/kssh/kssh.go root@server` in order to SSH into your server. Anyone else in `{TEAM}.ssh` can
 also run that command in order to ssh into the server.

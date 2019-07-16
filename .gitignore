@@ -1,1 +1,4 @@
 bin/
+keybaseca.config
+nohup.out
+env.sh

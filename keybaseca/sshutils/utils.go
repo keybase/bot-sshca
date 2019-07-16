@@ -22,14 +22,14 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 				return err
 			}
 		} else {
-			return fmt.Errorf("Refusing to overwrite existing key (try with --overwrite-existing-key if you're sure): %s", filename)
+			return fmt.Errorf("Refusing to overwrite existing key (try with --overwrite-existing-key or FORCE_WRITE=true if you're sure): %s", filename)
 		}
 	}
 
 	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", filename, "-m", "PEM", "-N", "")
-	err := cmd.Run()
+	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("ssh-keygen failed: %s (%v)", string(bytes), err)
 	}
 	if printPubKey {
 		bytes, err := ioutil.ReadFile(shared.KeyPathToPubKey(filename))
