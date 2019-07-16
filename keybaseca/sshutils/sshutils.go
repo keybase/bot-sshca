@@ -25,7 +25,7 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 				return err
 			}
 		} else {
-			return fmt.Errorf("Refusing to overwrite existing key (try with --overwrite-existing-key if you're sure): %s", filename)
+			return fmt.Errorf("Refusing to overwrite existing key (try with --overwrite-existing-key or FORCE_WRITE=true if you're sure): %s", filename)
 		}
 	}
 

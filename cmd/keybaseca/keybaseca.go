@@ -52,7 +52,7 @@ func main() {
 				}
 				captureControlCToDeleteClientConfig(conf)
 				defer deleteClientConfig(conf)
-				err = sshutils.Generate(conf, c.Bool("overwrite-existing-key"), true)
+				err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true", true)
 				if err != nil {
 					return fmt.Errorf("Failed to generate a new key: %v", err)
 				}
@@ -88,9 +88,13 @@ func main() {
 			semaphore := make(chan interface{}, len(teams))
 			for _, team := range teams {
 				go func(team string) {
-					err = shared.KBFSDelete(fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename))
-					if err != nil {
-						fmt.Printf("%v\n", err)
+					filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
+					exists, _ := shared.KBFSFileExists(filename)
+					if exists {
+						err = shared.KBFSDelete(filename)
+						if err != nil {
+							fmt.Printf("%v\n", err)
+						}
 					}
 					semaphore <- 0
 				}(team)

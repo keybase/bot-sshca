@@ -11,6 +11,7 @@ NC='\033[0m'
 indent() { sed 's/^/    /'; }
 
 cd tests/simple/
+../reset.sh
 source env.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
@@ -37,6 +38,7 @@ docker-compose kill 2>&1 > /dev/null
 docker-compose rm -f
 
 cd ../advanced/
+../reset.sh
 source env.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
@@ -61,3 +63,5 @@ fi
 docker-compose stop 2>&1 > /dev/null
 docker-compose kill 2>&1 > /dev/null
 docker-compose rm -f
+
+../reset.sh

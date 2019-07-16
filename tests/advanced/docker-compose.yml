@@ -27,7 +27,7 @@ services:
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/advanced/kssh-entrypoint.sh"
+    command: "bash tests/advanced/tester-entrypoint.sh"
     depends_on:
       - sshd-staging
       - sshd-prod
