@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
@@ -34,6 +35,11 @@ func main() {
 			Name:   "wipe-all-configs",
 			Hidden: true,
 			Usage:  "Used in the integration tests to clean all client configs from KBFS",
+		},
+		cli.BoolFlag{
+			Name:   "wipe-logs",
+			Hidden: true,
+			Usage:  "Used in the integration tests to delete all CA logs",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -102,6 +108,25 @@ func main() {
 			for i := 0; i < len(teams); i++ {
 				<-semaphore
 			}
+		}
+		if c.Bool("wipe-logs") {
+			conf, err := config.LoadConfig(c.String("config"))
+			if err != nil {
+				return fmt.Errorf("Failed to parse config file: %v", err)
+			}
+			logLocation := conf.GetLogLocation()
+			if strings.HasPrefix(logLocation, "/keybase/") {
+				err = shared.KBFSDelete(logLocation)
+				if err != nil {
+					return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
+				}
+			} else {
+				err = os.Remove(logLocation)
+				if err != nil {
+					return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
+				}
+			}
+			fmt.Println("Wiped existing log file at " + logLocation)
 		}
 		return nil
 	}

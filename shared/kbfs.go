@@ -41,11 +41,8 @@ func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	if appendToFile {
 		// `keybase fs write --append` only works if the file already exists so create it if it does not exist
 		exists, err := KBFSFileExists(filename)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			err := KBFSWrite(filename, "", false)
+		if !exists || err != nil {
+			err = KBFSWrite(filename, "", false)
 			if err != nil {
 				return err
 			}

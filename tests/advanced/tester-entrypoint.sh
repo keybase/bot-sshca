@@ -27,7 +27,7 @@ clear_keys() {
 }
 
 nohup bash -c "run_keybase -g &"
-sleep 10
+sleep 15
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 
 ## Loop until a kssh-client.config file appears
@@ -79,8 +79,8 @@ clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY.ssh.staging
 clear_keys && bin/kssh --team $SUBTEAM.ssh.staging -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 10: --team overrides the default team'"
 
 # This tests the audit log feature
-#sleep 2 # sleep to make sure ca-bot has synced all kbfs changes
-#keybase fs read /keybase/team/$SUBTEAM.ssh.staging/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 9 "staging,root_everywhere"
-#echo "kssh passed test 11: ca bot produces correct audit logs"
+sleep 2 # sleep to make sure ca-bot has synced all kbfs changes
+keybase fs read /keybase/team/$SUBTEAM.ssh.staging/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 9 "staging,root_everywhere"
+echo "kssh passed test 11: ca bot produces correct audit logs"
 
 cleanup

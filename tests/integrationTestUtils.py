@@ -27,7 +27,6 @@ def check_logs(expected_number, expected_principals):
     cnt = 0
     all_stdin = sys.stdin.read()
     for line in all_stdin.splitlines():
-        print("Looking at %s" % repr(line))
         if "Processing SignatureRequest from user=%s" % username in line and "principals:%s, expiration:+1h, pubkey:ssh-ed25519" % expected_principals in line:
             cnt += 1
     if cnt != expected_number:
