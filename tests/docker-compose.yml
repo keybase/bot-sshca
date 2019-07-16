@@ -23,7 +23,7 @@ services:
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/kssh-entrypoint.sh"
+    command: "bash tests/tester-entrypoint.sh"
     depends_on:
       - sshd
       - ca-bot

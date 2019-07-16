@@ -44,7 +44,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				err = sshutils.Generate(conf, c.Bool("overwrite-existing-key"), true)
+				err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true", true)
 				if err != nil {
 					return fmt.Errorf("Failed to generate a new key: %v", err)
 				}
