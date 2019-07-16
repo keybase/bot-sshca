@@ -29,6 +29,15 @@ clear_keys() {
 nohup bash -c "run_keybase -g &"
 sleep 10
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
+
+## Loop until a kssh-client.config file appears
+#set +e
+#keybase fs stat /keybase/private/dworken/$SUBTEAM.ssh.staging/kssh-client.config
+#while [ $? -ne 0 ]; do
+#    keybase fs stat /keybase/private/dworken/$SUBTEAM.ssh.staging/kssh-client.config
+#done
+#set -e
+
 echo "========================= Launched Keybase, starting tests... ========================="
 
 # Tests that show it is putting the correct principals in the keys
@@ -68,5 +77,10 @@ clear_keys && bin/kssh --set-default-team $SUBTEAM.ssh.staging
 clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 9: Uses the default team'"
 clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY.ssh.staging
 clear_keys && bin/kssh --team $SUBTEAM.ssh.staging -o StrictHostKeyChecking=no root@sshd-prod "echo 'kssh passed test 10: --team overrides the default team'"
+
+# This tests the audit log feature
+#sleep 2 # sleep to make sure ca-bot has synced all kbfs changes
+#keybase fs read /keybase/team/$SUBTEAM.ssh.staging/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 9 "staging,root_everywhere"
+#echo "kssh passed test 11: ca bot produces correct audit logs"
 
 cleanup

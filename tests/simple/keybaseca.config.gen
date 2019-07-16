@@ -6,3 +6,5 @@ teams:
 - $SUBTEAM
 keybase_paper_key: $BOT_PAPERKEY
 keybase_username: $BOT_USERNAME
+log_location: /mnt/ca.log
+strict_logging: true

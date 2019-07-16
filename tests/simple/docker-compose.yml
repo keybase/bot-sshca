@@ -26,8 +26,8 @@ services:
       - SUBTEAM_SECONDARY=${SUBTEAM_SECONDARY}
     volumes:
       - app-volume:/mnt/
-    user: keybase
-    command: "bash tests/simple/tester-entrypoint.sh"
+    user: root
+    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/simple/tester-entrypoint.sh\"'"
     depends_on:
       - sshd
       - ca-bot

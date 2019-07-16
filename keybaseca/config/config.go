@@ -70,16 +70,13 @@ func validateConfig(cf ConfigFile) error {
 func isValidPath(path string) bool {
 	if strings.HasPrefix(path, "/keybase/") {
 		// If it exists it is valid
-		exists, err := shared.KBFSFileExists(path)
-		if err != nil {
-			return false
-		}
+		exists, _ := shared.KBFSFileExists(path)
 		if exists {
 			return true
 		}
 
 		// Otherwise try to write to it
-		err = shared.KBFSWrite(path, "", false)
+		err := shared.KBFSWrite(path, "", false)
 		if err != nil {
 			return false
 		}

@@ -39,6 +39,17 @@ func KBFSDelete(filename string) error {
 func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	var cmd *exec.Cmd
 	if appendToFile {
+		// `keybase fs write --append` only works if the file already exists so create it if it does not exist
+		exists, err := KBFSFileExists(filename)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			err := KBFSWrite(filename, "", false)
+			if err != nil {
+				return err
+			}
+		}
 		cmd = exec.Command("keybase", "fs", "write", "--append", filename)
 	} else {
 		cmd = exec.Command("keybase", "fs", "write", filename)
@@ -47,6 +58,14 @@ func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	cmd.Stdin = strings.NewReader(string(contents))
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
+		fmt.Println("{{{")
+		c2 := exec.Command("keybase", "fs", "write", "/keybase/team/dworken_int.ssh.staging/test")
+		c2.Stdin = strings.NewReader("test")
+		c2.Run()
+		fmt.Println("|||")
+		c2 = exec.Command("keybase", "fs", "ls", "/keybase/team/dworken_int.ssh.staging/")
+		c2.Run()
+		fmt.Println("}}}")
 		return fmt.Errorf("failed to write to file at %s: %s (%v)", filename, string(bytes), err)
 	}
 	return nil

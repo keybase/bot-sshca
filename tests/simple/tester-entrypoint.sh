@@ -56,4 +56,8 @@ clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed 
 clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY
 clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 7: --team overrides the default team'"
 
+# This tests the audit log feature
+cat /mnt/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 5 "root"
+echo "kssh passed test 8: ca bot produces correct audit logs"
+
 cleanup

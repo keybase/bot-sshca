@@ -41,5 +41,6 @@ func appendToFile(filename string, str string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

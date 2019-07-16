@@ -26,7 +26,7 @@ docker logs kssh | indent
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Simple Mode Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  if (docker logs kssh | python3 ../integrationTestUtils.py count 7) ; then
+  if (docker logs kssh | python3 ../integrationTestUtils.py count 8) ; then
     printf "${GREEN}Simple Mode Tests Passed${NC}\n"
   else
     printf "${RED}Simple Mode Tests Missing Output${NC}\n"
@@ -53,7 +53,7 @@ docker logs kssh | indent
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Advanced Mode Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  if (docker logs kssh | python3 ../integrationTestUtils.py count 10) ; then
+  if (docker logs kssh | python3 ../integrationTestUtils.py count 11) ; then
     printf "${GREEN}Advanced Mode Tests Passed${NC}\n"
   else
     printf "${RED}Advanced Mode Tests Missing Output${NC}\n"
