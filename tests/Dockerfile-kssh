@@ -1,5 +1,5 @@
-# This dockerfile builds a container capable of running the SSH CA bot. Note that a lot of this code is duplicated
-# between this file and Dockerfile-kssh.
+# This dockerfile builds a container capable of running kssh. Note that a lot of this code is duplicated
+# between this file and Dockerfile-ca.
 FROM ubuntu:18.04
 
 RUN apt-get -qq update
@@ -28,9 +28,6 @@ COPY --chown=keybase go.sum .
 RUN /usr/lib/go-1.11/bin/go mod download
 
 COPY --chown=keybase ./ /home/keybase/
-RUN /usr/lib/go-1.11/bin/go build -o bin/keybaseca cmd/keybaseca/keybaseca.go
+RUN /usr/lib/go-1.11/bin/go build -o bin/kssh cmd/kssh/kssh.go
 
 USER root
-
-# Set up mount so it has the correct permissions for the keybase user to access it
-RUN rm -rf /mnt && mkdir /mnt && chown -R keybase:keybase /mnt
