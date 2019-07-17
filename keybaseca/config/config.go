@@ -58,6 +58,9 @@ func validateConfig(cf ConfigFile) error {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
+	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
+		return fmt.Errorf("cannot use multiple teams in single-environment mode")
+	}
 	return nil
 }
 
