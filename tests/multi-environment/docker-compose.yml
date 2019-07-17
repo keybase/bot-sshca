@@ -12,7 +12,7 @@ services:
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/advanced/bot-entrypoint.sh"
+    command: "bash tests/multi-environment/bot-entrypoint.sh"
   kssh:
     image: kssh
     container_name: kssh
@@ -27,7 +27,7 @@ services:
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/advanced/tester-entrypoint.sh"
+    command: "bash tests/multi-environment/tester-entrypoint.sh"
     depends_on:
       - sshd-staging
       - sshd-prod
@@ -37,7 +37,7 @@ services:
     container_name: sshd-staging
     build:
       context: ..
-      dockerfile: advanced/Dockerfile-sshd
+      dockerfile: "multi-environment/Dockerfile-sshd"
       args:
         allowed_principal: staging
     volumes:
@@ -49,7 +49,7 @@ services:
     container_name: sshd-prod
     build:
       context: ..
-      dockerfile: advanced/Dockerfile-sshd
+      dockerfile: "multi-environment/Dockerfile-sshd"
       args:
         allowed_principal: prod
     volumes:

@@ -1,30 +1,23 @@
 SHELL := /bin/bash
 
-.PHONY: generate generate-advanced serve serve-advanced generatekey generatekey-advanced clean
+.PHONY: build generate serve clean reset-permissions confirm-clean
 
-generate: | build generatekey
-generate-advanced: | build generatekey-advanced
-
-serve:
-	source env.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
-
-serve-advanced:
-	source env-advanced.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
-
-build:
+build: reset-permissions
 	docker build -t ca -f Dockerfile-ca ..
 
-generatekey:
-	source env.sh && cat keybaseca.config.gen | envsubst > ../example-keybaseca-volume/keybaseca.config
-	source env.sh && docker run -e FORCE_WRITE -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
-	@echo -e '\nFor each server that you wish to make accessible to the CA bot:\n\n1. Place the public key in `/etc/ssh/ca.pub`\n2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`\n3. Restart ssh `service ssh restart`'
+generate: build
+	source env.sh && python3 .run.py generate
 
-generatekey-advanced:
-	source env-advanced.sh && cat keybaseca-advanced.config.gen | envsubst > ../example-keybaseca-volume/keybaseca.config
-	source env-advanced.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+serve: build
+	source env.sh && source env.sh && python3 .run.py serve
 
-clean:
-	# Sudo since it is likely owned by another use since it was written from a docker container
+clean: confirm-clean reset-permissions
+	@# Sudo since it is likely owned by another use since it was written from a docker container
 	sudo rm -rf ../example-keybaseca-volume/keybaseca*
 	sudo rm -rf ../example-keybaseca-volume/keybase-ca*
+
+confirm-clean:
+	@echo -n "Are you sure? This will delete the CA key used to connect to your servers [yes/N] " && read ans && [ $${ans:-N} = yes ]
+
+reset-permissions:
 	sudo chown -R $$USER ../example-keybaseca-volume/
