@@ -74,7 +74,10 @@ func validateConfig(cf ConfigFile) error {
 	if cf.ChannelName != "" && !isValid {
 		return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", cf.ChannelName, cf.Teams[0])
 	}
-	// TODO: Validate the channel name via `keybase chat list-channels -j teamname.blah`
+	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
+		return fmt.Errorf("cannot use multiple teams in single-environment mode. You must either add use_subteam_as_principal:true to " +
+			"the config file (and configure servers for multi-environment mode as described in the README) or only specify a single team")
+	}
 	return nil
 }
 
