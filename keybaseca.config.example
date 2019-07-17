@@ -25,9 +25,11 @@ teams:
 
 # It is possible to configure a specific location for where the CA key should be stored
 ca_key_location: /path/to/where/the/ca/key/is/stored
+
 # The key expiration field for signed keys. By default signed keys expire after one hour. It is recommended
 # to keep the key expiration window to a relatively short period of time. Valid formats are +1h, +5h, +1d, +3d, +1w, etc
 key_expiration: "+3d"
+
 # This is the location where logs from the CA bot will be stored. It is recommended to store these logs in a
 # secure location for audit purposes. One potential option is storing logs in a KBFS subteam dedicated to admins.
 # If not set, logs go to stdout.
@@ -36,6 +38,13 @@ log_location: /path/to/keybaseca.log
 # simply send it to stdout. If it is critical to maintain correct audit logs, the strict_logging option will cause
 # the CA bot to panic and shutdown if it is unable to save logs.
 strict_logging: true
+
+# If the subteam used for granting SSH access is a big team, you can set the a specific channel to use here. This
+# may be useful if subteams are being used for more purposes than just SSH access. For example, one could use
+# team.prod to grant SSH production access and for a secret sharing bot used to share other credentials. One would
+# then want to configure the CA bot to use a separate channel (eg #ssh-provision) for provision requests so that
+# the general channel could be used for lower volume purposes.
+channel_name: ssh-provision
 
 # Mainly useful for dev work. For security reasons, it is recommended to always run a production CA chat bot on an
 # isolated machine. These options make it possible to run a CA chat bot on a machine where you currently are logged
