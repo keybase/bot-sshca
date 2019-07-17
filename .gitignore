@@ -2,4 +2,3 @@ bin/
 keybaseca.config
 nohup.out
 env.sh
-env-advanced.sh

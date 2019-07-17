@@ -35,10 +35,10 @@ This project contains integration tests that can be run via `./integrationTest.s
 the integration tests you need to:
 
 ```
-cp tests/simple/env.sh.example tests/simple/env.sh; cp tests/advanced/env.sh.example tests/advanced/env.sh
+cp tests/single-environment/env.sh.example tests/single-environment/env.sh; cp tests/multi-environment/env.sh.example tests/multi-environment/env.sh
 ``` 
 
-and fill in `tests/simple/env.sh` and `tests/advanced/env.sh`. 
+and fill in `tests/single-environment/env.sh` and `tests/multi-environment/env.sh`. 
 
 # Getting Started (single environment mode)
 

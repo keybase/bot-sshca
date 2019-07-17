@@ -9,7 +9,7 @@ generate: build
 	source env.sh && python3 .run.py generate
 
 serve: build
-	source env.sh && source env.sh && python3 .run.py serve
+	source env.sh && python3 .run.py serve
 
 clean: confirm-clean reset-permissions
 	@# Sudo since it is likely owned by another use since it was written from a docker container

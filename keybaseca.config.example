@@ -1,6 +1,6 @@
-##################################
-##### Example 1: Simple Mode #####
-##################################
+##############################################
+##### Example 1: Single Environment Mode #####
+##############################################
 # This config file configures a simple CA bot that grants root access to anyone in the listed team
 
 # The ssh user you want to use
@@ -9,10 +9,10 @@ ssh_user: root
 teams:
 - teamname.ssh
 
-####################################
-##### Example 2: Advanced Mode #####
-####################################
-# See README.md for a description of how advanced mode works. This config file grants places `staging`,
+#############################################
+##### Example 2: Multi-environment Mode #####
+#############################################
+# See README.md for a description of how multi-environment mode works. This config file grants places `staging`,
 # `production`, or `root_everywhere` into the principals field of the signed certificate.
 teams:
 - teamname.ssh.staging
