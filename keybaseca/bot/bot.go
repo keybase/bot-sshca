@@ -57,6 +57,8 @@ func StartBot(conf config.Config) error {
 			return fmt.Errorf("failed to read message: %v", err)
 		}
 
+		fmt.Printf("Got %s on chan %s\n", msg.Message.Content.Text.Body, msg.Message.Channel.Name)
+
 		if msg.Message.Content.Type != "text" || msg.Message.Sender.Username == kbc.GetUsername() {
 			continue
 		}

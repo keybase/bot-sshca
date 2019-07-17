@@ -147,7 +147,10 @@ func writeClientConfig(conf config.Config) error {
 		return err
 	}
 
-	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username})
+	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username, ChannelName: conf.GetChannelName()})
+	if err != nil {
+		return err
+	}
 
 	return shared.KBFSWrite(filename, string(content), false)
 }

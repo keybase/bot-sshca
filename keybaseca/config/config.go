@@ -1,9 +1,11 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/keybase/bot-ssh-ca/shared"
@@ -23,6 +25,7 @@ type Config interface {
 	GetKeyExpiration() string
 	GetSSHUser() string
 	GetTeams() []string
+	GetChannelName() string
 	GetUseSubteamAsPrincipal() bool
 	GetLogLocation() string
 	GetStrictLogging() bool
@@ -64,7 +67,38 @@ func validateConfig(cf ConfigFile) error {
 	if cf.LogLocation != "" && !isValidPath(cf.LogLocation) {
 		return fmt.Errorf("log_location '%s' is not a valid path", cf.LogLocation)
 	}
+	isValid, err := isValidChannel(cf.Teams[0], cf.ChannelName)
+	if err != nil {
+		return fmt.Errorf("failed to validate channel_name '%s': %v", cf.ChannelName, err)
+	}
+	if cf.ChannelName != "" && !isValid {
+		return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", cf.ChannelName, cf.Teams[0])
+	}
+	// TODO: Validate the channel name via `keybase chat list-channels -j teamname.blah`
 	return nil
+}
+
+func isValidChannel(teamName string, channelName string) (bool, error) {
+	cmd := exec.Command("keybase", "chat", "list-channels", "-j", teamName)
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("failed to call keybase: %v", err)
+	}
+
+	m := map[string]interface{}{}
+	err = json.Unmarshal(bytes, &m)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse json output from keybase: %v", err)
+	}
+
+	channels := m["convs"].([]interface{})
+	for _, channel := range channels {
+		name := channel.(map[string]interface{})["channel"]
+		if name == channelName {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func isValidPath(path string) bool {
@@ -105,6 +139,7 @@ type ConfigFile struct {
 	KeyExpiration         string   `yaml:"key_expiration"`
 	SSHUser               string   `yaml:"ssh_user"`
 	Teams                 []string `yaml:"teams"`
+	ChannelName           string   `yaml:"channel_name"`
 	UseSubteamAsPrincipal bool     `yaml:"use_subteam_as_principal"`
 	LogLocation           string   `yaml:"log_location"`
 	StrictLogging         bool     `yaml:"strict_logging"`
@@ -156,4 +191,8 @@ func (cf *ConfigFile) GetLogLocation() string {
 
 func (cf *ConfigFile) GetStrictLogging() bool {
 	return cf.StrictLogging
+}
+
+func (cf *ConfigFile) GetChannelName() string {
+	return cf.ChannelName
 }
