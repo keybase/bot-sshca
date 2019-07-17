@@ -28,9 +28,7 @@ COPY --chown=keybase go.sum .
 RUN /usr/lib/go-1.11/bin/go mod download
 
 COPY --chown=keybase ./ /home/keybase/
+
 RUN /usr/lib/go-1.11/bin/go build -o bin/keybaseca cmd/keybaseca/keybaseca.go
 
 USER root
-
-# Set up mount so it has the correct permissions for the keybase user to access it
-RUN rm -rf /mnt && mkdir /mnt && chown -R keybase:keybase /mnt

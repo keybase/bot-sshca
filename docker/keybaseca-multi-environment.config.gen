@@ -1,4 +1,4 @@
-# Note that you do not need to edit this file. It is used with env-advanced.sh and envsubst in order to generate a config file
+# Note that you do not need to edit this file. It is used with make and .run.py in order to generate a config file
 ca_key_location: /mnt/keybase-ca-key
 key_expiration: "+1h"
 teams: [$SUBTEAMS]

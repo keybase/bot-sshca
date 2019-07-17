@@ -40,7 +40,7 @@ cp tests/simple/env.sh.example tests/simple/env.sh; cp tests/advanced/env.sh.exa
 
 and fill in `tests/simple/env.sh` and `tests/advanced/env.sh`. 
 
-# Getting Started (docker)
+# Getting Started (single environment mode)
 
 ```bash
 cd docker/
@@ -75,9 +75,9 @@ bin/kssh root@server
 
 Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
 
-# Advanced Mode
+# Multi-Environment Mode
 
-kssh supports a so called advanced mode that allows you to define realms of servers where access is granted based off of 
+kssh supports a multi-environment mode of operation that allows you to define realms of servers where access is granted based off of 
 membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
 up a third realm that grants root access to all machines. To configure kssh to work with this environment:
@@ -87,14 +87,14 @@ up a third realm that grants root access to all machines. To configure kssh to w
 
 ```bash
 cd docker/
-cp env-advanced.sh-example env-advanced.sh
+cp env.sh.example env.sh
 keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
 keybase paperkey    # Generate a new paper key
 # Create `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere` as new Keybase subteams
 # and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
 # different users
 nano env.sh         # Fill in the values including the previously generated paper key
-make generate-advanced
+make generate
 ```
 
 This will output the public key for the CA. 
@@ -120,7 +120,7 @@ For each server in production:
 Now start the chatbot itself:
 
 ```bash
-make serve-advanced
+make serve
 ```
 
 Now build kssh and start SSHing!

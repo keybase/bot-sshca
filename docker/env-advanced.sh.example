@@ -1,8 +1,0 @@
-#!/bin/bash
-set -euo pipefail
-IFS=$'\n\t'
-
-# The subteams that will be used to grant SSH access
-export SUBTEAMS="teamname.ssh.staging, teamname.ssh.prod, teamname.ssh.root_everywhere"
-export KEYBASE_USERNAME="username_of_ca_bot"
-export PAPERKEY="paper key for the ca bot"
