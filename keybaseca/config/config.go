@@ -59,7 +59,8 @@ func validateConfig(cf ConfigFile) error {
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
 	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
-		return fmt.Errorf("cannot use multiple teams in single-environment mode")
+		return fmt.Errorf("cannot use multiple teams in single-environment mode. You must either add use_subteam_as_principal:true to " +
+			"the config file (and configure servers for multi-environment mode as described in the README) or only specify a single team")
 	}
 	return nil
 }
