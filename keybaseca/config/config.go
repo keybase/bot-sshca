@@ -81,6 +81,7 @@ func validateConfig(cf ConfigFile) error {
 	return nil
 }
 
+// Returns whether or not the given channelName is the name of a channel inside the given team
 func isValidChannel(teamName string, channelName string) (bool, error) {
 	cmd := exec.Command("keybase", "chat", "list-channels", "-j", teamName)
 	bytes, err := cmd.CombinedOutput()
@@ -104,6 +105,7 @@ func isValidChannel(teamName string, channelName string) (bool, error) {
 	return false, nil
 }
 
+// Returns whether or not the given path is a writable path on the local filesystem OR in KBFS
 func isValidPath(path string) bool {
 	if strings.HasPrefix(path, "/keybase/") {
 		// If it exists it is valid
