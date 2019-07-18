@@ -14,7 +14,7 @@ teams:
 #############################################
 # See README.md for a description of how multi-environment mode works. This config file grants places `staging`,
 # `production`, or `root_everywhere` into the principals field of the signed certificate. Note that if multiple
-# teams are listed, the first team is used for chat messages between kssh and keybaseca. 
+# teams are listed, the first team is used for chat messages between kssh and keybaseca.
 teams:
 - teamname.ssh.staging
 - teamname.ssh.production

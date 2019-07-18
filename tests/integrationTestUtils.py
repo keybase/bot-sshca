@@ -34,12 +34,39 @@ def check_logs(expected_number, expected_principals):
         exit(42)
     exit(0)
 
+def check_ca_key_backup():
+    all_stdin = sys.stdin.read()
+    keyLines = []
+    add = False
+    for line in all_stdin.splitlines():
+        if "----" in line and "PRIVATE" in line and "BEGIN" in line:
+            add = True
+        if add:
+            keyLines.append(line)
+        if "----" in line and "PRIVATE" in line and "END" in line:
+            add = False
+    print('\n'.join(keyLines))
+    os.system('whoami')
+    os.mkdir('/home/keybase/ssh/', 777)
+    os.system('ls -Slah /home/keybase/ssh/')
+    with open('/home/keybase/ssh/cakey.bak', 'w+') as f:
+        f.write("\n".join(keyLines))
+    os.chmod('/home/keybase/ssh/cakey.bak', 600)
+    os.system('ls -Slah /home/keybase/ssh/')
+    ret = os.system("ssh-keygen -y -e -f /home/keybase/ssh/cakey.bak")
+    if ret != 0:
+        print("Failed to validate CA key backup with ssh-keygen!")
+        print(keyLines)
+        exit(42)
+
 if __name__ == "__main__":
     subcommand = sys.argv[1]
     if subcommand == "count":
         count_running_tests(int(sys.argv[2]))
-    if subcommand == "logcheck":
+    elif subcommand == "logcheck":
         check_logs(int(sys.argv[2]), sys.argv[3])
+    elif subcommand == "backupcheck":
+        check_ca_key_backup()
     else:
         # Error on a bogus subcommand so we fail fast
         exit(1)

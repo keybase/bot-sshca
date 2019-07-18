@@ -15,9 +15,9 @@ cd tests/single-environment/
 source env.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
-docker-compose build 2>&1 > /dev/null
+docker-compose build
 echo "Running integration tests..."
-docker-compose up -d
+docker-compose up
 
 TEST_EXIT_CODE=`docker wait kssh`
 
