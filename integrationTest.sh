@@ -15,7 +15,7 @@ cd tests/single-environment/
 source env.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
-docker-compose build
+docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
 docker-compose up -d
 
