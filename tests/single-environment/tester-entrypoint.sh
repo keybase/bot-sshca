@@ -62,17 +62,17 @@ echo "kssh passed test 8: ca bot produces correct audit logs"
 
 # This tests the key backup feature
 mkdir -p /tmp/ssh/
-whoami
 chown -R keybase:keybase /tmp/ssh/
-ls -Slah /tmp/
-ls -Slah /tmp/ssh
 cat /mnt/cakey.backup | python3 ~/tests/integrationTestUtils.py backupcheck > /tmp/ssh/cakey
 chmod 0600 /tmp/ssh/cakey
-chown -R keybase:keybase /tmp/ssh
-chown -R keybase:keybase /tmp/ssh/*
-ls -Slah /tmp/ssh
-cat /tmp/ssh/cakey
-ssh-keygen -y -e -f /tmp/ssh/cakey
+OUTPUT=`ssh-keygen -y -e -f /tmp/ssh/cakey`
+if [[ $OUTPUT == *"BEGIN SSH2 PUBLIC KEY"* ]]; then
+    echo 'kssh passed test 9: keybaseca backup outputs a valid private key'
+else
+    echo "Got bad output while validating backup key"
+    echo $OUTPUT
+    exit 1
+fi
 
 
 cleanup

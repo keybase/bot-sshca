@@ -46,18 +46,6 @@ def check_ca_key_backup():
         if "----" in line and "PRIVATE" in line and "END" in line:
             add = False
     print('\n'.join(keyLines))
-    os.system('whoami')
-    os.mkdir('/home/keybase/ssh/', 777)
-    os.system('ls -Slah /home/keybase/ssh/')
-    with open('/home/keybase/ssh/cakey.bak', 'w+') as f:
-        f.write("\n".join(keyLines))
-    os.chmod('/home/keybase/ssh/cakey.bak', 600)
-    os.system('ls -Slah /home/keybase/ssh/')
-    ret = os.system("ssh-keygen -y -e -f /home/keybase/ssh/cakey.bak")
-    if ret != 0:
-        print("Failed to validate CA key backup with ssh-keygen!")
-        print(keyLines)
-        exit(42)
 
 if __name__ == "__main__":
     subcommand = sys.argv[1]
