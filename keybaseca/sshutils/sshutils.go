@@ -13,10 +13,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Generate a new SSH key. Places the private key at filename and the public key at filename.pub. If `overwrite`,
-// it will overwrite the existing key. If `printPubKey` it will print out the generated public key to stdout.
 func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error {
-	if _, err := os.Stat(filename); err == nil {
+	_, err := os.Stat(filename)
+	if err == nil {
 		if overwrite {
 			err := os.Remove(filename)
 			if err != nil {
@@ -27,11 +26,11 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 		}
 	}
 
-	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", filename, "-m", "PEM", "-N", "")
-	bytes, err := cmd.CombinedOutput()
+	err = generateNewSSHKey(filename)
 	if err != nil {
-		return fmt.Errorf("ssh-keygen failed: %s (%v)", string(bytes), err)
+		return err
 	}
+
 	if printPubKey {
 		bytes, err := ioutil.ReadFile(shared.KeyPathToPubKey(filename))
 		if err != nil {
@@ -39,6 +38,7 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 		}
 		fmt.Printf("Generated new public key: \n%s\n", string(bytes))
 	}
+
 	return nil
 }
 
