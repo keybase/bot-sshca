@@ -47,7 +47,6 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 func Generate(conf config.Config, overwrite bool, printPubKey bool) error {
 	err := GenerateNewSSHKey(conf.GetCAKeyLocation(), overwrite, printPubKey)
 	if err == nil {
-		fmt.Printf("Wrote new SSH CA key to %s\n", conf.GetCAKeyLocation())
 		log.Log(conf, fmt.Sprintf("Wrote new SSH CA key to %s", conf.GetCAKeyLocation()))
 	}
 	return err
