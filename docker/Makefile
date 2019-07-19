@@ -1,3 +1,4 @@
+# Set FORCE_WRITE to false if it is not already set
 ifdef FORCE_WRITE
 FORCE_WRITE := $(FORCE_WRITE)
 else

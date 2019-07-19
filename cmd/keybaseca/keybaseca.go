@@ -116,13 +116,16 @@ func main() {
 func writeClientConfig(conf config.Config) error {
 	// We only write the client config into the first team since that is enough for kssh to find it. This means
 	// kssh will talk to the bot in the first team that is listed in the config file
-	filename := filepath.Join("/keybase/team/", conf.GetTeams()[0], shared.ConfigFilename)
+	filename := filepath.Join("/keybase/team/", conf.GetDefaultTeam(), shared.ConfigFilename)
 	username, err := bot.GetUsername(conf)
 	if err != nil {
 		return err
 	}
 
 	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetTeams()[0], BotName: username})
+	if err != nil {
+		return err
+	}
 
 	return shared.KBFSWrite(filename, string(content))
 }
@@ -130,7 +133,7 @@ func writeClientConfig(conf config.Config) error {
 // Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale
 // client config files
 func deleteClientConfig(conf config.Config) error {
-	filename := filepath.Join("/keybase/team/", conf.GetTeams()[0], shared.ConfigFilename)
+	filename := filepath.Join("/keybase/team/", conf.GetDefaultTeam(), shared.ConfigFilename)
 	return shared.KBFSDelete(filename)
 }
 
