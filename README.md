@@ -80,7 +80,7 @@ Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
 kssh supports a multi-environment mode of operation that allows you to define realms of servers where access is granted based off of 
 membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
-up a third realm that grants root access to all machines. To configure kssh to work with this environment:
+up a third realm that grants root access to all machines. To configure kssh to work with this setup:
 
 1. Create three subteams: `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere`
 2. Add users to those three teams based off of the permissions you want to grant different users
