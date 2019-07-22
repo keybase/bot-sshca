@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	team, remainingArgs, err := handleArgs(os.Args)
+	team, remainingArgs, action, err := handleArgs(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		os.Exit(1)
@@ -29,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 	if isValidCert(keyPath) {
-		runSSHWithKey(keyPath, remainingArgs)
+		doAction(action, keyPath, remainingArgs)
 	}
 	config, err := getConfig(team)
 	if err != nil {
@@ -41,7 +41,20 @@ func main() {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
-	runSSHWithKey(keyPath, remainingArgs)
+	doAction(action, keyPath, remainingArgs)
+}
+
+func doAction(action Action, keyPath string, remainingArgs []string) {
+	if action == SSH {
+		runSSHWithKey(keyPath, remainingArgs)
+	} else if action == Provision {
+		err := kssh.AddKeyToSSHAgent(keyPath)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Provisioned new SSH key at %s", keyPath)
+	}
 }
 
 // getSignedKeyLocation returns the path of where the signed SSH key should be stored. team is the name of the team
@@ -59,34 +72,47 @@ func getSignedKeyLocation(team string) (string, error) {
 	return signedKeyLocation + defaultTeam, nil
 }
 
-// handleArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
-// any other CLI argument parsing library) since we want to have custom arguments and access any other remaining
-// arguments. This function calls os.Exit(0) if it finds and handles a --set-default-team CLI flag.
-// handleArgs returns (theDefaultTeam, theRemainingArguments, err). See this Github discussion for a longer
-// discussion of why this is implemented this way: https://github.com/keybase/bot-sshca/pull/3#discussion_r302740696
-func handleArgs(args []string) (string, []string, error) {
-	// TODO: Provide a way to clear default teams or at least a better message if there is a bad value there
-	if len(args) > 1 {
-		if args[1] == "--team" {
-			if len(args) == 2 {
-				return "", nil, fmt.Errorf("Got --team argument with no value!")
-			}
-			return args[2], args[3:], nil
+var cliArguments = []kssh.CLIArgument{
+	{Name: "--set-default-team", HasArgument: true},
+	{Name: "--team", HasArgument: true},
+	{Name: "--provision", HasArgument: false},
+}
+
+type Action int
+
+const (
+	Provision Action = iota
+	SSH
+)
+
+// Returns team, remaining arguments, action, error
+func handleArgs(args []string) (string, []string, Action, error) {
+	remaining, found, err := kssh.ParseArgs(args, cliArguments)
+	if err != nil {
+		return "", nil, 0, fmt.Errorf("Failed to parse provided arguments: %v", err)
+	}
+
+	team := ""
+	action := SSH
+	for _, arg := range found {
+		if arg.Name == "--team" {
+			team = arg.Value
 		}
-		if args[1] == "--set-default-team" {
-			if len(args) == 2 {
-				return "", nil, fmt.Errorf("Got --set-default-team argument with no value!")
-			}
+		if arg.Name == "--set-default-team" {
 			// We exit immediately after setting the default team
 			err := kssh.SetDefaultTeam(args[2])
 			if err != nil {
 				fmt.Printf("Failed to set the default team: %v", err)
 				os.Exit(1)
 			}
+			fmt.Println("Set default team, exiting...")
 			os.Exit(0)
 		}
+		if arg.Name == "--provision" {
+			action = Provision
+		}
 	}
-	return "", args[1:], nil
+	return team, remaining, action, nil
 }
 
 // Get the kssh.ConfigFile. team is the team specified via --team if one was specified, otherwise the empty string

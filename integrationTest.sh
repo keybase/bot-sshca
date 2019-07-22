@@ -17,7 +17,7 @@ cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
 docker-compose build 2>&1 > /dev/null
 echo "Running integration tests..."
-docker-compose up -d
+docker-compose up 
 
 TEST_EXIT_CODE=`docker wait kssh`
 
