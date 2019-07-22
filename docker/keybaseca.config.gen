@@ -5,4 +5,4 @@ ssh_user: $SSH_USER
 teams: [$SUBTEAMS]
 keybase_paper_key: $PAPERKEY
 keybase_username: $KEYBASE_USERNAME
-use_subteam_as_principal: $MULTI_ENVIRONMENT_MODE
+use_subteam_as_principal: $USE_SUBTEAM_AS_PRINCIPAL
