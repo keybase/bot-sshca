@@ -27,8 +27,17 @@ clear_keys() {
 }
 
 nohup bash -c "run_keybase -g &"
-sleep 15
+
+# Sleep until the CA bot has started
+while ! [ -f /mnt/keybase-ca-key.pub ];
+do
+    sleep 1
+done
+echo ""
+sleep 2
+
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
+
 echo "========================= Launched Keybase, starting tests... ========================="
 
 # Tests that show it is putting the correct principals in the keys
