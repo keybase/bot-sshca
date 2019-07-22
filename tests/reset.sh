@@ -6,5 +6,5 @@ docker system prune -f
 
 OUTPUT=$(docker volume ls -q)
 if [[ $OUTPUT ]]; then
-    echo $OUTPUT | xargs -r -- docker volume rm -f
+    echo $OUTPUT | xargs docker volume rm -f
 fi

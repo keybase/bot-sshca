@@ -21,4 +21,4 @@ RUN echo "TrustedUserCAKeys /etc/ssh/ca.pub\nAuthorizedPrincipalsFile /etc/ssh/a
 
 EXPOSE 22
 
-CMD ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D
+CMD while ! [ -f /mnt/keybase-ca-key.pub ]; do sleep 1; done && echo " Starting sshd..." && ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D
