@@ -68,12 +68,12 @@ func validateConfig(cf ConfigFile) error {
 	if cf.LogLocation != "" && !isValidPath(cf.LogLocation) {
 		return fmt.Errorf("log_location '%s' is not a valid path", cf.LogLocation)
 	}
-	isValid, err := isValidChannel(cf.Teams[0], cf.ChannelName)
+	isValid, err := isValidChannel(cf.GetDefaultTeam(), cf.ChannelName)
 	if err != nil {
 		return fmt.Errorf("failed to validate channel_name '%s': %v", cf.ChannelName, err)
 	}
 	if cf.ChannelName != "" && !isValid {
-		return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", cf.ChannelName, cf.Teams[0])
+		return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", cf.ChannelName, cf.GetDefaultTeam())
 	}
 	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
 		return fmt.Errorf("cannot use multiple teams in single-environment mode. You must either add use_subteam_as_principal:true to " +
@@ -100,6 +100,13 @@ func isValidChannel(teamName string, channelName string) (bool, error) {
 	for _, channel := range channels {
 		name := channel.(map[string]interface{})["channel"]
 		if name == channelName {
+			// The channel does exist, but the bot may or may not be in it. So join the channel in order to ensure
+			// the bot will receive chat events from it
+			cmd = exec.Command("keybase", "chat", "join-channel", teamName, channelName)
+			err = cmd.Run()
+			if err != nil {
+				return false, fmt.Errorf("failed to join bot to the configured channel: %v", err)
+			}
 			return true, nil
 		}
 	}
