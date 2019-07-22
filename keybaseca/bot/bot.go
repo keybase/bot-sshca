@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/config"
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
+
+	"github.com/keybase/bot-ssh-ca/keybaseca/config"
 	"github.com/keybase/bot-ssh-ca/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
@@ -26,7 +27,7 @@ func GetKBChat(conf config.Config) (*kbchat.API, error) {
 func GetUsername(conf config.Config) (string, error) {
 	kbChat, err := GetKBChat(conf)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to start Keybase chat: %v", err)
 	}
 	username := kbChat.GetUsername()
 	if username == "" {
@@ -77,6 +78,7 @@ func StartBot(conf config.Config) error {
 				LogError(msg, err)
 				continue
 			}
+			signatureRequest.Username = msg.Message.Sender.Username
 			signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
 			if err != nil {
 				LogError(msg, err)

@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # chown as root
-chown keybase:keybase /mnt
+chown -R keybase:keybase /mnt
 
 # Run everything else as the keybase user
 sudo -i -u keybase bash << EOF

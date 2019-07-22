@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/keybase/bot-ssh-ca/shared"
@@ -19,20 +18,16 @@ type ConfigFile struct {
 
 // LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfTeamNames, err)
 func LoadConfigs() ([]ConfigFile, []string, error) {
-	cmd := exec.Command("keybase", "fs", "ls", "-1", "--nocolor", "/keybase/team/")
-	output, err := cmd.CombinedOutput()
+	listedFiles, err := shared.KBFSList("/keybase/team/")
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list files in /keybase/team/: %s (%v)", string(output), err)
+		return nil, nil, fmt.Errorf("failed to load config file(s): %v", err)
 	}
 
 	var configs []ConfigFile
 	var teams []string
-	for _, team := range strings.Split(string(output), "\n") {
-		if team == "" {
-			continue
-		}
+	for _, team := range listedFiles {
 		filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
-		exists, err := KBFSFileExists(filename)
+		exists, err := shared.KBFSFileExists(filename)
 		if err != nil {
 			// Treat an error as it not existing and just skip that team while searching for config files
 			exists = false
@@ -51,7 +46,10 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 
 func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 	var cf ConfigFile
-	bytes, err := ReadKBFS(kbfsFilename)
+	if !strings.HasPrefix(kbfsFilename, "/keybase/") {
+		return cf, fmt.Errorf("cannot load a kssh config from outside of KBFS")
+	}
+	bytes, err := shared.KBFSRead(kbfsFilename)
 	if err != nil {
 		return cf, err
 	}
@@ -60,30 +58,6 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 		return cf, fmt.Errorf("Got a config file that is missing data: %s", string(bytes))
 	}
 	return cf, err
-}
-
-func KBFSFileExists(kbfsFilename string) (bool, error) {
-	cmd := exec.Command("keybase", "fs", "stat", kbfsFilename)
-	bytes, err := cmd.CombinedOutput()
-	if err == nil {
-		return true, nil
-	}
-	if strings.Contains(string(bytes), "ERROR file does not exist") {
-		return false, nil
-	}
-	return false, fmt.Errorf("failed to stat %s: %s (%v)", kbfsFilename, string(bytes), err)
-}
-
-func ReadKBFS(kbfsFilename string) ([]byte, error) {
-	if !strings.HasPrefix(kbfsFilename, "/keybase/") {
-		return nil, fmt.Errorf("cannot load a kssh config from outside of KBFS")
-	}
-	cmd := exec.Command("keybase", "fs", "read", kbfsFilename)
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %s (%v)", kbfsFilename, string(bytes), err)
-	}
-	return bytes, nil
 }
 
 // A LocalConfigFile is a file that lives on the FS of the computer running kssh. It is only used if the user is

@@ -1,8 +1,8 @@
-# Note that you do not need to edit this file. It is used with env.sh and envsubst in order to generate a config file
+# Note that you do not need to edit this file. It is used with make and env.sh in order to generate a config file
 ca_key_location: /mnt/keybase-ca-key
 key_expiration: "+1h"
-ssh_user: root
-teams: 
-- $SUBTEAM
+ssh_user: $SSH_USER
+teams: [$SUBTEAMS]
 keybase_paper_key: $PAPERKEY
 keybase_username: $KEYBASE_USERNAME
+use_subteam_as_principal: $USE_SUBTEAM_AS_PRINCIPAL

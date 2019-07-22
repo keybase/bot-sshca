@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/config"
 	"github.com/keybase/bot-ssh-ca/shared"
@@ -115,5 +116,39 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 
 // Get the principals that should be placed in the signed certificate
 func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, error) {
+	if conf.GetUseSubteamAsPrincipal() {
+		// Iterate through the teams in the config file and use the last portion of the subteam as the principal
+		// if the user is in that subteam
+		var principals []string
+		for _, team := range conf.GetTeams() {
+			members, err := getMembers(team)
+			if err != nil {
+				return "", err
+			}
+			for _, member := range members {
+				if member == sr.Username {
+					subteamChunks := strings.Split(team, ".")
+					principals = append(principals, subteamChunks[len(subteamChunks)-1])
+				}
+			}
+		}
+		return strings.Join(principals, ","), nil
+	}
 	return conf.GetSSHUser(), nil
+}
+
+// Get the members of the given team
+func getMembers(team string) ([]string, error) {
+	cmd := exec.Command("keybase", "team", "list-members", team)
+	data, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+	var users []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.Contains(line, "writer") || strings.Contains(line, "admin") {
+			users = append(users, strings.Fields(line)[2])
+		}
+	}
+	return users, nil
 }

@@ -1,18 +1,33 @@
+# Set FORCE_WRITE to false if it is not already set
+ifdef FORCE_WRITE
+FORCE_WRITE := $(FORCE_WRITE)
+else
+FORCE_WRITE := false
+endif
+
 SHELL := /bin/bash
 
-.PHONY: generate serve generatekey
+.PHONY: build generate serve clean reset-permissions confirm-clean config
 
-generate: | build generatekey
-
-serve:
-	source env.sh && cat keybaseca.config.gen | envsubst > ../example-keybaseca-volume/keybaseca.config
-	source env.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
-
-build:
+build: reset-permissions
 	docker build -t ca -f Dockerfile-ca ..
 
-generatekey:
+config:
 	source env.sh && cat keybaseca.config.gen | envsubst > ../example-keybaseca-volume/keybaseca.config
-	source env.sh && docker run -e FORCE_WRITE -e KEYBASE_USERNAME -e PAPERKEY -v $(PWD)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
-	@echo -e '\nFor each server that you wish to make accessible to the CA bot:\n\n1. Place the public key in `/etc/ssh/ca.pub`\n2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`\n3. Restart ssh `service ssh restart`'
 
+generate: build config
+	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+
+serve: build config
+	source env.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
+
+clean: confirm-clean reset-permissions
+	@# Sudo since it is likely owned by another use since it was written from a docker container
+	sudo rm -rf ../example-keybaseca-volume/keybaseca*
+	sudo rm -rf ../example-keybaseca-volume/keybase-ca*
+
+confirm-clean:
+	@echo -n "Are you sure? This will delete the CA key used to connect to your servers [yes/N] " && read ans && [ $${ans:-N} = yes ]
+
+reset-permissions:
+	sudo chown -R $$USER ../example-keybaseca-volume/

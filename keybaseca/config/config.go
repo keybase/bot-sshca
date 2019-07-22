@@ -1,26 +1,3 @@
-/*
-A keybaseca config file looks like
-
-```
-# The location of the CA key file. Defaults to ~/keybaseca.config
-ca_key_location: ~/keybase-ca-key
-# How long signed keys are valid for. Defaults to 1 hour. Valid formats are +1h, +5h, +1d, +3d, +1w, etc
-key_expiration: "+2h"
-# The ssh user
-ssh_user: root
-# The name of the subteam used for granting SSH access
-teams:
-- my_team.ssh
-
-# Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
-# Mainly useful for dev work
-use_alternate_account: true
-keybase_home_dir: /tmp/keybase/
-keybase_paper_key: "paper key goes here"
-keybase_username: username_for_the_bot
-```
-*/
-
 package config
 
 import (
@@ -45,6 +22,8 @@ type Config interface {
 	GetKeyExpiration() string
 	GetSSHUser() string
 	GetTeams() []string
+	GetDefaultTeam() string
+	GetUseSubteamAsPrincipal() bool
 }
 
 // Load a yaml config file from the given filename. See the top of this file for an example yaml config file.
@@ -79,6 +58,10 @@ func validateConfig(cf ConfigFile) error {
 	if cf.KeyExpiration != "" && !strings.HasPrefix(cf.KeyExpiration, "+") {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
+	}
+	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
+		return fmt.Errorf("cannot use multiple teams in single-environment mode. You must either add use_subteam_as_principal:true to " +
+			"the config file (and configure servers for multi-environment mode as described in the README) or only specify a single team")
 	}
 	return nil
 }
@@ -128,4 +111,15 @@ func (cf *ConfigFile) GetSSHUser() string {
 
 func (cf *ConfigFile) GetTeams() []string {
 	return cf.Teams
+}
+
+// Arbitrarily choose a team from GetTeams() that can be used for storing of config files and
+// sending and receiving of chat messages. The choice of team does not matter as long as it
+// is consistent
+func (cf *ConfigFile) GetDefaultTeam() string {
+	return cf.GetTeams()[0]
+}
+
+func (cf *ConfigFile) GetUseSubteamAsPrincipal() bool {
+	return cf.UseSubteamAsPrincipal
 }

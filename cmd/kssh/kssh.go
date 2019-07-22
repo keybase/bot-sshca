@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
+
+	"github.com/google/uuid"
 	"github.com/keybase/bot-ssh-ca/kssh"
 	"github.com/keybase/bot-ssh-ca/shared"
 
@@ -23,6 +24,10 @@ func main() {
 		os.Exit(1)
 	}
 	keyPath, err := getSignedKeyLocation(team)
+	if err != nil {
+		fmt.Printf("Failed to retrieve location to store SSH keys: %v\n", err)
+		os.Exit(1)
+	}
 	if isValidCert(keyPath) {
 		runSSHWithKey(keyPath, remainingArgs)
 	}
@@ -31,7 +36,11 @@ func main() {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
-	provisionNewKey(config, keyPath)
+	err = provisionNewKey(config, keyPath)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
 	runSSHWithKey(keyPath, remainingArgs)
 }
 
@@ -53,7 +62,8 @@ func getSignedKeyLocation(team string) (string, error) {
 // handleArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
 // any other CLI argument parsing library) since we want to have custom arguments and access any other remaining
 // arguments. This function calls os.Exit(0) if it finds and handles a --set-default-team CLI flag.
-// handleArgs returns (theDefaultTeam, theRemainingArguments, err)
+// handleArgs returns (theDefaultTeam, theRemainingArguments, err). See this Github discussion for a longer
+// discussion of why this is implemented this way: https://github.com/keybase/bot-sshca/pull/3#discussion_r302740696
 func handleArgs(args []string) (string, []string, error) {
 	// TODO: Provide a way to clear default teams or at least a better message if there is a bad value there
 	if len(args) > 1 {
@@ -148,22 +158,19 @@ func isValidCert(keyPath string) bool {
 }
 
 // Provision a new signed SSH key with the given config
-func provisionNewKey(config kssh.ConfigFile, keyPath string) {
+func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 	err := sshutils.GenerateNewSSHKey(keyPath, true, false)
 	if err != nil {
-		fmt.Printf("Failed to generate a new SSH key: %v\n", err)
-		return
+		return fmt.Errorf("Failed to generate a new SSH key: %v", err)
 	}
 	pubKey, err := ioutil.ReadFile(shared.KeyPathToPubKey(keyPath))
 	if err != nil {
-		fmt.Printf("Failed to read the SSH key from the filesystem: %v\n", err)
-		return
+		return fmt.Errorf("Failed to read the SSH key from the filesystem: %v", err)
 	}
 
 	randomUUID, err := uuid.NewRandom()
 	if err != nil {
-		fmt.Printf("Failed to generate a new UUID for the SignatureRequest: %v\n", err)
-		return
+		return fmt.Errorf("Failed to generate a new UUID for the SignatureRequest: %v", err)
 	}
 
 	resp, err := kssh.GetSignedKey(config, shared.SignatureRequest{
@@ -171,15 +178,15 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) {
 		SSHPublicKey: string(pubKey),
 	})
 	if err != nil {
-		fmt.Printf("Failed to get a signed key from the CA: %v\n", err)
-		return
+		return fmt.Errorf("Failed to get a signed key from the CA: %v", err)
 	}
 
 	err = ioutil.WriteFile(shared.KeyPathToCert(keyPath), []byte(resp.SignedKey), 0600)
 	if err != nil {
-		fmt.Printf("Failed to write new SSH key to disk: %v\n", err)
-		return
+		return fmt.Errorf("Failed to write new SSH key to disk: %v", err)
 	}
+
+	return nil
 }
 
 // Run SSH with the given key. Calls os.Exit if SSH returns
@@ -193,7 +200,7 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	cmd.Stdin = os.Stdin
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("SSH exited with err: %v", err)
+		fmt.Printf("SSH exited with err: %v\n", err)
 		os.Exit(1)
 	}
 	os.Exit(0)

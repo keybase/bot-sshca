@@ -32,9 +32,15 @@ binaries.
 # Integration Tests
 
 This project contains integration tests that can be run via `./integrationTest.sh`. Note that prior to running
-the integration tests you need to `cp tests/env.sh.example tests/env.sh` and fill in `tests/env.sh`. 
+the integration tests you need to:
 
-# Getting Started (docker)
+```
+cp tests/single-environment/env.sh.example tests/single-environment/env.sh; cp tests/multi-environment/env.sh.example tests/multi-environment/env.sh
+``` 
+
+and fill in `tests/single-environment/env.sh` and `tests/multi-environment/env.sh`. 
+
+# Getting Started (single environment mode)
 
 ```bash
 cd docker/
@@ -42,7 +48,7 @@ cp env.sh.example env.sh
 keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
 keybase paperkey    # Generate a new paper key
 # Create a new Keybase subteam that this user is in along with anyone else you wish to grant SSH access to
-nano env.sh         # Fill in the values including the just generated paper key
+nano env.sh         # Fill in the values including the previously generated paper key
 make generate
 ```
 
@@ -69,6 +75,64 @@ bin/kssh root@server
 
 Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
 
+# Multi-Environment Mode
+
+kssh supports a multi-environment mode of operation that allows you to define realms of servers where access is granted based off of 
+membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
+a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
+up a third realm that grants root access to all machines. To configure kssh to work with this setup:
+
+1. Create three subteams: `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere`
+2. Add users to those three teams based off of the permissions you want to grant different users
+
+```bash
+cd docker/
+cp env.sh.example env.sh
+keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
+keybase paperkey    # Generate a new paper key
+# Create `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere` as new Keybase subteams
+# and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
+# different users
+nano env.sh         # Fill in the values including the previously generated paper key
+make generate
+```
+
+This will output the public key for the CA. 
+
+For each server in staging:
+
+1. Place the public key in `/etc/ssh/ca.pub` 
+2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
+3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
+4. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
+5. Create the file `/etc/ssh/auth_principals/user` with contents `staging`
+6. Restart ssh `service ssh restart`
+
+For each server in production:
+
+1. Place the public key in `/etc/ssh/ca.pub` 
+2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
+3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
+4. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
+5. Create the file `/etc/ssh/auth_principals/user` with contents `production`
+6. Restart ssh `service ssh restart`
+
+Now start the chatbot itself:
+
+```bash
+make serve
+```
+
+Now build kssh and start SSHing!
+
+```bash
+go build -o bin/kssh cmd/kssh/kssh.go
+sudo cp bin/kssh /usr/local/bin/        # Optional
+bin/kssh user@staging-server-ip         # If in {TEAM}.ssh.staging
+bin/kssh user@production-server-ip      # If in {TEAM}.ssh.production
+bin/kssh root@server                    # If in {TEAM}.ssh.root_everywhere
+```
+
 # Getting Started (local environment)
 ###### Recommended only for development work
 In all of these directions, replace `{USER}` with your username and `{TEAM}` with the name of the team that you wish to 
@@ -86,8 +150,6 @@ ssh_user: root
 teams: 
 - {TEAM}.ssh
 
-# Whether to use an alternate account. Only useful if you are running the chatbot on an account other than the one you are currently using
-# Mainly useful for dev work
 keybase_home_dir: /tmp/keybase/
 keybase_paper_key: "{Put the paper key here}"
 keybase_username: {TEAM}sshca
