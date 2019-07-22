@@ -11,14 +11,14 @@ services:
       - KEYBASE_USERNAME=${BOT_USERNAME}
     volumes:
       - app-volume:/mnt/
-    user: keybase
-    command: "bash tests/multi-environment/bot-entrypoint.sh"
+    user: root
+    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/multi-environment/bot-entrypoint.sh\"'"
   kssh:
     image: kssh
     container_name: kssh
     build:
       context: ../..
-      dockerfile: "docker/Dockerfile-ca"
+      dockerfile: "tests/Dockerfile-kssh"
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
       - KEYBASE_USERNAME=${KSSH_USERNAME}
