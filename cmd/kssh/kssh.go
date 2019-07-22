@@ -100,7 +100,7 @@ func handleArgs(args []string) (string, []string, Action, error) {
 		}
 		if arg.Name == "--set-default-team" {
 			// We exit immediately after setting the default team
-			err := kssh.SetDefaultTeam(args[2])
+			err := kssh.SetDefaultTeam(arg.Value)
 			if err != nil {
 				fmt.Printf("Failed to set the default team: %v", err)
 				os.Exit(1)
