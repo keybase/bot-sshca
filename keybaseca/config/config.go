@@ -25,6 +25,7 @@ type Config interface {
 	GetKeyExpiration() string
 	GetSSHUser() string
 	GetTeams() []string
+	GetDefaultTeam() string
 	GetChannelName() string
 	GetUseSubteamAsPrincipal() bool
 	GetLogLocation() string
@@ -184,6 +185,13 @@ func (cf *ConfigFile) GetSSHUser() string {
 
 func (cf *ConfigFile) GetTeams() []string {
 	return cf.Teams
+}
+
+// Arbitrarily choose a team from GetTeams() that can be used for storing of config files and
+// sending and receiving of chat messages. The choice of team does not matter as long as it
+// is consistent
+func (cf *ConfigFile) GetDefaultTeam() string {
+	return cf.GetTeams()[0]
 }
 
 func (cf *ConfigFile) GetUseSubteamAsPrincipal() bool {

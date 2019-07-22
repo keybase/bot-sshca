@@ -1,15 +1,25 @@
+# Set FORCE_WRITE to false if it is not already set
+ifdef FORCE_WRITE
+FORCE_WRITE := $(FORCE_WRITE)
+else
+FORCE_WRITE := false
+endif
+
 SHELL := /bin/bash
 
-.PHONY: build generate serve clean reset-permissions confirm-clean
+.PHONY: build generate serve clean reset-permissions confirm-clean config
 
 build: reset-permissions
 	docker build -t ca -f Dockerfile-ca ..
 
-generate: build
-	source env.sh && python3 .run.py generate
+config:
+	source env.sh && cat keybaseca.config.gen | envsubst > ../example-keybaseca-volume/keybaseca.config
 
-serve: build
-	source env.sh && python3 .run.py serve
+generate: build config
+	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+
+serve: build config
+	source env.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
 
 clean: confirm-clean reset-permissions
 	@# Sudo since it is likely owned by another use since it was written from a docker container
