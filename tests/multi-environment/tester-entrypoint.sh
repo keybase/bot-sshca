@@ -27,16 +27,16 @@ clear_keys() {
 }
 
 nohup bash -c "run_keybase -g &"
-sleep 15
-keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 
-## Loop until a kssh-client.config file appears
-#set +e
-#keybase fs stat /keybase/private/dworken/$SUBTEAM.ssh.staging/kssh-client.config
-#while [ $? -ne 0 ]; do
-#    keybase fs stat /keybase/private/dworken/$SUBTEAM.ssh.staging/kssh-client.config
-#done
-#set -e
+# Sleep until the CA bot has started
+while ! [ -f /mnt/keybase-ca-key.pub ];
+do
+    sleep 1
+done
+echo ""
+sleep 2
+
+keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 
 echo "========================= Launched Keybase, starting tests... ========================="
 

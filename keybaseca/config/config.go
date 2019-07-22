@@ -25,6 +25,7 @@ type Config interface {
 	GetKeyExpiration() string
 	GetSSHUser() string
 	GetTeams() []string
+	GetDefaultTeam() string
 	GetChannelName() string
 	GetUseSubteamAsPrincipal() bool
 	GetLogLocation() string
@@ -81,6 +82,7 @@ func validateConfig(cf ConfigFile) error {
 	return nil
 }
 
+// Returns whether or not the given channelName is the name of a channel inside the given team
 func isValidChannel(teamName string, channelName string) (bool, error) {
 	cmd := exec.Command("keybase", "chat", "list-channels", "-j", teamName)
 	bytes, err := cmd.CombinedOutput()
@@ -104,6 +106,7 @@ func isValidChannel(teamName string, channelName string) (bool, error) {
 	return false, nil
 }
 
+// Returns whether or not the given path is a writable path on the local filesystem OR in KBFS
 func isValidPath(path string) bool {
 	if strings.HasPrefix(path, "/keybase/") {
 		// If it exists it is valid
@@ -182,6 +185,13 @@ func (cf *ConfigFile) GetSSHUser() string {
 
 func (cf *ConfigFile) GetTeams() []string {
 	return cf.Teams
+}
+
+// Arbitrarily choose a team from GetTeams() that can be used for storing of config files and
+// sending and receiving of chat messages. The choice of team does not matter as long as it
+// is consistent
+func (cf *ConfigFile) GetDefaultTeam() string {
+	return cf.GetTeams()[0]
 }
 
 func (cf *ConfigFile) GetUseSubteamAsPrincipal() bool {

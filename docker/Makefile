@@ -1,3 +1,4 @@
+# Set FORCE_WRITE to false if it is not already set
 ifdef FORCE_WRITE
 FORCE_WRITE := $(FORCE_WRITE)
 else
@@ -20,7 +21,6 @@ config:
 generate: build config
 	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 
-# Start the CA bot
 serve: build config
 	source env.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
 

@@ -57,8 +57,6 @@ func StartBot(conf config.Config) error {
 			return fmt.Errorf("failed to read message: %v", err)
 		}
 
-		fmt.Printf("Got %s on chan %s\n", msg.Message.Content.Text.Body, msg.Message.Channel.Name)
-
 		if msg.Message.Content.Type != "text" || msg.Message.Sender.Username == kbc.GetUsername() {
 			continue
 		}
@@ -104,8 +102,9 @@ func StartBot(conf config.Config) error {
 	}
 }
 
+// Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
+// due to an error caused by a malformed message.
 func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
-	// TODO: Send these to chat?
 	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.MsgID, err)
 	log.Log(conf, message)
 	e := kbc.SendMessageByConvID(msg.Message.ConversationID, message)

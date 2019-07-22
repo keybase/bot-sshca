@@ -27,6 +27,8 @@ func Log(conf config.Config, str string) {
 	}
 }
 
+// Append to the file at the given filename via either Keybase simple fs commands or via standard interactions with
+// the local filesystem
 func appendToFile(filename string, str string) error {
 	if strings.HasPrefix(filename, "/keybase/") {
 		return shared.KBFSWrite(filename, str, true)

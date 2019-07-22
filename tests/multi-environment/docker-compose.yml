@@ -18,7 +18,7 @@ services:
     container_name: kssh
     build:
       context: ../..
-      dockerfile: "docker/Dockerfile-ca"
+      dockerfile: "tests/Dockerfile-kssh"
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
       - KEYBASE_USERNAME=${KSSH_USERNAME}
