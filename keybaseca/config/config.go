@@ -100,6 +100,13 @@ func isValidChannel(teamName string, channelName string) (bool, error) {
 	for _, channel := range channels {
 		name := channel.(map[string]interface{})["channel"]
 		if name == channelName {
+			// The channel does exist, but the bot may or may not be in it. So join the channel in order to ensure
+			// the bot will receive chat events from it
+			cmd = exec.Command("keybase", "chat", "join-channel", teamName, channelName)
+			err = cmd.Run()
+			if err != nil {
+				return false, fmt.Errorf("failed to join bot to the configured channel: %v", err)
+			}
 			return true, nil
 		}
 	}
