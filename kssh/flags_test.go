@@ -12,7 +12,7 @@ import (
 func TestParseArgs(t *testing.T) {
 	var emptyCliArguments = []CLIArgument{}
 	var cliArguments = []CLIArgument{
-		{Name: "--set-deafult-team", HasArgument: true},
+		{Name: "--set-default-team", HasArgument: true},
 		{Name: "--team", HasArgument: true},
 		{Name: "--provision", HasArgument: false},
 	}
@@ -55,7 +55,17 @@ func TestParseArgs(t *testing.T) {
 	assert.Equal(t, "", found[0].Value)
 
 	// Parsing multiple arguments
-	// TODO
+	args = []string{"--provision", "foo", "--team", "bar", "--set-default-team", "foobar"}
+	remaining, found, err = ParseArgs(args, cliArguments)
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"foo"}, remaining)
+	assert.Len(t, found, 3)
+	assert.Equal(t, "--provision", found[0].Name)
+	assert.Equal(t, "", found[0].Value)
+	assert.Equal(t, "--team", found[1].Name)
+	assert.Equal(t, "bar", found[1].Value)
+	assert.Equal(t, "--set-default-team", found[2].Name)
+	assert.Equal(t, "foobar", found[2].Value)
 }
 
 func isValidShuffle(args []string) bool {
