@@ -5,6 +5,11 @@ import time
 
 import pytest
 
+SUBTEAM = os.environ['SUBTEAM']
+SUBTEAM_SECONDARY = os.environ['SUBTEAM_SECONDARY']
+USERNAME = os.environ['KEYBASE_USERNAME']
+BOT_USERNAME = os.environ['BOT_USERNAME']
+
 # "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
 # and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
 # kssh is actually executing on the remote server.
@@ -37,11 +42,11 @@ def clear_local_config():
 def simulate_two_teams(func):
     # A decorator that simulates running the given function in an environment with two teams set up
     def inner(*args, **kwargs):
-        run_command("keybase fs cp /keybase/team/%s.ssh.staging/kssh-client.config /keybase/team/%s/kssh-client.config" % (os.environ['SUBTEAM'], os.environ['SUBTEAM_SECONDARY']))
+        run_command(f"keybase fs read /keybase/team/{SUBTEAM}.ssh.staging/kssh-client.config | sed 's/{SUBTEAM}.ssh.staging/{SUBTEAM_SECONDARY}/g' | sed 's/{BOT_USERNAME}/otherbotname/g' | keybase fs write /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
         try:
             ret = func(*args, **kwargs)
         finally:
-            run_command("keybase fs rm /keybase/team/%s/kssh-client.config" % os.environ['SUBTEAM_SECONDARY'])
+            run_command("keybase fs rm /keybase/team/%s/kssh-client.config" % SUBTEAM_SECONDARY)
         return ret
     return inner
 
@@ -51,10 +56,9 @@ def outputs_audit_log(expected_number):
     def decorator(func):
         def inner(*args, **kwargs):
             cnt = 0
-            username = os.environ.get('KEYBASE_USERNAME', None)
 
             # Make a set of the lines in the audit log before we ran
-            before_lines = set(run_command("keybase fs read /keybase/team/%s.ssh.staging/ca.log" % os.environ['SUBTEAM']).splitlines())
+            before_lines = set(run_command("keybase fs read /keybase/team/%s.ssh.staging/ca.log" % SUBTEAM).splitlines())
 
             # Then run the function
             ret = func(*args, **kwargs)
@@ -64,12 +68,12 @@ def outputs_audit_log(expected_number):
 
             # Then see if there are new lines using set difference. This is only safe/reasonable since we include a
             # timestamp in audit log lines.
-            after_lines = set(run_command("keybase fs read /keybase/team/%s.ssh.staging/ca.log" % os.environ['SUBTEAM']).splitlines())
+            after_lines = set(run_command("keybase fs read /keybase/team/%s.ssh.staging/ca.log" % SUBTEAM).splitlines())
             new_lines = after_lines - before_lines
 
             for line in new_lines:
                 line = line.decode('utf-8')
-                if line and "Processing SignatureRequest from user=%s" % username in line and "principals:staging,root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
+                if line and "Processing SignatureRequest from user=%s" % USERNAME in line and "principals:staging,root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
                     cnt += 1
 
             if cnt != expected_number:
@@ -113,7 +117,7 @@ def test_kssh_reuse():
     start = time.time()
     assert_contains_hash(run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
     elapsed = time.time() - start
-    assert elapsed < 0.5
+    assert elapsed < 0.75
 
 @outputs_audit_log(expected_number=1)
 def test_kssh_regenerate_expired_keys():
@@ -152,25 +156,25 @@ def test_kssh_errors_on_two_teams():
 @simulate_two_teams
 def test_kssh_team_flag():
     # Test that kssh works with the --team flag
-    assert_contains_hash(run_command("bin/kssh --team %s.ssh.staging -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+    assert_contains_hash(run_command("bin/kssh --team %s.ssh.staging -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % SUBTEAM))
 
 @outputs_audit_log(expected_number=1)
 @simulate_two_teams
 def test_kssh_set_default_team():
     # Test that kssh works with the --set-default-team flag
-    run_command("bin/kssh --set-default-team %s.ssh.staging" % os.environ['SUBTEAM'])
+    run_command("bin/kssh --set-default-team %s.ssh.staging" % SUBTEAM)
     assert_contains_hash(run_command("bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
 @outputs_audit_log(expected_number=1)
 @simulate_two_teams
 def test_kssh_override_default_team():
     # Test that the --team flag overrides the local config file
-    run_command("bin/kssh --set-default-team %s" % os.environ['SUBTEAM_SECONDARY'])
-    assert_contains_hash(run_command("bin/kssh --team %s.ssh.staging -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+    run_command("bin/kssh --set-default-team %s" % SUBTEAM_SECONDARY)
+    assert_contains_hash(run_command("bin/kssh --team %s.ssh.staging -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % SUBTEAM))
 
 def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client config files stick around
-    run_command("keybase fs rm /keybase/team/%s.ssh.staging/kssh-client.config || true" % os.environ['SUBTEAM'])
-    run_command("keybase fs rm /keybase/team/%s.ssh.prod/kssh-client.config || true" % os.environ['SUBTEAM'])
-    run_command("keybase fs rm /keybase/team/%s.ssh.root_everywhere/kssh-client.config || true" % os.environ['SUBTEAM'])
-    run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % os.environ['SUBTEAM_SECONDARY'])
+    run_command("keybase fs rm /keybase/team/%s.ssh.staging/kssh-client.config || true" % SUBTEAM)
+    run_command("keybase fs rm /keybase/team/%s.ssh.prod/kssh-client.config || true" % SUBTEAM)
+    run_command("keybase fs rm /keybase/team/%s.ssh.root_everywhere/kssh-client.config || true" % SUBTEAM)
+    run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % SUBTEAM_SECONDARY)

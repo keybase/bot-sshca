@@ -22,6 +22,7 @@ services:
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
       - KEYBASE_USERNAME=${KSSH_USERNAME}
+      - BOT_USERNAME=${BOT_USERNAME}
       - SUBTEAM=${SUBTEAM}
       - SUBTEAM_SECONDARY=${SUBTEAM_SECONDARY}
     volumes:

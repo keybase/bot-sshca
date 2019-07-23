@@ -18,14 +18,14 @@ type ConfigFile struct {
 }
 
 // LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfTeamNames, err)
+// Both lists are deduplicated based on ConfigFile.BotName
 func LoadConfigs() ([]ConfigFile, []string, error) {
 	listedFiles, err := shared.KBFSList("/keybase/team/")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config file(s): %v", err)
 	}
 
-	var configs []ConfigFile
-	var teams []string
+	botNameToConfig := make(map[string]ConfigFile)
 	for _, team := range listedFiles {
 		filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
 		exists, err := shared.KBFSFileExists(filename)
@@ -38,10 +38,22 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 			if err != nil {
 				return nil, nil, err
 			}
-			configs = append(configs, conf)
-			teams = append(teams, team)
+
+			if conf.TeamName != team {
+				return nil, nil, fmt.Errorf("bad client config at %s, specifies incorrect team name %s", filename, conf.TeamName)
+			}
+
+			botNameToConfig[conf.BotName] = conf
 		}
 	}
+
+	var configs []ConfigFile
+	var teams []string
+	for _, config := range botNameToConfig {
+		teams = append(teams, config.TeamName)
+		configs = append(configs, config)
+	}
+
 	return configs, teams, nil
 }
 
