@@ -19,6 +19,9 @@ RUN echo 'root_everywhere' > /etc/ssh/auth_principals/root
 
 RUN echo "TrustedUserCAKeys /etc/ssh/ca.pub\nAuthorizedPrincipalsFile /etc/ssh/auth_principals/%u" >> /etc/ssh/sshd_config
 
+# Used in the integration tests by reading the contents of this file. See test_kssh.py
+RUN echo -n "uniquestring" > /etc/unique
+
 EXPOSE 22
 
 CMD while ! [ -f /mnt/keybase-ca-key.pub ]; do sleep 1; done && echo " Starting sshd..." && ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D

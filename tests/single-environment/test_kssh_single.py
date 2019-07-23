@@ -55,7 +55,6 @@ def outputs_audit_log(expected_number):
                 while f.readline():
                     # Read all lines of the audit log
                     pass
-                pass
                 # Then run the function
                 ret = func(*args, **kwargs)
                 # Then see if there are new lines
@@ -168,5 +167,5 @@ def test_keybaseca_backup():
 
 def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client config files stick around
-    run_command("keybase fs rm /keybase/team/$SUBTEAM/kssh-client.config || true")
-    run_command("keybase fs rm /keybase/team/$SUBTEAM_SECONDARY/kssh-client.config || true")
+    run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % os.environ['SUBTEAM'])
+    run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % os.environ['SUBTEAM_SECONDARY'])
