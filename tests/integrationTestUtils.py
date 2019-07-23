@@ -34,12 +34,27 @@ def check_logs(expected_number, expected_principals):
         exit(42)
     exit(0)
 
+def check_ca_key_backup():
+    all_stdin = sys.stdin.read()
+    keyLines = []
+    add = False
+    for line in all_stdin.splitlines():
+        if "----" in line and "PRIVATE" in line and "BEGIN" in line:
+            add = True
+        if add:
+            keyLines.append(line)
+        if "----" in line and "PRIVATE" in line and "END" in line:
+            add = False
+    print('\n'.join(keyLines))
+
 if __name__ == "__main__":
     subcommand = sys.argv[1]
     if subcommand == "count":
         count_running_tests(int(sys.argv[2]))
-    if subcommand == "logcheck":
+    elif subcommand == "logcheck":
         check_logs(int(sys.argv[2]), sys.argv[3])
+    elif subcommand == "backupcheck":
+        check_ca_key_backup()
     else:
         # Error on a bogus subcommand so we fail fast
         exit(1)

@@ -42,7 +42,7 @@ echo "========================= Launched Keybase, starting tests... ============
 # Test 1: kssh works
 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 1: It works!'"
 # Test 2: kssh reuses keys. Checked by making sure it finishes quickly
-timeout 0.5 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 2: Reuse unexpired keys'"
+timeout 0.75 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 2: Reuse unexpired keys'"
 # Test 3: kssh generates a new key once the key is expired. Test this by sticking an expired key in the file and
 # checking that it connects
 clear_keys && mv tests/testFiles/expired ~/.ssh/keybase-signed-key-- && mv tests/testFiles/expired.pub ~/.ssh/keybase-signed-key--.pub && mv tests/testFiles/expired-cert.pub ~/.ssh/keybase-signed-key---cert.pub
@@ -68,5 +68,20 @@ clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "ec
 # This tests the audit log feature
 cat /mnt/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 5 "root"
 echo "kssh passed test 8: ca bot produces correct audit logs"
+
+# This tests the key backup feature
+mkdir -p /tmp/ssh/
+chown -R keybase:keybase /tmp/ssh/
+cat /mnt/cakey.backup | python3 ~/tests/integrationTestUtils.py backupcheck > /tmp/ssh/cakey
+chmod 0600 /tmp/ssh/cakey
+OUTPUT=`ssh-keygen -y -e -f /tmp/ssh/cakey`
+if [[ $OUTPUT == *"BEGIN SSH2 PUBLIC KEY"* ]]; then
+    echo 'kssh passed test 9: keybaseca backup outputs a valid private key'
+else
+    echo "Got bad output while validating backup key"
+    echo $OUTPUT
+    exit 1
+fi
+
 
 cleanup

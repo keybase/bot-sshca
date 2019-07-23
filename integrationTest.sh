@@ -30,7 +30,7 @@ docker logs kssh | indent
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
   printf "${RED}Single Environment Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  if (docker logs kssh | python3 ../integrationTestUtils.py count 8) ; then
+  if (docker logs kssh | python3 ../integrationTestUtils.py count 9) ; then
     printf "${GREEN}Single Environment Mode Tests Passed${NC}\n"
   else
     printf "${RED}Single Environment Mode Tests Missing Output${NC}\n"

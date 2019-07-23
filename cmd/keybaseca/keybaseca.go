@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -10,10 +11,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
-
 	"github.com/keybase/bot-ssh-ca/keybaseca/bot"
 	"github.com/keybase/bot-ssh-ca/keybaseca/config"
+	klog "github.com/keybase/bot-ssh-ca/keybaseca/log"
+	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
 	"github.com/keybase/bot-ssh-ca/kssh"
 	"github.com/keybase/bot-ssh-ca/shared"
 
@@ -43,6 +44,36 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
+		{
+			Name:  "backup",
+			Usage: "Print the current CA private key to stdout for backup purposes",
+			Action: func(c *cli.Context) error {
+				fmt.Println("Are you sure you want to export the CA private key? If this key is compromised, an " +
+					"attacker could access every server that you have configured with this bot. Type \"yes\" to confirm.")
+				var response string
+				_, err := fmt.Scanln(&response)
+				if err != nil {
+					return err
+				}
+				if response != "yes" {
+					return fmt.Errorf("Did not get confirmation of key export, aborting...")
+				}
+
+				conf, err := loadServerConfig(c.GlobalString("config"))
+				if err != nil {
+					return err
+				}
+				bytes, err := ioutil.ReadFile(conf.GetCAKeyLocation())
+				if err != nil {
+					return fmt.Errorf("Failed to load the CA key from %s: %v", conf.GetCAKeyLocation(), err)
+				}
+				klog.Log(conf, "Exported CA key to stdout")
+				fmt.Println("\nKeep this key somewhere very safe. We recommend keeping a physical copy of it in a secure place.")
+				fmt.Println("")
+				fmt.Println(string(bytes))
+				return nil
+			},
+		},
 		{
 			Name:  "generate",
 			Usage: "Generate a new CA key",
@@ -110,9 +141,9 @@ func main() {
 			}
 		}
 		if c.Bool("wipe-logs") {
-			conf, err := config.LoadConfig(c.String("config"))
+			conf, err := loadServerConfig(c.String("config"))
 			if err != nil {
-				return fmt.Errorf("Failed to parse config file: %v", err)
+				return err
 			}
 			logLocation := conf.GetLogLocation()
 			if strings.HasPrefix(logLocation, "/keybase/") {
@@ -177,13 +208,21 @@ func captureControlCToDeleteClientConfig(conf config.Config) {
 	}()
 }
 
-func loadServerConfigAndWriteClientConfig(configFilename string) (config.Config, error) {
+func loadServerConfig(configFilename string) (config.Config, error) {
 	if _, err := os.Stat(configFilename); os.IsNotExist(err) {
 		return nil, fmt.Errorf("Config file at %s does not exist", configFilename)
 	}
 	conf, err := config.LoadConfig(configFilename)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse config file: %v", err)
+	}
+	return conf, nil
+}
+
+func loadServerConfigAndWriteClientConfig(configFilename string) (config.Config, error) {
+	conf, err := loadServerConfig(configFilename)
+	if err != nil {
+		return nil, err
 	}
 	err = writeClientConfig(conf)
 	if err != nil {
