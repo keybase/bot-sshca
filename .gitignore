@@ -2,3 +2,4 @@ bin/
 keybaseca.config
 nohup.out
 env.sh
+__pycache__
