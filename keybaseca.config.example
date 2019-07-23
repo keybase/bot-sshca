@@ -46,7 +46,7 @@ strict_logging: true
 # sharing bot used to share other credentials. One would then want to configure the CA bot to use a separate
 # channel (eg #ssh-provision) for provision requests so that the general channel could be used for lower volume
 # purposes. Note that this means that all users of the SSH bot must have access to this channel.
-chat_channel: team.prod#ssh-provision
+chat_channel: team.everyone#ssh-provision
 
 # Mainly useful for dev work. For security reasons, it is recommended to always run a production CA chat bot on an
 # isolated machine. These options make it possible to run a CA chat bot on a machine where you currently are logged
