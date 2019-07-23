@@ -16,4 +16,4 @@ keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 
 echo "========================= Launched Keybase, starting tests... ========================="
 
-pytest -x --verbose
+pytest -x --verbose ~/tests/single-environment/

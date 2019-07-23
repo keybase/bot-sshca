@@ -19,7 +19,7 @@ source env.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
 docker-compose build 2>&1 > /dev/null
-echo "Running integration tests..."
+echo "Running single-environment integration tests..."
 docker-compose up -d
 
 docker logs kssh -f | indent
@@ -39,9 +39,7 @@ cd ../multi-environment/
 source env.sh
 ../reset.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
-echo "Building containers..."
-docker-compose build 2>&1 > /dev/null
-echo "Running integration tests..."
+echo "Running multi-environment integration tests..."
 docker-compose up -d
 
 docker logs -f kssh | indent
