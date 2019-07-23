@@ -68,12 +68,18 @@ func validateConfig(cf ConfigFile) error {
 	if cf.LogLocation != "" && !isValidPath(cf.LogLocation) {
 		return fmt.Errorf("log_location '%s' is not a valid path", cf.LogLocation)
 	}
-	isValid, err := isValidChannel(cf.GetDefaultTeam(), cf.ChannelName)
-	if err != nil {
-		return fmt.Errorf("failed to validate channel_name '%s': %v", cf.ChannelName, err)
-	}
-	if cf.ChannelName != "" && !isValid {
-		return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", cf.ChannelName, cf.GetDefaultTeam())
+	if cf.ChatChannel != "" {
+		team, channel, err := splitTeamChannel(cf.ChatChannel)
+		if err != nil {
+			return fmt.Errorf("Failed to parse chat_channel=%s: %v", cf.ChatChannel, err)
+		}
+		isValid, err := isValidChannel(team, channel)
+		if err != nil {
+			return fmt.Errorf("failed to validate channel_name '%s': %v", channel, err)
+		}
+		if !isValid {
+			return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", channel, team)
+		}
 	}
 	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
 		return fmt.Errorf("cannot use multiple teams in single-environment mode. You must either add use_subteam_as_principal:true to " +
@@ -152,7 +158,7 @@ type ConfigFile struct {
 	KeyExpiration         string   `yaml:"key_expiration"`
 	SSHUser               string   `yaml:"ssh_user"`
 	Teams                 []string `yaml:"teams"`
-	ChannelName           string   `yaml:"channel_name"`
+	ChatChannel           string   `yaml:"chat_channel"`
 	UseSubteamAsPrincipal bool     `yaml:"use_subteam_as_principal"`
 	LogLocation           string   `yaml:"log_location"`
 	StrictLogging         bool     `yaml:"strict_logging"`
@@ -194,10 +200,14 @@ func (cf *ConfigFile) GetTeams() []string {
 	return cf.Teams
 }
 
-// Arbitrarily choose a team from GetTeams() that can be used for storing of config files and
-// sending and receiving of chat messages. The choice of team does not matter as long as it
-// is consistent
 func (cf *ConfigFile) GetDefaultTeam() string {
+	if cf.ChatChannel != "" {
+		team, _, err := splitTeamChannel(cf.ChatChannel)
+		if err != nil {
+			panic("Failed to retrieve default team! This should never happen due to config validation...")
+		}
+		return team
+	}
 	return cf.GetTeams()[0]
 }
 
@@ -214,5 +224,21 @@ func (cf *ConfigFile) GetStrictLogging() bool {
 }
 
 func (cf *ConfigFile) GetChannelName() string {
-	return cf.ChannelName
+	if cf.ChatChannel == "" {
+		return ""
+	}
+	_, channel, err := splitTeamChannel(cf.ChatChannel)
+	if err != nil {
+		panic("Failed to retrieve channel name! This should never happen due to config validation...")
+	}
+	return channel
+}
+
+// Split a teamChannel of the form team.foo.bar#chan into "team.foo.bar", "chan"
+func splitTeamChannel(teamChannel string) (string, string, error) {
+	split := strings.Split(teamChannel, "#")
+	if len(split) != 2 {
+		return "", "", fmt.Errorf("'%s' is not a valid specifier for a team and a channel", teamChannel)
+	}
+	return split[0], split[1], nil
 }

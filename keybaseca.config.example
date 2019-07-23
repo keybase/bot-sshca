@@ -40,12 +40,13 @@ log_location: /keybase/team/teamname.ssh.admin/keybaseca_audit.log
 # the CA bot to panic and shutdown if it is unable to save logs.
 strict_logging: true
 
-# If the subteam used for granting SSH access is a big team, you can set the a specific channel to use here. This
-# may be useful if subteams are being used for more purposes than just SSH access. For example, one could use
-# team.prod to grant SSH production access and for a secret sharing bot used to share other credentials. One would
-# then want to configure the CA bot to use a separate channel (eg #ssh-provision) for provision requests so that
-# the general channel could be used for lower volume purposes.
-channel_name: ssh-provision
+# If you wish to enforce that all chat communication between the bot and users happens in a single location, you
+# can specify a specific team and channel here. This may be useful if subteams are being used for more purposes
+# than just SSH access. For example, one could use team.prod to grant SSH production access and for a secret
+# sharing bot used to share other credentials. One would then want to configure the CA bot to use a separate
+# channel (eg #ssh-provision) for provision requests so that the general channel could be used for lower volume
+# purposes. Note that this means that all users of the SSH bot must have access to this channel.
+chat_channel: team.prod#ssh-provision
 
 # Mainly useful for dev work. For security reasons, it is recommended to always run a production CA chat bot on an
 # isolated machine. These options make it possible to run a CA chat bot on a machine where you currently are logged
