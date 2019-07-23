@@ -73,12 +73,9 @@ func validateConfig(cf ConfigFile) error {
 		if err != nil {
 			return fmt.Errorf("Failed to parse chat_channel=%s: %v", cf.ChatChannel, err)
 		}
-		isValid, err := isValidChannel(team, channel)
+		err = validateChannel(team, channel)
 		if err != nil {
-			return fmt.Errorf("failed to validate channel_name '%s': %v", channel, err)
-		}
-		if !isValid {
-			return fmt.Errorf("channel_name: '%s' is not a valid channel in the team %s", channel, team)
+			return fmt.Errorf("failed to validate chat_channel '%s': %v", channel, err)
 		}
 	}
 	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
@@ -88,18 +85,19 @@ func validateConfig(cf ConfigFile) error {
 	return nil
 }
 
-// Returns whether or not the given channelName is the name of a channel inside the given team
-func isValidChannel(teamName string, channelName string) (bool, error) {
+// Validates the given teamName and channelName to determine whether or not the given channelName is the name
+// of a channel inside the given team. Returns nil if everything validates.
+func validateChannel(teamName string, channelName string) error {
 	cmd := exec.Command("keybase", "chat", "list-channels", "-j", teamName)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, fmt.Errorf("failed to call keybase: %v", err)
+		return fmt.Errorf("failed to call keybase: %v", err)
 	}
 
 	m := map[string]interface{}{}
 	err = json.Unmarshal(bytes, &m)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse json output from keybase: %v", err)
+		return fmt.Errorf("failed to parse json output from keybase: %v", err)
 	}
 
 	channels := m["convs"].([]interface{})
@@ -111,12 +109,12 @@ func isValidChannel(teamName string, channelName string) (bool, error) {
 			cmd = exec.Command("keybase", "chat", "join-channel", teamName, channelName)
 			err = cmd.Run()
 			if err != nil {
-				return false, fmt.Errorf("failed to join bot to the configured channel: %v", err)
+				return fmt.Errorf("failed to join bot to the configured channel: %v", err)
 			}
-			return true, nil
+			return nil
 		}
 	}
-	return false, nil
+	return fmt.Errorf("did not find a channel named %s in %s", channelName, teamName)
 }
 
 // Returns whether or not the given path is a writable path on the local filesystem OR in KBFS
