@@ -12,8 +12,9 @@ import (
 
 // A ConfigFile that is provided by the keybaseca server process and lives in kbfs
 type ConfigFile struct {
-	TeamName string `json:"teamname"`
-	BotName  string `json:"botname"`
+	TeamName    string `json:"teamname"`
+	ChannelName string `json:"channelname"`
+	BotName     string `json:"botname"`
 }
 
 // LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfTeamNames, err)

@@ -36,8 +36,22 @@ func KBFSDelete(filename string) error {
 	return nil
 }
 
-func KBFSWrite(filename string, contents string) error {
-	cmd := exec.Command("keybase", "fs", "write", filename)
+func KBFSWrite(filename string, contents string, appendToFile bool) error {
+	var cmd *exec.Cmd
+	if appendToFile {
+		// `keybase fs write --append` only works if the file already exists so create it if it does not exist
+		exists, err := KBFSFileExists(filename)
+		if !exists || err != nil {
+			err = KBFSWrite(filename, "", false)
+			if err != nil {
+				return err
+			}
+		}
+		cmd = exec.Command("keybase", "fs", "write", "--append", filename)
+	} else {
+		cmd = exec.Command("keybase", "fs", "write", filename)
+	}
+
 	cmd.Stdin = strings.NewReader(string(contents))
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {

@@ -8,3 +8,6 @@ teams:
 use_subteam_as_principal: true
 keybase_paper_key: $BOT_PAPERKEY
 keybase_username: $BOT_USERNAME
+log_location: /keybase/team/$SUBTEAM.ssh.staging/ca.log
+strict_logging: true
+chat_channel: $SUBTEAM.ssh.staging#ssh-provision

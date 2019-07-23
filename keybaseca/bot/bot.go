@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/keybase/bot-ssh-ca/keybaseca/log"
+
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/config"
@@ -69,39 +71,46 @@ func StartBot(conf config.Config) error {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
 			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.Ack)
 			if err != nil {
-				LogError(msg, err)
+				LogError(conf, kbc, msg, err)
 				continue
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureRequestPreamble) {
 			signatureRequest, err := shared.ParseSignatureRequest(messageBody)
 			if err != nil {
-				LogError(msg, err)
+				LogError(conf, kbc, msg, err)
 				continue
 			}
 			signatureRequest.Username = msg.Message.Sender.Username
+			signatureRequest.DeviceName = msg.Message.Sender.DeviceName
 			signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
 			if err != nil {
-				LogError(msg, err)
+				LogError(conf, kbc, msg, err)
 				continue
 			}
 
 			response, err := json.Marshal(signatureResponse)
 			if err != nil {
-				LogError(msg, err)
+				LogError(conf, kbc, msg, err)
 				continue
 			}
 			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.SignatureResponsePreamble+string(response))
 			if err != nil {
-				LogError(msg, err)
+				LogError(conf, kbc, msg, err)
 				continue
 			}
 		}
 	}
 }
 
-func LogError(message kbchat.SubscriptionMessage, err error) {
-	// TODO: Send these to chat?
-	fmt.Printf("Got error while processing a message: %v\n", err)
+// Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
+// due to an error caused by a malformed message.
+func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
+	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.MsgID, err)
+	log.Log(conf, message)
+	e := kbc.SendMessageByConvID(msg.Message.ConversationID, message)
+	if e != nil {
+		log.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
+	}
 }
 
 // Whether the given channel is one of the specified channels in the config

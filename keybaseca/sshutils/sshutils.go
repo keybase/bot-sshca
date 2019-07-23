@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/keybase/bot-ssh-ca/keybaseca/log"
+
 	"github.com/keybase/bot-ssh-ca/keybaseca/config"
 	"github.com/keybase/bot-ssh-ca/shared"
 
@@ -46,6 +48,7 @@ func Generate(conf config.Config, overwrite bool, printPubKey bool) error {
 	err := GenerateNewSSHKey(conf.GetCAKeyLocation(), overwrite, printPubKey)
 	if err == nil {
 		fmt.Printf("Wrote new SSH CA key to %s\n", conf.GetCAKeyLocation())
+		log.Log(conf, fmt.Sprintf("Wrote new SSH CA key to %s", conf.GetCAKeyLocation()))
 	}
 	return err
 }
@@ -84,9 +87,13 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 		return
 	}
 
+	keyID := sr.UUID + ":" + randomUUID.String()
+
+	log.Log(conf, fmt.Sprintf("Processing SignatureRequest from user=%s on device='%s' keyID:%s, principals:%s, expiration:%s, pubkey:%s",
+		sr.Username, sr.DeviceName, keyID, principals, conf.GetKeyExpiration(), sr.SSHPublicKey))
 	cmd := exec.Command("ssh-keygen",
 		"-s", conf.GetCAKeyLocation(), // The CA key
-		"-I", sr.UUID+":"+randomUUID.String(), // The ID of the signed key. Use their uuid and our uuid to ensure it is unique
+		"-I", keyID, // The ID of the signed key. Use their uuid and our uuid to ensure it is unique
 		"-n", principals, // The allowed principals
 		"-V", conf.GetKeyExpiration(), // The configured key expiration
 		"-N", "", // No password on the key

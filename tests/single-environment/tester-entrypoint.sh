@@ -26,8 +26,17 @@ clear_keys() {
 }
 
 nohup bash -c "run_keybase -g &"
-sleep 10
+
+# Sleep until the CA bot has started
+while ! [ -f /mnt/keybase-ca-key.pub ];
+do
+    sleep 1
+done
+echo ""
+sleep 2
+
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
+
 echo "========================= Launched Keybase, starting tests... ========================="
 
 # Test 1: kssh works
@@ -55,5 +64,9 @@ clear_keys && bin/kssh --set-default-team $SUBTEAM
 clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 6: Uses the default team'"
 clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY
 clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 7: --team overrides the default team'"
+
+# This tests the audit log feature
+cat /mnt/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 5 "root"
+echo "kssh passed test 8: ca bot produces correct audit logs"
 
 cleanup
