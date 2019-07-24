@@ -47,6 +47,11 @@ timeout 0.75 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passe
 # checking that it connects
 clear_keys && mv tests/testFiles/expired ~/.ssh/keybase-signed-key-- && mv tests/testFiles/expired.pub ~/.ssh/keybase-signed-key--.pub && mv tests/testFiles/expired-cert.pub ~/.ssh/keybase-signed-key---cert.pub
 bin/kssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 3: Renew expired keys'"
+# Test 4: Test that kssh --provision provisions a new valid key. Test this by running provision and checking that normal
+# ssh works afterwards. In order to test this we need the ssh-agent to be running so start it first
+eval "$(ssh-agent -s)"
+clear_keys && bin/kssh --provision
+ssh -q -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 4: --provision flag'"
 
 # The next series of tests are about what happens when there are multiple teams configured. So we create a kssh-client.config
 # file in $SUBTEAM_SECONDARY in order to make kssh think that there are two active teams with CA bots.
@@ -55,19 +60,19 @@ keybase fs cp /keybase/team/$SUBTEAM/kssh-client.config /keybase/team/$SUBTEAM_S
 clear_keys
 OUTPUT=`bin/kssh -o StrictHostKeyChecking=no root@sshd || true`
 if [[ $OUTPUT == *"Found 2 config files"* ]]; then
-    echo 'kssh passed test 4: Rejects multiple teams'
+    echo 'kssh passed test 5: Rejects multiple teams'
 else
     exit 1
 fi
-clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 5: Works with specified --team flag'"
+clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 6: Works with specified --team flag'"
 clear_keys && bin/kssh --set-default-team $SUBTEAM
-clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 6: Uses the default team'"
+clear_keys && bin/kssh -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 7: Uses the default team'"
 clear_keys && bin/kssh --set-default-team $SUBTEAM_SECONDARY
-clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 7: --team overrides the default team'"
+clear_keys && bin/kssh --team $SUBTEAM -o StrictHostKeyChecking=no root@sshd "echo 'kssh passed test 8: --team overrides the default team'"
 
 # This tests the audit log feature
-cat /mnt/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 5 "root"
-echo "kssh passed test 8: ca bot produces correct audit logs"
+cat /mnt/ca.log | python3 ~/tests/integrationTestUtils.py logcheck 6 "root"
+echo "kssh passed test 9: ca bot produces correct audit logs"
 
 # This tests the key backup feature
 mkdir -p /tmp/ssh/
@@ -76,12 +81,11 @@ cat /mnt/cakey.backup | python3 ~/tests/integrationTestUtils.py backupcheck > /t
 chmod 0600 /tmp/ssh/cakey
 OUTPUT=`ssh-keygen -y -e -f /tmp/ssh/cakey`
 if [[ $OUTPUT == *"BEGIN SSH2 PUBLIC KEY"* ]]; then
-    echo 'kssh passed test 9: keybaseca backup outputs a valid private key'
+    echo 'kssh passed test 10: keybaseca backup outputs a valid private key'
 else
     echo "Got bad output while validating backup key"
     echo $OUTPUT
     exit 1
 fi
-
 
 cleanup
