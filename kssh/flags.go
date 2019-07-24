@@ -5,8 +5,11 @@ import "fmt"
 type CLIArgument struct {
 	Name        string // eg "--set-default-team"
 	HasArgument bool   // true if an argument comes after it (eg "--set-default-team foo") false if it is a boolean flag (eg "--help")
-	// These fields are set by the parser and are how the parser returns data
-	Value string
+}
+
+type ParsedCLIArgument struct {
+	Argument CLIArgument
+	Value    string
 }
 
 // ParseArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
@@ -15,23 +18,24 @@ type CLIArgument struct {
 // https://github.com/keybase/bot-sshca/pull/3#discussion_r302740696
 //
 // Returns: a list of the remaining unparsed arguments, a list of the parsed arguments, error
-func ParseArgs(args []string, cliArguments []CLIArgument) ([]string, []CLIArgument, error) {
+func ParseArgs(args []string, cliArguments []CLIArgument) ([]string, []ParsedCLIArgument, error) {
 	remainingArguments := []string{}
-	found := []CLIArgument{}
+	found := []ParsedCLIArgument{}
 OUTER:
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		for _, cliArg := range cliArguments {
 			if cliArg.Name == arg {
+				parsed := ParsedCLIArgument{Argument: cliArg}
 				if cliArg.HasArgument {
 					if i+1 == len(args) {
 						return nil, nil, fmt.Errorf("argument %s requires a value", cliArg.Name)
 					}
 					nextArg := args[i+1]
-					cliArg.Value = nextArg
+					parsed.Value = nextArg
 					i++
 				}
-				found = append(found, cliArg)
+				found = append(found, parsed)
 				continue OUTER
 			}
 		}

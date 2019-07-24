@@ -5,8 +5,6 @@ IFS=$'\n\t'
 # chown as root
 chown -R keybase:keybase /mnt
 
-echo $KEYBASE_USERNAME
-
 # Run everything else as the keybase user
 sudo -i -u keybase bash << EOF
 nohup bash -c "run_keybase -g &"

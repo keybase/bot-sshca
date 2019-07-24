@@ -12,10 +12,14 @@ NC='\033[0m'
 
 # A function used to indent the log output from the tests
 indent() { sed 's/^/    /'; }
+reset_docker() {
+    docker-compose down -v
+    docker system prune -f
+}
 
 cd tests/single-environment/
+reset_docker
 source env.sh
-../reset.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
 docker-compose build 2>&1 > /dev/null
@@ -36,8 +40,8 @@ docker-compose kill 2>&1 > /dev/null
 docker-compose rm -f
 
 cd ../multi-environment/
+reset_docker
 source env.sh
-../reset.sh
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Running multi-environment integration tests..."
 docker-compose up -d
@@ -55,4 +59,4 @@ docker-compose stop 2>&1 > /dev/null
 docker-compose kill 2>&1 > /dev/null
 docker-compose rm -f
 
-../reset.sh
+reset_docker

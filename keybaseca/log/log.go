@@ -16,7 +16,7 @@ func Log(conf config.Config, str string) {
 	if conf.GetLogLocation() == "" {
 		fmt.Println(str)
 	} else {
-		err := appendToFile(conf.GetLogLocation(), fmt.Sprintf("[%s]%s\n", time.Now().String(), str))
+		err := appendToFile(conf.GetLogLocation(), fmt.Sprintf("[%s] %s\n", time.Now().String(), str))
 		if err != nil {
 			if conf.GetStrictLogging() {
 				panic(fmt.Errorf("Failed to log '%s' to %s: %v", str, conf.GetLogLocation(), err))
