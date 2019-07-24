@@ -18,7 +18,7 @@ USER keybase
 # Install go
 USER root
 RUN add-apt-repository ppa:gophers/archive -y
-RUN apt-get update
+RUN apt-get update -y
 RUN apt-get install golang-1.11-go git sudo python3 -y
 USER keybase
 
