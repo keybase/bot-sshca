@@ -11,9 +11,6 @@ import (
 	"github.com/keybase/bot-ssh-ca/shared"
 )
 
-// Used by the CLI argument parsing code
-var DefaultConfigLocation = shared.ExpandPathWithTilde("~/keybaseca.config")
-
 // Represents a loaded config for keybaseca
 type Config interface {
 	GetCAKeyLocation() string

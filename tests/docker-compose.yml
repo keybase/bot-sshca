@@ -12,7 +12,7 @@ services:
     volumes:
       - app-volume:/mnt/
     user: root
-    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh tests/keybaseca.config\"'"
+    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
   kssh:
     image: kssh
     container_name: kssh

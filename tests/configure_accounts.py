@@ -1,5 +1,11 @@
 #!/bin/python3
 
+"""
+This script walks the user through creating and configuring two accounts in order to run the integration tests.
+
+Usage: ./configure_accounts.py
+"""
+
 import os
 import random
 import select
