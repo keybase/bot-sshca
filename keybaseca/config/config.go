@@ -65,8 +65,11 @@ func validateConfig(cf ConfigFile) error {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
-	if cf.LogLocation != "" && !isValidPath(cf.LogLocation) {
-		return fmt.Errorf("log_location '%s' is not a valid path", cf.LogLocation)
+	if cf.LogLocation != "" {
+		err := validatePath(cf.LogLocation)
+		if err != nil {
+			return fmt.Errorf("log_location '%s' is not a valid path: %v", cf.LogLocation, err)
+		}
 	}
 	isValid, err := isValidChannel(cf.GetDefaultTeam(), cf.ChannelName)
 	if err != nil {
@@ -113,35 +116,35 @@ func isValidChannel(teamName string, channelName string) (bool, error) {
 	return false, nil
 }
 
-// Returns whether or not the given path is a writable path on the local filesystem OR in KBFS
-func isValidPath(path string) bool {
+// Returns an error if the given path is not a writable path on the local filesystem or on KBFS
+func validatePath(path string) error {
 	if strings.HasPrefix(path, "/keybase/") {
 		// If it exists it is valid
 		exists, _ := shared.KBFSFileExists(path)
 		if exists {
-			return true
+			return nil
 		}
 
 		// Otherwise try to write to it
 		err := shared.KBFSWrite(path, "", false)
 		if err != nil {
-			return false
+			return fmt.Errorf("path is not writable: %v", err)
 		}
 		shared.KBFSDelete(path)
-		return true
+		return nil
 	}
 	_, err := os.Stat(path)
 	if err == nil {
-		return true
+		return nil
 	}
 
 	var d []byte
 	err = ioutil.WriteFile(path, d, 0600)
 	if err != nil {
-		return false
+		return fmt.Errorf("path is not writable: %v", err)
 	}
 	os.Remove(path)
-	return true
+	return nil
 }
 
 type ConfigFile struct {

@@ -5,6 +5,13 @@ IFS=$'\n\t'
 # Unit tests first
 go test ./...
 
+if [[ -f "tests/single-environment/env.sh" ]] && [[ -f "tests/multi-environment/env.sh" ]]; then
+    echo "env.sh files already exist, skipping configuring new accounts..."
+else
+    python3 tests/configure-accounts.py
+fi
+
+
 # Some colors for pretty output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,7 +22,7 @@ indent() { sed 's/^/    /'; }
 
 cd tests/single-environment/
 source env.sh
-../reset.sh
+reset_docker
 cat keybaseca.config.gen | envsubst > keybaseca.config
 echo "Building containers..."
 docker-compose build 2>&1 > /dev/null
@@ -37,8 +44,10 @@ docker-compose rm -f
 
 cd ../multi-environment/
 source env.sh
-../reset.sh
+reset_docker
 cat keybaseca.config.gen | envsubst > keybaseca.config
+echo "Building containers..."
+docker-compose build 2>&1 > /dev/null
 echo "Running multi-environment integration tests..."
 docker-compose up -d
 

@@ -10,6 +10,7 @@ nohup bash -c "run_keybase -g &"
 sleep 3
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
 bin/keybaseca --wipe-all-configs
-bin/keybaseca --wipe-logs -c tests/multi-environment/keybaseca.config || true
-bin/keybaseca -c tests/multi-environment/keybaseca.config generate --overwrite-existing-key
-bin/keybaseca -c tests/multi-environment/keybaseca.config service
+bin/keybaseca --wipe-logs -c $1 || true
+bin/keybaseca -c $1 generate --overwrite-existing-key
+echo yes | bin/keybaseca -c $1 backup > /mnt/cakey.backup
+bin/keybaseca -c $1 service

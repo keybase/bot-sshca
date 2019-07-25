@@ -115,6 +115,9 @@ func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessag
 
 // Whether the given channel is one of the specified channels in the config
 func isConfiguredChannel(conf config.Config, channelName string) bool {
+	if conf.GetDefaultTeam() == channelName {
+		return true
+	}
 	for _, team := range conf.GetTeams() {
 		if team == channelName {
 			return true

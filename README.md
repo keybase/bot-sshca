@@ -31,14 +31,7 @@ binaries.
 
 # Integration Tests
 
-This project contains integration tests that can be run via `./integrationTest.sh`. Note that prior to running
-the integration tests you need to:
-
-```
-cp tests/single-environment/env.sh.example tests/single-environment/env.sh; cp tests/multi-environment/env.sh.example tests/multi-environment/env.sh
-``` 
-
-and fill in `tests/single-environment/env.sh` and `tests/multi-environment/env.sh`. 
+This project contains integration tests that can be run via `./integrationTest.sh`. 
 
 # Getting Started (single environment mode)
 
