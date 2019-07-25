@@ -95,10 +95,10 @@ func handleArgs(args []string) (string, []string, Action, error) {
 	team := ""
 	action := SSH
 	for _, arg := range found {
-		if arg.Name == "--team" {
+		if arg.Argument.Name == "--team" {
 			team = arg.Value
 		}
-		if arg.Name == "--set-default-team" {
+		if arg.Argument.Name == "--set-default-team" {
 			// We exit immediately after setting the default team
 			err := kssh.SetDefaultTeam(arg.Value)
 			if err != nil {
@@ -108,7 +108,7 @@ func handleArgs(args []string) (string, []string, Action, error) {
 			fmt.Println("Set default team, exiting...")
 			os.Exit(0)
 		}
-		if arg.Name == "--provision" {
+		if arg.Argument.Name == "--provision" {
 			action = Provision
 		}
 	}
