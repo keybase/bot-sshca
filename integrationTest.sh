@@ -32,7 +32,8 @@ mkdir -p generated-env
 ls envFiles/ | xargs -I {} -- bash -c 'cat envFiles/{} | envsubst > generated-env/{}'
 
 echo "Building containers..."
-docker-compose build 2>&1 > /dev/null
+cd ../docker/ && make && cd ../tests/
+docker-compose build
 echo "Running integration tests..."
 docker-compose up -d
 

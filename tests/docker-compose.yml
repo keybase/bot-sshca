@@ -5,7 +5,7 @@ services:
     container_name: ca-bot
     build:
       context: ..
-      dockerfile: "docker/Dockerfile-ca"
+      dockerfile: "tests/Dockerfile-cabot"
     environment:
       - KEYBASE_PAPERKEY=${BOT_PAPERKEY}
       - KEYBASE_USERNAME=${BOT_USERNAME}
@@ -13,6 +13,8 @@ services:
       - app-volume:/mnt/
     user: root
     command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
+    ports:
+      - 8080
   kssh:
     image: kssh
     container_name: kssh

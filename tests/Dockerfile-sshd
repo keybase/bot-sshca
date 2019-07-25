@@ -25,4 +25,4 @@ RUN echo -n "uniquestring" > /etc/unique
 
 EXPOSE 22
 
-CMD while ! [ -f /mnt/keybase-ca-key.pub ]; do sleep 1; done && echo " Starting sshd..." && ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D
+CMD ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D
