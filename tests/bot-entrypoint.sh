@@ -8,9 +8,11 @@ touch /mnt/.keep
 
 nohup bash -c "run_keybase -g &"
 sleep 3
-keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
+
+source tests/generated-env/env-1-simple-tests
+keybase oneshot --username $KEYBASE_USERNAME --paperkey "$KEYBASE_PAPERKEY"
 bin/keybaseca --wipe-all-configs
-bin/keybaseca --wipe-logs -c $1 || true
-bin/keybaseca -c $1 generate --overwrite-existing-key
-echo yes | bin/keybaseca -c $1 backup > /mnt/cakey.backup
-bin/keybaseca -c $1 service
+bin/keybaseca --wipe-logs || true
+bin/keybaseca generate --overwrite-existing-key
+echo yes | bin/keybaseca backup > /mnt/cakey.backup
+bin/keybaseca service

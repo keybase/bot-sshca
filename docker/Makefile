@@ -7,22 +7,18 @@ endif
 
 SHELL := /bin/bash
 
-.PHONY: build generate serve clean reset-permissions confirm-clean config
+.PHONY: build generate serve clean reset-permissions confirm-clean
 
 # Build a new docker image for the CA bot
 build: reset-permissions
 	docker build -t ca -f Dockerfile-ca ..
 
-# Generate a config file for the CA bot using the values in env.sh
-config:
-	source env.sh && cat keybaseca.config.gen | envsubst > ../example-keybaseca-volume/keybaseca.config
-
 # Generate a new CA key
-generate: build config
-	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+generate: build
+	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 
-serve: build config
-	source env.sh && docker run -e KEYBASE_USERNAME -e PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
+serve: build
+	source env.sh && docker run -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
 
 # Wipe all data
 clean: confirm-clean reset-permissions

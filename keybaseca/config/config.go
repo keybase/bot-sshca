@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/keybase/bot-ssh-ca/shared"
-
-	"github.com/go-yaml/yaml"
 )
 
 // Used by the CLI argument parsing code
@@ -25,53 +23,38 @@ type Config interface {
 	GetKeyExpiration() string
 	GetTeams() []string
 	GetDefaultTeam() string
-	getChatChannel() string
 	GetChannelName() string
 	GetLogLocation() string
 	GetStrictLogging() bool
 }
 
-// Load a yaml config file from the given filename. See the top of this file for an example yaml config file.
-func LoadConfig(filename string) (Config, error) {
-	contents, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	var cf ConfigFile
-	// UnmarshalStrict will error out if there is an unexpected field in the yaml data
-	err = yaml.UnmarshalStrict(contents, &cf)
-	if err != nil {
-		return nil, err
-	}
-	err = validateConfig(&cf)
-	if err != nil {
-		return nil, err
-	}
-	return &cf, nil
-}
-
-func validateConfig(conf Config) error {
+func ValidateConfig(conf EnvConfig) error {
 	if len(conf.GetTeams()) == 0 {
-		return fmt.Errorf("must specify at least one team in the config file")
+		return fmt.Errorf("must specify at least one team via the TEAMS environment variable")
 	}
 	if conf.GetKeyExpiration() != "" && !strings.HasPrefix(conf.GetKeyExpiration(), "+") {
 		// Only a basic check for this since ssh will error out later on if it is bogus
-		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
+		return fmt.Errorf("KEY_EXPIRATION must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
 	if conf.GetLogLocation() != "" {
 		err := validatePath(conf.GetLogLocation())
 		if err != nil {
-			return fmt.Errorf("log_location '%s' is not a valid path: %v", conf.GetLogLocation(), err)
+			return fmt.Errorf("LOG_LOCATION '%s' is not a valid path: %v", conf.GetLogLocation(), err)
 		}
 	}
 	if conf.getChatChannel() != "" {
 		team, channel, err := splitTeamChannel(conf.getChatChannel())
 		if err != nil {
-			return fmt.Errorf("Failed to parse chat_channel=%s: %v", conf.getChatChannel(), err)
+			return fmt.Errorf("Failed to parse CHAT_CHANNEL=%s: %v", conf.getChatChannel(), err)
 		}
 		err = validateChannel(team, channel)
 		if err != nil {
-			return fmt.Errorf("failed to validate chat_channel '%s': %v", channel, err)
+			return fmt.Errorf("failed to validate CHAT_CHANNEL '%s': %v", channel, err)
+		}
+	}
+	if conf.getStrictLogging() != "" {
+		if conf.getStrictLogging() != "true" && conf.getStrictLogging() != "false" {
+			return fmt.Errorf("STRICT_LOGGING must be either 'true' or 'false', '%s' is not valid", conf.getStrictLogging())
 		}
 	}
 	return nil
@@ -140,78 +123,80 @@ func validatePath(path string) error {
 	return nil
 }
 
-type ConfigFile struct {
-	CAKeyLocation   string   `yaml:"ca_key_location"`
-	KeybaseHomeDir  string   `yaml:"keybase_home_dir"`
-	KeybasePaperKey string   `yaml:"keybase_paper_key"`
-	KeybaseUsername string   `yaml:"keybase_username"`
-	KeyExpiration   string   `yaml:"key_expiration"`
-	Teams           []string `yaml:"teams"`
-	ChatChannel     string   `yaml:"chat_channel"`
-	LogLocation     string   `yaml:"log_location"`
-	StrictLogging   bool     `yaml:"strict_logging"`
-}
+type EnvConfig struct{}
 
-var _ Config = (*ConfigFile)(nil)
+var _ Config = (*EnvConfig)(nil)
 
-func (cf *ConfigFile) GetCAKeyLocation() string {
-	if cf.CAKeyLocation != "" {
-		return shared.ExpandPathWithTilde(cf.CAKeyLocation)
+func (ef *EnvConfig) GetCAKeyLocation() string {
+	if os.Getenv("CA_KEY_LOCATION") != "" {
+		return shared.ExpandPathWithTilde(os.Getenv("CA_KEY_LOCATION"))
 	}
 	return shared.ExpandPathWithTilde("~/keybase-ca-key")
 }
 
-func (cf *ConfigFile) GetKeybaseHomeDir() string {
-	return cf.KeybaseHomeDir
+func (ef *EnvConfig) GetKeybaseHomeDir() string {
+	return os.Getenv("KEYBASE_HOME_DIR")
 }
 
-func (cf *ConfigFile) GetKeybasePaperKey() string {
-	return cf.KeybasePaperKey
+func (ef *EnvConfig) GetKeybasePaperKey() string {
+	return os.Getenv("KEYBASE_PAPERKEY")
 }
 
-func (cf *ConfigFile) GetKeybaseUsername() string {
-	return cf.KeybaseUsername
+func (ef *EnvConfig) GetKeybaseUsername() string {
+	return os.Getenv("KEYBASE_USERNAME")
 }
 
-func (cf *ConfigFile) GetKeyExpiration() string {
-	if cf.KeyExpiration != "" {
-		return cf.KeyExpiration
+func (ef *EnvConfig) GetKeyExpiration() string {
+	if os.Getenv("KEY_EXPIRATION") != "" {
+		return os.Getenv("KEY_EXPIRATION")
 	}
 	return "+1h"
 }
 
-func (cf *ConfigFile) GetTeams() []string {
-	return cf.Teams
+func (ef *EnvConfig) GetTeams() []string {
+	split := strings.Split(os.Getenv("TEAMS"), ",")
+	var teams []string
+	for _, item := range split {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			teams = append(teams, trimmed)
+		}
+	}
+	return teams
 }
 
-func (cf *ConfigFile) GetDefaultTeam() string {
-	if cf.ChatChannel != "" {
-		team, _, err := splitTeamChannel(cf.ChatChannel)
+func (ef *EnvConfig) GetDefaultTeam() string {
+	if os.Getenv("CHAT_CHANNEL") != "" {
+		team, _, err := splitTeamChannel(os.Getenv("CHAT_CHANNEL"))
 		if err != nil {
 			panic("Failed to retrieve default team! This should never happen due to config validation...")
 		}
 		return team
 	}
-	return cf.GetTeams()[0]
+	return ef.GetTeams()[0]
 }
 
-func (cf *ConfigFile) GetLogLocation() string {
-	return cf.LogLocation
+func (ef *EnvConfig) GetLogLocation() string {
+	return os.Getenv("LOG_LOCATION")
 }
 
-func (cf *ConfigFile) GetStrictLogging() bool {
-	return cf.StrictLogging
+func (ef *EnvConfig) getStrictLogging() string {
+	return strings.ToLower(os.Getenv("STRICT_LOGGING"))
 }
 
-func (cf *ConfigFile) getChatChannel() string {
-	return cf.ChatChannel
+func (ef *EnvConfig) GetStrictLogging() bool {
+	return ef.getStrictLogging() == "true"
 }
 
-func (cf *ConfigFile) GetChannelName() string {
-	if cf.ChatChannel == "" {
+func (ef *EnvConfig) getChatChannel() string {
+	return os.Getenv("CHAT_CHANNEL")
+}
+
+func (ef *EnvConfig) GetChannelName() string {
+	if ef.getChatChannel() == "" {
 		return ""
 	}
-	_, channel, err := splitTeamChannel(cf.ChatChannel)
+	_, channel, err := splitTeamChannel(ef.getChatChannel())
 	if err != nil {
 		panic("Failed to retrieve channel name! This should never happen due to config validation...")
 	}

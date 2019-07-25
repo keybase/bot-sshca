@@ -168,6 +168,28 @@ def test_kssh_override_default_team():
     run_command("bin/kssh --set-default-team %s" % os.environ['SUBTEAM_SECONDARY'])
     assert_contains_hash(run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
 
+def test_keybaseca_backup():
+    # Test the keybaseca backup command by reading and verifying the private key stored in /mnt/cakey.backup
+    run_command("mkdir -p /tmp/ssh/")
+    run_command("chown -R keybase:keybase /tmp/ssh/")
+    with open('/mnt/cakey.backup') as f:
+        keyLines = []
+        add = False
+        for line in f:
+            if "----" in line and "PRIVATE" in line and "BEGIN" in line:
+                add = True
+            if add:
+                keyLines.append(line)
+            if "----" in line and "PRIVATE" in line and "END" in line:
+                add = False
+    key = '\n'.join(keyLines)
+    print(key)
+    with open('/tmp/ssh/cakey', 'w+') as f:
+        f.write(key)
+    run_command("chmod 0600 /tmp/ssh/cakey")
+    output = run_command("ssh-keygen -y -e -f /tmp/ssh/cakey")
+    assert b"BEGIN SSH2 PUBLIC KEY" in output
+
 def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client config files stick around
     run_command("keybase fs rm /keybase/team/%s.ssh/kssh-client.config || true" % os.environ['SUBTEAM'])

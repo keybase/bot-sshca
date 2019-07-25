@@ -7,7 +7,7 @@ services:
       context: ..
       dockerfile: "docker/Dockerfile-ca"
     environment:
-      - PAPERKEY=${BOT_PAPERKEY}
+      - KEYBASE_PAPERKEY=${BOT_PAPERKEY}
       - KEYBASE_USERNAME=${BOT_USERNAME}
     volumes:
       - app-volume:/mnt/
@@ -22,8 +22,8 @@ services:
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
       - KEYBASE_USERNAME=${KSSH_USERNAME}
-      - SUBTEAM=${SUBTEAM}
-      - SUBTEAM_SECONDARY=${SUBTEAM_SECONDARY}
+      - SUBTEAM
+      - SUBTEAM_SECONDARY
     volumes:
       - app-volume:/mnt/
     user: keybase
