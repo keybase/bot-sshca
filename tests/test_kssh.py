@@ -37,7 +37,7 @@ def clear_local_config():
 def simulate_two_teams(func):
     # A decorator that simulates running the given function in an environment with two teams set up
     def inner(*args, **kwargs):
-        run_command("keybase fs cp /keybase/team/%s.ssh.staging/kssh-client.config /keybase/team/%s/kssh-client.config" % (os.environ['SUBTEAM'], os.environ['SUBTEAM_SECONDARY']))
+        run_command("keybase fs cp /keybase/team/%s.ssh/kssh-client.config /keybase/team/%s/kssh-client.config" % (os.environ['SUBTEAM'], os.environ['SUBTEAM_SECONDARY']))
         try:
             ret = func(*args, **kwargs)
         finally:
@@ -152,13 +152,13 @@ def test_kssh_errors_on_two_teams():
 @simulate_two_teams
 def test_kssh_team_flag():
     # Test that kssh works with the --team flag
-    assert_contains_hash(run_command("bin/kssh --team %s.ssh.staging -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+    assert_contains_hash(run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
 
 @outputs_audit_log(expected_number=1)
 @simulate_two_teams
 def test_kssh_set_default_team():
     # Test that kssh works with the --set-default-team flag
-    run_command("bin/kssh --set-default-team %s.ssh.staging" % os.environ['SUBTEAM'])
+    run_command("bin/kssh --set-default-team %s.ssh" % os.environ['SUBTEAM'])
     assert_contains_hash(run_command("bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
 @outputs_audit_log(expected_number=1)
@@ -166,10 +166,11 @@ def test_kssh_set_default_team():
 def test_kssh_override_default_team():
     # Test that the --team flag overrides the local config file
     run_command("bin/kssh --set-default-team %s" % os.environ['SUBTEAM_SECONDARY'])
-    assert_contains_hash(run_command("bin/kssh --team %s.ssh.staging -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+    assert_contains_hash(run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
 
 def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client config files stick around
+    run_command("keybase fs rm /keybase/team/%s.ssh/kssh-client.config || true" % os.environ['SUBTEAM'])
     run_command("keybase fs rm /keybase/team/%s.ssh.staging/kssh-client.config || true" % os.environ['SUBTEAM'])
     run_command("keybase fs rm /keybase/team/%s.ssh.prod/kssh-client.config || true" % os.environ['SUBTEAM'])
     run_command("keybase fs rm /keybase/team/%s.ssh.root_everywhere/kssh-client.config || true" % os.environ['SUBTEAM'])

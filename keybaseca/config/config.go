@@ -23,11 +23,10 @@ type Config interface {
 	GetKeybasePaperKey() string
 	GetKeybaseUsername() string
 	GetKeyExpiration() string
-	GetSSHUser() string
 	GetTeams() []string
 	GetDefaultTeam() string
+	getChatChannel() string
 	GetChannelName() string
-	GetUseSubteamAsPrincipal() bool
 	GetLogLocation() string
 	GetStrictLogging() bool
 }
@@ -44,46 +43,36 @@ func LoadConfig(filename string) (Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = validateConfig(cf)
+	err = validateConfig(&cf)
 	if err != nil {
 		return nil, err
 	}
 	return &cf, nil
 }
 
-func validateConfig(cf ConfigFile) error {
-	if len(cf.Teams) == 0 {
+func validateConfig(conf Config) error {
+	if len(conf.GetTeams()) == 0 {
 		return fmt.Errorf("must specify at least one team in the config file")
 	}
-	if cf.SSHUser == "" && cf.UseSubteamAsPrincipal == false {
-		return fmt.Errorf("must specify either a ssh_user or use_subteam_as_principal")
-	}
-	if cf.SSHUser != "" && cf.UseSubteamAsPrincipal == true {
-		return fmt.Errorf("cannot specify both a ssh_user and use_subteam_as_principal")
-	}
-	if cf.KeyExpiration != "" && !strings.HasPrefix(cf.KeyExpiration, "+") {
+	if conf.GetKeyExpiration() != "" && !strings.HasPrefix(conf.GetKeyExpiration(), "+") {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("key_expiration must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
-	if cf.LogLocation != "" {
-		err := validatePath(cf.LogLocation)
+	if conf.GetLogLocation() != "" {
+		err := validatePath(conf.GetLogLocation())
 		if err != nil {
-			return fmt.Errorf("log_location '%s' is not a valid path: %v", cf.LogLocation, err)
+			return fmt.Errorf("log_location '%s' is not a valid path: %v", conf.GetLogLocation(), err)
 		}
 	}
-	if cf.ChatChannel != "" {
-		team, channel, err := splitTeamChannel(cf.ChatChannel)
+	if conf.getChatChannel() != "" {
+		team, channel, err := splitTeamChannel(conf.getChatChannel())
 		if err != nil {
-			return fmt.Errorf("Failed to parse chat_channel=%s: %v", cf.ChatChannel, err)
+			return fmt.Errorf("Failed to parse chat_channel=%s: %v", conf.getChatChannel(), err)
 		}
 		err = validateChannel(team, channel)
 		if err != nil {
 			return fmt.Errorf("failed to validate chat_channel '%s': %v", channel, err)
 		}
-	}
-	if len(cf.Teams) > 1 && cf.UseSubteamAsPrincipal == false {
-		return fmt.Errorf("cannot use multiple teams in single-environment mode. You must either add use_subteam_as_principal:true to " +
-			"the config file (and configure servers for multi-environment mode as described in the README) or only specify a single team")
 	}
 	return nil
 }
@@ -152,17 +141,15 @@ func validatePath(path string) error {
 }
 
 type ConfigFile struct {
-	CAKeyLocation         string   `yaml:"ca_key_location"`
-	KeybaseHomeDir        string   `yaml:"keybase_home_dir"`
-	KeybasePaperKey       string   `yaml:"keybase_paper_key"`
-	KeybaseUsername       string   `yaml:"keybase_username"`
-	KeyExpiration         string   `yaml:"key_expiration"`
-	SSHUser               string   `yaml:"ssh_user"`
-	Teams                 []string `yaml:"teams"`
-	ChatChannel           string   `yaml:"chat_channel"`
-	UseSubteamAsPrincipal bool     `yaml:"use_subteam_as_principal"`
-	LogLocation           string   `yaml:"log_location"`
-	StrictLogging         bool     `yaml:"strict_logging"`
+	CAKeyLocation   string   `yaml:"ca_key_location"`
+	KeybaseHomeDir  string   `yaml:"keybase_home_dir"`
+	KeybasePaperKey string   `yaml:"keybase_paper_key"`
+	KeybaseUsername string   `yaml:"keybase_username"`
+	KeyExpiration   string   `yaml:"key_expiration"`
+	Teams           []string `yaml:"teams"`
+	ChatChannel     string   `yaml:"chat_channel"`
+	LogLocation     string   `yaml:"log_location"`
+	StrictLogging   bool     `yaml:"strict_logging"`
 }
 
 var _ Config = (*ConfigFile)(nil)
@@ -193,10 +180,6 @@ func (cf *ConfigFile) GetKeyExpiration() string {
 	return "+1h"
 }
 
-func (cf *ConfigFile) GetSSHUser() string {
-	return cf.SSHUser
-}
-
 func (cf *ConfigFile) GetTeams() []string {
 	return cf.Teams
 }
@@ -212,16 +195,16 @@ func (cf *ConfigFile) GetDefaultTeam() string {
 	return cf.GetTeams()[0]
 }
 
-func (cf *ConfigFile) GetUseSubteamAsPrincipal() bool {
-	return cf.UseSubteamAsPrincipal
-}
-
 func (cf *ConfigFile) GetLogLocation() string {
 	return cf.LogLocation
 }
 
 func (cf *ConfigFile) GetStrictLogging() bool {
 	return cf.StrictLogging
+}
+
+func (cf *ConfigFile) getChatChannel() string {
+	return cf.ChatChannel
 }
 
 func (cf *ConfigFile) GetChannelName() string {

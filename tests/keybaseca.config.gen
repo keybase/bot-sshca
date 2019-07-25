@@ -1,10 +1,12 @@
 # Note that you do not need to edit this file. It is used with env.sh and envsubst in order to generate a config file
 ca_key_location: /mnt/keybase-ca-key
 key_expiration: "+1h"
-ssh_user: root
-teams: 
-- $SUBTEAM
+teams:
+- $SUBTEAM.ssh.staging
+- $SUBTEAM.ssh.prod
+- $SUBTEAM.ssh.root_everywhere
 keybase_paper_key: $BOT_PAPERKEY
 keybase_username: $BOT_USERNAME
-log_location: /mnt/ca.log
+log_location: /keybase/team/$SUBTEAM.ssh.staging/ca.log
 strict_logging: true
+chat_channel: $SUBTEAM.ssh#ssh-provision

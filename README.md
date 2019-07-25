@@ -33,44 +33,9 @@ binaries.
 
 This project contains integration tests that can be run via `./integrationTest.sh`. 
 
-# Getting Started (single environment mode)
+# Getting Started 
 
-```bash
-cd docker/
-cp env.sh.example env.sh
-keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
-keybase paperkey    # Generate a new paper key
-# Create a new Keybase subteam that this user is in along with anyone else you wish to grant SSH access to
-nano env.sh         # Fill in the values including the previously generated paper key
-make generate
-```
-
-This will output the public key for the CA. 
-For each server that you wish to make accessible to the CA bot:
-
-1. Place the public key in `/etc/ssh/ca.pub` 
-2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
-3. Restart ssh `service ssh restart`
-
-Now start the chatbot itself:
-
-```bash
-make serve
-```
-
-Now build kssh and start SSHing!
-
-```bash
-go build -o bin/kssh cmd/kssh/kssh.go
-sudo cp bin/kssh /usr/local/bin/        # Optional
-bin/kssh root@server
-```
-
-Anyone else in `{TEAM}.ssh` can also run kssh in order to ssh into the server.
-
-# Multi-Environment Mode
-
-kssh supports a multi-environment mode of operation that allows you to define realms of servers where access is granted based off of 
+kssh allows you to define realms of servers where access is granted based off of 
 membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
 up a third realm that grants root access to all machines. To configure kssh to work with this setup:
