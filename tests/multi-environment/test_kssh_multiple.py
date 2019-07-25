@@ -51,7 +51,7 @@ def simulate_two_teams(func):
     return inner
 
 def outputs_audit_log(expected_number):
-    # A decorator that asserts that the given function triggers expected_number of audit logs to be added to '/keybase/team/team.ssh.staging/ca.log'
+    # A decorator that asserts that the given function triggers expected_number of audit logs to be added to '/keybase/team/team.ssh.prod/ca.log'
     # Note that fuse is not running in the container so this has to use `keybase fs read`
     def decorator(func):
         def inner(*args, **kwargs):

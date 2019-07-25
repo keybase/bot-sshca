@@ -178,7 +178,7 @@ func writeClientConfig(conf config.Config) error {
 	for _, team := range conf.GetTeams() {
 		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
 
-		content, err := json.Marshal(kssh.ConfigFile{TeamName: team, BotName: username, ChannelName: conf.GetChannelName()})
+		content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetDefaultTeam(), BotName: username, ChannelName: conf.GetChannelName()})
 		if err != nil {
 			return err
 		}

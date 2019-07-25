@@ -17,6 +17,7 @@ RUN useradd -ms /bin/bash user
 RUN echo "$allowed_principal" > /etc/ssh/auth_principals/user
 RUN echo 'root_everywhere' > /etc/ssh/auth_principals/root
 
+# Set up the SSH server to trust the CA key based off of the files in /etc/ssh/auth_principals/
 RUN echo "TrustedUserCAKeys /etc/ssh/ca.pub\nAuthorizedPrincipalsFile /etc/ssh/auth_principals/%u" >> /etc/ssh/sshd_config
 
 # Used in the integration tests by reading the contents of this file. See test_kssh.py
