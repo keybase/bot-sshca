@@ -61,7 +61,7 @@ func StartBot(conf config.Config) error {
 			continue
 		}
 
-		if !isConfiguredChannel(conf, msg.Message.Channel.Name) {
+		if !isConfiguredTeam(conf, msg.Message.Channel.Name) {
 			continue
 		}
 
@@ -113,13 +113,13 @@ func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessag
 	}
 }
 
-// Whether the given channel is one of the specified channels in the config
-func isConfiguredChannel(conf config.Config, channelName string) bool {
-	if conf.GetDefaultTeam() == channelName {
+// Whether the given team is one of the specified teams in the config
+func isConfiguredTeam(conf config.Config, teamName string) bool {
+	if conf.GetChatTeam() != "" && conf.GetChatTeam() == teamName {
 		return true
 	}
 	for _, team := range conf.GetTeams() {
-		if team == channelName {
+		if team == teamName {
 			return true
 		}
 	}

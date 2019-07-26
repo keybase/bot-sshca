@@ -39,10 +39,6 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 				return nil, nil, err
 			}
 
-			if conf.TeamName != team {
-				return nil, nil, fmt.Errorf("bad client config at %s, specifies incorrect team name %s", filename, conf.TeamName)
-			}
-
 			botNameToConfig[conf.BotName] = conf
 		}
 	}

@@ -1,5 +1,5 @@
 import hashlib
-import os
+import json
 import subprocess
 import time
 
@@ -7,6 +7,7 @@ import pytest
 import requests
 
 import lib
+from lib import SUBTEAM, SUBTEAM_SECONDARY, BOT_USERNAME
 
 @pytest.fixture(autouse=True)
 def run_around_tests():
@@ -15,7 +16,7 @@ def run_around_tests():
     # Calling yield triggers the test execution
     yield
 
-test_env_1_log_filename = "/keybase/team/%s.ssh.staging/ca.log" % os.environ['SUBTEAM']
+test_env_1_log_filename = "/keybase/team/%s.ssh.staging/ca.log" % SUBTEAM
 class TestEnv1:
 
     @pytest.fixture(autouse=True, scope='class')
@@ -93,21 +94,21 @@ class TestEnv1:
     @lib.simulate_two_teams
     def test_kssh_team_flag(self):
         # Test that kssh works with the --team flag
-        lib.assert_contains_hash(lib.run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+        lib.assert_contains_hash(lib.run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % SUBTEAM))
 
     @lib.outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @lib.simulate_two_teams
     def test_kssh_set_default_team(self):
         # Test that kssh works with the --set-default-team flag
-        lib.run_command("bin/kssh --set-default-team %s.ssh" % os.environ['SUBTEAM'])
+        lib.run_command("bin/kssh --set-default-team %s.ssh" % SUBTEAM)
         lib.assert_contains_hash(lib.run_command("bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     @lib.outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @lib.simulate_two_teams
     def test_kssh_override_default_team(self):
         # Test that the --team flag overrides the local config file
-        lib.run_command("bin/kssh --set-default-team %s" % os.environ['SUBTEAM_SECONDARY'])
-        lib.assert_contains_hash(lib.run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+        lib.run_command("bin/kssh --set-default-team %s" % SUBTEAM_SECONDARY)
+        lib.assert_contains_hash(lib.run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % SUBTEAM))
 
     def test_keybaseca_backup(self):
         # Test the keybaseca backup command by reading and verifying the private key stored in /mnt/cakey.backup
@@ -141,11 +142,53 @@ class TestEnv2:
         # Test ksshing into staging as user
         lib.assert_contains_hash(lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
 
+class TestEnv3:
+    @pytest.fixture(autouse=True, scope='class')
+    def configure_env(self):
+        assert requests.get("http://ca-bot:8080/load_env?filename=env-3-user-not-in-first-team").content == b"OK"
+
+    @lib.outputs_audit_log(filename="/mnt/ca.log", expected_number=3)
+    def test_kssh(self):
+        # Test ksshing which tests that it is correctly finding a client config
+        lib.clear_keys()
+        lib.assert_contains_hash(lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
+        lib.clear_keys()
+        lib.assert_contains_hash(lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
+        lib.clear_keys()
+        lib.assert_contains_hash(lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
+
+class TestEnv4:
+    @pytest.fixture(autouse=True, scope='class')
+    def configure_env(self):
+        assert requests.get("http://ca-bot:8080/load_env?filename=env-4-user-not-in-any-team").content == b"OK"
+
+    @lib.outputs_audit_log(filename="/mnt/ca.log", expected_number=0)
+    def test_kssh_no_config_files(self):
+        # Test that it can't find any config files
+        for s in ['user@sshd-staging', 'root@sshd-staging', 'user@sshd-prod', 'root@sshd-prod']:
+            try:
+                lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no %s "sha1sum /etc/unique" """ % s)
+                assert False
+            except subprocess.CalledProcessError as e:
+                assert b"Did not find any config files in KBFS" in e.output
+
+    def test_kssh_spoofed_config(self):
+        # Test that even when kssh is forced to run by a spoofed config, the CA bot ignores messages that are in the
+        # wrong channel
+        client_config = json.dumps({'teamname': f"{SUBTEAM}.ssh", "channelname": "", "botname": BOT_USERNAME})
+        lib.run_command(f"echo '{client_config}' | keybase fs write /keybase/team/{SUBTEAM}.ssh/kssh-client.config")
+        for s in ['user@sshd-staging', 'root@sshd-staging', 'user@sshd-prod', 'root@sshd-prod']:
+            try:
+                lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no %s "sha1sum /etc/unique" """ % s)
+                assert False
+            except subprocess.CalledProcessError as e:
+                assert b"Failed to get a signed key from the CA: timed out while waiting for a response from the CA" in e.output
+
 
 def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client config files stick around
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh.staging/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh.prod/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh.root_everywhere/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % os.environ['SUBTEAM_SECONDARY'])
+    lib.run_command("keybase fs rm /keybase/team/%s.ssh/kssh-client.config || true" % SUBTEAM)
+    lib.run_command("keybase fs rm /keybase/team/%s.ssh.staging/kssh-client.config || true" % SUBTEAM)
+    lib.run_command("keybase fs rm /keybase/team/%s.ssh.prod/kssh-client.config || true" % SUBTEAM)
+    lib.run_command("keybase fs rm /keybase/team/%s.ssh.root_everywhere/kssh-client.config || true" % SUBTEAM)
+    lib.run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % SUBTEAM_SECONDARY)

@@ -170,10 +170,23 @@ func writeClientConfig(conf config.Config) error {
 		return err
 	}
 
-	for _, team := range conf.GetTeams() {
+	teams := conf.GetTeams()
+	if conf.GetChatTeam() != "" {
+		// Make sure we place a client config file in the default team which may not be in the list of teams
+		teams = append(teams, conf.GetChatTeam())
+	}
+	for _, team := range teams {
 		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
 
-		content, err := json.Marshal(kssh.ConfigFile{TeamName: team, BotName: username, ChannelName: conf.GetChannelName()})
+		var content []byte
+		if conf.GetChatTeam() == "" {
+			// If they didn't configure a chat team, messages should be sent to any channel. This is done by having each
+			// client config reference the team it is found in
+			content, err = json.Marshal(kssh.ConfigFile{TeamName: team, BotName: username, ChannelName: ""})
+		} else {
+			// If they configured a chat team, have messages go there
+			content, err = json.Marshal(kssh.ConfigFile{TeamName: conf.GetChatTeam(), BotName: username, ChannelName: conf.GetChannelName()})
+		}
 		if err != nil {
 			return err
 		}

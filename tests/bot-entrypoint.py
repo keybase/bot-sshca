@@ -13,7 +13,7 @@ def load_env():
     filename = request.args.get('filename')
     path = os.path.join("tests/generated-env/", filename)
     os.system((
-        "killall keybaseca || true\n"
+        "killall keybaseca 2>&1 > /dev/null|| true\n"
         ". %s\n"
         "bin/keybaseca --wipe-all-configs\n"
         "bin/keybaseca --wipe-logs || true\n"

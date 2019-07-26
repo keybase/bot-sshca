@@ -1,0 +1,7 @@
+# Used to test the behavior of the chatbot when the user is not in any of the listed teams
+export CA_KEY_LOCATION="/mnt/keybase-ca-key"
+export KEY_EXPIRATION="+1h"
+export LOG_LOCATION="/mnt/ca.log"
+export TEAMS="$SUBTEAM.ssh.prod"
+export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
+export KEYBASE_USERNAME="$BOT_USERNAME"
