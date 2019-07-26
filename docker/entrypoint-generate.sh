@@ -10,6 +10,6 @@ sudo -i -u keybase bash << EOF
 export "FORCE_WRITE=$FORCE_WRITE"
 nohup bash -c "run_keybase -g &"
 sleep 3
-keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
-bin/keybaseca -c /mnt/keybaseca.config generate
+keybase oneshot --username $KEYBASE_USERNAME --paperkey "$KEYBASE_PAPERKEY"
+source docker/env.sh && bin/keybaseca generate
 EOF

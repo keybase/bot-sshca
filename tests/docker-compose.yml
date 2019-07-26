@@ -4,31 +4,33 @@ services:
     image: ca-bot
     container_name: ca-bot
     build:
-      context: ../..
-      dockerfile: "docker/Dockerfile-ca"
+      context: ..
+      dockerfile: "tests/Dockerfile-cabot"
     environment:
-      - PAPERKEY=${BOT_PAPERKEY}
+      - KEYBASE_PAPERKEY=${BOT_PAPERKEY}
       - KEYBASE_USERNAME=${BOT_USERNAME}
     volumes:
       - app-volume:/mnt/
     user: root
-    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/multi-environment/bot-entrypoint.sh\"'"
+    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
+    ports:
+      - 8080
   kssh:
     image: kssh
     container_name: kssh
     build:
-      context: ../..
+      context: ../
       dockerfile: "tests/Dockerfile-kssh"
     environment:
       - PAPERKEY=${KSSH_PAPERKEY}
       - KEYBASE_USERNAME=${KSSH_USERNAME}
-      - BOT_USERNAME=${BOT_USERNAME}
-      - SUBTEAM=${SUBTEAM}
-      - SUBTEAM_SECONDARY=${SUBTEAM_SECONDARY}
+      - BOT_USERNAME
+      - SUBTEAM
+      - SUBTEAM_SECONDARY
     volumes:
       - app-volume:/mnt/
     user: keybase
-    command: "bash tests/multi-environment/tester-entrypoint.sh"
+    command: "bash tests/tester-entrypoint.sh"
     depends_on:
       - sshd-staging
       - sshd-prod
@@ -37,8 +39,8 @@ services:
     image: sshd-staging
     container_name: sshd-staging
     build:
-      context: ..
-      dockerfile: "multi-environment/Dockerfile-sshd"
+      context: .
+      dockerfile: "Dockerfile-sshd"
       args:
         allowed_principal: staging
     volumes:
@@ -49,8 +51,8 @@ services:
     image: sshd-prod
     container_name: sshd-prod
     build:
-      context: ..
-      dockerfile: "multi-environment/Dockerfile-sshd"
+      context: .
+      dockerfile: "Dockerfile-sshd"
       args:
         allowed_principal: prod
     volumes:

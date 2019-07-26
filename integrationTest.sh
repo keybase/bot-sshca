@@ -3,7 +3,14 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Unit tests first
-go test ./...
+go test ./... 2>&1 | grep -v 'no test files'
+
+if [[ -f "tests/env.sh" ]]; then
+    echo "env.sh file already exists, skipping configuring new accounts..."
+else
+    python3 tests/configure-accounts.py
+fi
+
 
 # Some colors for pretty output
 RED='\033[0;31m'
@@ -17,42 +24,26 @@ reset_docker() {
     docker system prune -f
 }
 
-cd tests/single-environment/
-reset_docker
+cd tests/
 source env.sh
-cat keybaseca.config.gen | envsubst > keybaseca.config
+reset_docker
+
+mkdir -p generated-env
+ls envFiles/ | xargs -I {} -- bash -c 'cat envFiles/{} | envsubst > generated-env/{}'
+
 echo "Building containers..."
-docker-compose build 2>&1 > /dev/null
-echo "Running single-environment integration tests..."
+cd ../docker/ && make && cd ../tests/
+docker-compose build
+echo "Running integration tests..."
 docker-compose up -d
 
 docker logs kssh -f | indent
 TEST_EXIT_CODE=`docker wait kssh`
 
 if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
-  printf "${RED}Single Environment Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
+  printf "${RED}Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
 else
-  printf "${GREEN}Single Environment Mode Tests Passed${NC}\n"
-fi
-
-docker-compose stop 2>&1 > /dev/null
-docker-compose kill 2>&1 > /dev/null
-docker-compose rm -f
-
-cd ../multi-environment/
-reset_docker
-source env.sh
-cat keybaseca.config.gen | envsubst > keybaseca.config
-echo "Running multi-environment integration tests..."
-docker-compose up -d
-
-docker logs -f kssh | indent
-TEST_EXIT_CODE=`docker wait kssh`
-
-if [ -z ${TEST_EXIT_CODE+x} ] || [ "$TEST_EXIT_CODE" -ne 0 ] ; then
-  printf "${RED}Multi-Environment Tests Failed${NC} - Exit Code: $TEST_EXIT_CODE\n"
-else
-  printf "${GREEN}Multi-Environment Tests Passed${NC}\n"
+  printf "${GREEN}Tests Passed${NC}\n"
 fi
 
 docker-compose stop 2>&1 > /dev/null

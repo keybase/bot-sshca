@@ -27,11 +27,6 @@ func main() {
 	app.Usage = "An SSH CA built on top of Keybase"
 	app.Version = "0.0.1"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "config, c",
-			Value: config.DefaultConfigLocation,
-			Usage: "Load configuration from `FILE`",
-		},
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",
 			Hidden: true,
@@ -59,7 +54,7 @@ func main() {
 					return fmt.Errorf("Did not get confirmation of key export, aborting...")
 				}
 
-				conf, err := loadServerConfig(c.GlobalString("config"))
+				conf, err := loadServerConfig()
 				if err != nil {
 					return err
 				}
@@ -83,7 +78,7 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				conf, err := loadServerConfigAndWriteClientConfig(c.GlobalString("config"))
+				conf, err := loadServerConfigAndWriteClientConfig()
 				if err != nil {
 					return err
 				}
@@ -100,7 +95,7 @@ func main() {
 			Name:  "service",
 			Usage: "Start the CA service in the foreground",
 			Action: func(c *cli.Context) error {
-				conf, err := loadServerConfigAndWriteClientConfig(c.GlobalString("config"))
+				conf, err := loadServerConfigAndWriteClientConfig()
 				if err != nil {
 					return err
 				}
@@ -141,7 +136,7 @@ func main() {
 			}
 		}
 		if c.Bool("wipe-logs") {
-			conf, err := loadServerConfig(c.String("config"))
+			conf, err := loadServerConfig()
 			if err != nil {
 				return err
 			}
@@ -220,19 +215,17 @@ func captureControlCToDeleteClientConfig(conf config.Config) {
 	}()
 }
 
-func loadServerConfig(configFilename string) (config.Config, error) {
-	if _, err := os.Stat(configFilename); os.IsNotExist(err) {
-		return nil, fmt.Errorf("Config file at %s does not exist", configFilename)
-	}
-	conf, err := config.LoadConfig(configFilename)
+func loadServerConfig() (config.Config, error) {
+	conf := config.EnvConfig{}
+	err := config.ValidateConfig(conf)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse config file: %v", err)
+		return nil, fmt.Errorf("Failed to validate config: %v", err)
 	}
-	return conf, nil
+	return &conf, nil
 }
 
-func loadServerConfigAndWriteClientConfig(configFilename string) (config.Config, error) {
-	conf, err := loadServerConfig(configFilename)
+func loadServerConfigAndWriteClientConfig() (config.Config, error) {
+	conf, err := loadServerConfig()
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,9 @@
+# Tests with a decently complex config
+export CA_KEY_LOCATION="/mnt/keybase-ca-key"
+export KEY_EXPIRATION="+1h"
+export STRICT_LOGGING="true"
+export LOG_LOCATION="/keybase/team/$SUBTEAM.ssh.staging/ca.log"
+export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywhere"
+export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
+export KEYBASE_USERNAME="$BOT_USERNAME"
+export CHAT_CHANNEL="$SUBTEAM.ssh#ssh-provision"
