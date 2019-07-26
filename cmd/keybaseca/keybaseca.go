@@ -172,7 +172,7 @@ func writeClientConfig(conf config.Config) error {
 
 	teams := conf.GetTeams()
 	if conf.GetChatTeam() != "" {
-		// Make sure we place a client config file in the default team which may not be in the list of teams
+		// Make sure we place a client config file in the chat team which may not be in the list of teams
 		teams = append(teams, conf.GetChatTeam())
 	}
 	for _, team := range teams {
@@ -203,7 +203,13 @@ func writeClientConfig(conf config.Config) error {
 // Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale
 // client config files
 func deleteClientConfig(conf config.Config) error {
-	for _, team := range conf.GetTeams() {
+	teams := conf.GetTeams()
+	if conf.GetChatTeam() != "" {
+		// Make sure we delete the client config file in the chat team which may not be in the list of teams
+		teams = append(teams, conf.GetChatTeam())
+	}
+
+	for _, team := range teams {
 		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
 		err := shared.KBFSDelete(filename)
 		if err != nil {
