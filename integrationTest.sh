@@ -8,7 +8,7 @@ go test ./... 2>&1 | grep -v 'no test files'
 if [[ -f "tests/env.sh" ]]; then
     echo "env.sh file already exists, skipping configuring new accounts..."
 else
-    python3 tests/configure-accounts.py
+    python3 tests/configure_accounts.py
 fi
 
 
