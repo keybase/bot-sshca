@@ -76,6 +76,8 @@ bin/kssh user@production-server-ip      # If in {TEAM}.ssh.production
 bin/kssh root@server                    # If in {TEAM}.ssh.root_everywhere
 ```
 
+We recommend building kssh yourself and distributing it among your team. 
+
 # OS Support
 
 It is recommended to run the server component of this bot on linux and running it in other environments is untested. 
