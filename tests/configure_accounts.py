@@ -113,9 +113,9 @@ def make_user(purpose):
         print("Follow the prompts in order to create a new account...")
         home_dir = start_service()
         os.system("keybase --home %s signup --no-email" % home_dir)
-        username = input("What is the username: ")
+        username = input("Confirm your username: ")
         os.system("keybase --home %s paperkey" % home_dir)
-        paperkey = input("What is the paper key: ")
+        paperkey = input("Confirm your paper key: ")
         return User(username, paperkey)
     else:
         # Prompt them for the username and password

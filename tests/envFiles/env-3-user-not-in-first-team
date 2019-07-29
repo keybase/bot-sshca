@@ -1,5 +1,4 @@
 # Used to test the behavior of the chatbot when the user is not in the first listed team
-export CA_KEY_LOCATION="/mnt/keybase-ca-key"
 export KEY_EXPIRATION="+1h"
 export LOG_LOCATION="/mnt/ca.log"
 export TEAMS="$SUBTEAM.ssh.prod,$SUBTEAM.ssh.staging,$SUBTEAM.ssh.root_everywhere"

@@ -18,7 +18,7 @@ export TEAMS="team.ssh.prod,team.ssh.staging,team.ssh.root_everywhere"
 ### CA_KEY_LOCATION
 
 The `CA_KEY_LOCATION` environment variable configures where the CA bot will store the CA key. It is recommended to 
-ensure that the CA key is stored in a secure location. Defaults to `~/keybase-ca-key`. 
+ensure that the CA key is stored in a secure location. Defaults to `/mnt/keybase-ca-key`. 
 
 Examples:
 

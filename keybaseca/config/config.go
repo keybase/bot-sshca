@@ -128,7 +128,7 @@ func (ef *EnvConfig) GetCAKeyLocation() string {
 	if os.Getenv("CA_KEY_LOCATION") != "" {
 		return shared.ExpandPathWithTilde(os.Getenv("CA_KEY_LOCATION"))
 	}
-	return shared.ExpandPathWithTilde("~/keybase-ca-key")
+	return shared.ExpandPathWithTilde("/mnt/keybase-ca-key")
 }
 
 func (ef *EnvConfig) GetKeybaseHomeDir() string {

@@ -19,7 +19,7 @@ USER keybase
 USER root
 RUN add-apt-repository ppa:gophers/archive -y
 RUN apt-get update
-RUN apt-get install golang-1.11-go git sudo -y
+RUN apt-get install golang-1.11-go git sudo gettext -y
 USER keybase
 
 # Install go dependencies (speeds up future builds)

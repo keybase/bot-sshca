@@ -6,6 +6,11 @@ IFS=$'\n\t'
 # when keybaseca generate runs
 touch /mnt/.keep
 
+# Generate the env files that will be used for tests
+source tests/env.sh
+mkdir -p tests/generated-env
+ls tests/envFiles/ | xargs -I {} -- bash -c 'cat tests/envFiles/{} | envsubst > tests/generated-env/{}'
+
 nohup bash -c "run_keybase -g &"
 sleep 3
 keybase oneshot --username $KEYBASE_USERNAME --paperkey "$KEYBASE_PAPERKEY"

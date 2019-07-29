@@ -20,16 +20,13 @@ membership in different teams. Imagine that you have a staging environment that 
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
 up a third realm that grants root access to all machines. To configure kssh to work with this setup:
 
-1. Create three subteams: `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere`
-2. Add users to those three teams based off of the permissions you want to grant different users
-
 On a secured server that you wish to use to run the CA chatbot:
 
 ```bash
 git clone git@github.com:keybase/bot-sshca.git
 cd bot-sshca/docker/
 cp env.sh.example env.sh
-keybase signup      # Follow the prompts to create a new Keybase users to use for the SSH CA bot
+keybase signup      # Creates a new Keybase user to use for the SSH CA bot
 keybase paperkey    # Generate a new paper key
 # Create `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere` as new Keybase subteams
 # and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
@@ -42,7 +39,7 @@ This will output the public key for the CA.
 
 For each server in staging:
 
-0. Create a user named `user`
+0. Create a user named `user` to use for non-root logins (`useradd user`)
 1. Place the public key in `/etc/ssh/ca.pub` 
 2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
 3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
@@ -52,7 +49,7 @@ For each server in staging:
 
 For each server in production:
 
-0. Create a user named `user`
+0. Create a user named `user` to use for non-root logins (`useradd user`)
 1. Place the public key in `/etc/ssh/ca.pub` 
 2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
 3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
