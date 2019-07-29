@@ -1,6 +1,7 @@
 package sshutils
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -98,8 +99,6 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 		"-N", "", // No password on the key
 		shared.KeyPathToPubKey(tempFilename), // The location of where to put the key
 	)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
 	err = cmd.Run()
 	if err != nil {
 		return
@@ -140,18 +139,44 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	return strings.Join(principals, ","), nil
 }
 
-// Get the members of the given team
+type ListMembersOutput struct {
+	Members ListMembersOutputMembers `json:"members"`
+}
+
+type ListMembersOutputMembers struct {
+	Owners  []ListMembersOutputMembersCategory `json:"owners"`
+	Admins  []ListMembersOutputMembersCategory `json:"admins"`
+	Writers []ListMembersOutputMembersCategory `json:"writers"`
+}
+
+type ListMembersOutputMembersCategory struct {
+	Username string `json:"username"`
+}
+
+// Get the members of the given team. Note that this function is a security boundary since if it was bypassed an
+// attacker would be able to provision SSH keys for environments that they should not have access to.
 func getMembers(team string) ([]string, error) {
-	cmd := exec.Command("keybase", "team", "list-members", team)
+	cmd := exec.Command("keybase", "team", "list-members", "-j", team)
 	data, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
+
+	jsonBody := ListMembersOutput{}
+	err = json.Unmarshal(data, &jsonBody)
+	if err != nil {
+		return nil, err
+	}
+
 	var users []string
-	for _, line := range strings.Split(string(data), "\n") {
-		if strings.Contains(line, "writer") || strings.Contains(line, "admin") {
-			users = append(users, strings.Fields(line)[2])
-		}
+	for _, j := range jsonBody.Members.Owners {
+		users = append(users, j.Username)
+	}
+	for _, j := range jsonBody.Members.Admins {
+		users = append(users, j.Username)
+	}
+	for _, j := range jsonBody.Members.Writers {
+		users = append(users, j.Username)
 	}
 	return users, nil
 }

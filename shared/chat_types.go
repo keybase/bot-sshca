@@ -48,5 +48,16 @@ func ParseSignatureResponse(body string) (SignatureResponse, error) {
 	return sr, err
 }
 
-var AckRequest = "AckRequest"
-var Ack = "Ack"
+func GenerateAckRequest(username string) string {
+	return "AckRequest--" + username
+}
+
+func GenerateAckResponse(ackRequest string) string {
+	return strings.Replace(ackRequest, "AckRequest", "Ack", 1)
+}
+func IsAckRequest(msg string) bool {
+	return strings.HasPrefix(msg, "AckRequest--")
+}
+func IsAckResponse(msg string) bool {
+	return strings.HasPrefix(msg, "Ack--")
+}

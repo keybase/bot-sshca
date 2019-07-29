@@ -10,6 +10,7 @@ import (
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 
+// Get a signed SSH key from interacting with the CA chatbot
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
 
@@ -41,7 +42,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			default:
 
 			}
-			err = kbc.SendMessageByTeamName(config.TeamName, shared.AckRequest, getChannel(config))
+			err = kbc.SendMessageByTeamName(config.TeamName, shared.GenerateAckRequest(kbc.GetUsername()), getChannel(config))
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)
 			}
@@ -50,7 +51,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		}
 	}()
 
-	fmt.Println("Waiting for a response from the CA....")
+	fmt.Println("Requesting signature from the CA....")
 	hasBeenAcked := false
 	startTime := time.Now()
 	for {
@@ -72,7 +73,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 
 		messageBody := msg.Message.Content.Text.Body
 
-		if messageBody == shared.Ack && !hasBeenAcked {
+		if shared.IsAckResponse(messageBody) && !hasBeenAcked {
 			// We got an Ack so we terminate our AckRequests and send the real payload
 			hasBeenAcked = true
 			terminateRoutineCh <- true
@@ -85,7 +86,6 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 				return empty, err
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureResponsePreamble) {
-			fmt.Println("Got a response from the CA!")
 			resp, err := shared.ParseSignatureResponse(messageBody)
 			if err != nil {
 				fmt.Printf("Failed to parse a message from the bot: %s\n", messageBody)
@@ -97,6 +97,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 				// someone else's signature request
 				continue
 			}
+			fmt.Println("Received signature from the CA!")
 			return resp, nil
 		}
 	}

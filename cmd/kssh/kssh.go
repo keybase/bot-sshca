@@ -74,8 +74,31 @@ func getSignedKeyLocation(team string) (string, error) {
 
 var cliArguments = []kssh.CLIArgument{
 	{Name: "--set-default-team", HasArgument: true},
+	{Name: "--clear-default-team", HasArgument: false},
 	{Name: "--team", HasArgument: true},
 	{Name: "--provision", HasArgument: false},
+	{Name: "--help", HasArgument: false},
+}
+
+func generateHelpPage() string {
+	return fmt.Sprintf(`NAME:
+   kssh - A replacement ssh binary using Keybase SSH CA to provision SSH keys
+
+USAGE:
+   kssh [kssh options] [ssh arguments...]
+
+VERSION:
+   0.0.1
+
+GLOBAL OPTIONS:
+   --help,               Show help
+   --provision           Provision a new SSH key and add it to the ssh-agent. Useful if you need to run another 
+                         program that uses SSH auth (eg scp, rsync, etc)
+   --set-default-team    Set the default team to be used for kssh. Not necessary if you are only in one team that
+                         is using Keybase SSH CA
+   --clear-default-team  Clear the default team
+   --team                Specify a specific team to be used for kssh. Not necessary if you are only in one team that
+                         is using Keybase SSH CA`)
 }
 
 type Action int
@@ -86,6 +109,7 @@ const (
 )
 
 // Returns team, remaining arguments, action, error
+// If the argumnent requires exiting after processing, it will call os.Exit
 func handleArgs(args []string) (string, []string, Action, error) {
 	remaining, found, err := kssh.ParseArgs(args, cliArguments)
 	if err != nil {
@@ -102,14 +126,27 @@ func handleArgs(args []string) (string, []string, Action, error) {
 			// We exit immediately after setting the default team
 			err := kssh.SetDefaultTeam(arg.Value)
 			if err != nil {
-				fmt.Printf("Failed to set the default team: %v", err)
+				fmt.Printf("Failed to set the default team: %v\n", err)
 				os.Exit(1)
 			}
 			fmt.Println("Set default team, exiting...")
 			os.Exit(0)
 		}
+		if arg.Argument.Name == "--clear-default-team" {
+			err := kssh.SetDefaultTeam("")
+			if err != nil {
+				fmt.Printf("Failed to clear the default team: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Cleared default team, exiting...")
+			os.Exit(0)
+		}
 		if arg.Argument.Name == "--provision" {
 			action = Provision
+		}
+		if arg.Argument.Name == "--help" {
+			fmt.Println(generateHelpPage())
+			os.Exit(0)
 		}
 	}
 	return team, remaining, action, nil
@@ -136,7 +173,7 @@ func getConfig(team string) (kssh.ConfigFile, error) {
 	if defaultTeam != "" {
 		conf, err := kssh.LoadConfig(fmt.Sprintf("/keybase/team/%s/%s", defaultTeam, shared.ConfigFilename))
 		if err != nil {
-			return empty, fmt.Errorf("Failed to load config file for team=%s: %v", defaultTeam, err)
+			return empty, fmt.Errorf("Failed to load config file for default team=%s: %v", defaultTeam, err)
 		}
 		return conf, nil
 	}
@@ -185,6 +222,7 @@ func isValidCert(keyPath string) bool {
 
 // Provision a new signed SSH key with the given config
 func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
+	fmt.Println("Generating a new SSH key...")
 	err := sshutils.GenerateNewSSHKey(keyPath, true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new SSH key: %v", err)
@@ -217,6 +255,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 
 // Run SSH with the given key. Calls os.Exit if SSH returns
 func runSSHWithKey(keyPath string, remainingArgs []string) {
+	fmt.Printf("\n") // a new line to separate kssh output from ssh output
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
 	argumentList = append(argumentList, remainingArgs...)
 

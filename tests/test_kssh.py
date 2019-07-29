@@ -1,3 +1,8 @@
+"""
+This file contains all of the integration tests for the CA bot and kssh. Each class defines integration tests that run
+with a specific set of config options for keybaseca
+"""
+
 import hashlib
 import json
 import subprocess
@@ -18,7 +23,6 @@ def run_around_tests():
 
 test_env_1_log_filename = "/keybase/team/%s.ssh.staging/ca.log" % SUBTEAM
 class TestEnv1:
-
     @pytest.fixture(autouse=True, scope='class')
     def configure_env(self):
         assert requests.get("http://ca-bot:8080/load_env?filename=env-1-simple-tests").content == b"OK"

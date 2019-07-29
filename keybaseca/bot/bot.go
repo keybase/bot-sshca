@@ -14,6 +14,7 @@ import (
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 
+// Get a running instance of the keybase chat API. Will use the configured credentials if necessary.
 func GetKBChat(conf config.Config) (*kbchat.API, error) {
 	runOptions := kbchat.RunOptions{}
 	if conf.GetKeybaseHomeDir() != "" {
@@ -61,15 +62,18 @@ func StartBot(conf config.Config) error {
 			continue
 		}
 
-		if !isConfiguredTeam(conf, msg.Message.Channel.Name) {
+		// Note that this line is one of the main security barriers around the SSH bot. If this line were removed
+		// or had a bug, it would cause the SSH bot to respond to any SignatureRequest messages in any channels. This
+		// would allow an attacker to provision SSH keys even though they are not in the listed channels.
+		if !isConfiguredTeam(conf, msg.Message.Channel.Name, msg.Message.Channel.TopicName) {
 			continue
 		}
 
 		messageBody := msg.Message.Content.Text.Body
 
-		if messageBody == shared.AckRequest {
+		if shared.IsAckRequest(messageBody) {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
-			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.Ack)
+			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
@@ -113,11 +117,13 @@ func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessag
 	}
 }
 
-// Whether the given team is one of the specified teams in the config
-func isConfiguredTeam(conf config.Config, teamName string) bool {
-	if conf.GetChatTeam() != "" && conf.GetChatTeam() == teamName {
-		return true
+// Whether the given team is one of the specified teams in the config. Note that this function is a security boundary
+// since it ensures that bots will not respond to messages outside of the configured teams.
+func isConfiguredTeam(conf config.Config, teamName string, channelName string) bool {
+	if conf.GetChatTeam() != "" {
+		return conf.GetChatTeam() == teamName && conf.GetChannelName() == channelName
 	}
+	// If they didn't specify a chat team/channel, we just check whether the message was in one of the listed teams
 	for _, team := range conf.GetTeams() {
 		if team == teamName {
 			return true

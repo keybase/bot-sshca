@@ -11,7 +11,7 @@ import (
 	"github.com/keybase/bot-ssh-ca/shared"
 )
 
-// Represents a loaded config for keybaseca
+// Represents a loaded and validated config for keybaseca
 type Config interface {
 	GetCAKeyLocation() string
 	GetKeybaseHomeDir() string
@@ -182,7 +182,7 @@ func (ef *EnvConfig) GetChatTeam() string {
 	if ef.getChatChannel() == "" {
 		return ""
 	}
-	team, _, err := splitTeamChannel(os.Getenv("CHAT_CHANNEL"))
+	team, _, err := splitTeamChannel(ef.getChatChannel())
 	if err != nil {
 		panic("Failed to retrieve chat team! This should never happen due to config validation...")
 	}

@@ -40,34 +40,9 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:  "backup",
-			Usage: "Print the current CA private key to stdout for backup purposes",
-			Action: func(c *cli.Context) error {
-				fmt.Println("Are you sure you want to export the CA private key? If this key is compromised, an " +
-					"attacker could access every server that you have configured with this bot. Type \"yes\" to confirm.")
-				var response string
-				_, err := fmt.Scanln(&response)
-				if err != nil {
-					return err
-				}
-				if response != "yes" {
-					return fmt.Errorf("Did not get confirmation of key export, aborting...")
-				}
-
-				conf, err := loadServerConfig()
-				if err != nil {
-					return err
-				}
-				bytes, err := ioutil.ReadFile(conf.GetCAKeyLocation())
-				if err != nil {
-					return fmt.Errorf("Failed to load the CA key from %s: %v", conf.GetCAKeyLocation(), err)
-				}
-				klog.Log(conf, "Exported CA key to stdout")
-				fmt.Println("\nKeep this key somewhere very safe. We recommend keeping a physical copy of it in a secure place.")
-				fmt.Println("")
-				fmt.Println(string(bytes))
-				return nil
-			},
+			Name:   "backup",
+			Usage:  "Print the current CA private key to stdout for backup purposes",
+			Action: backupAction,
 		},
 		{
 			Name:  "generate",
@@ -77,93 +52,128 @@ func main() {
 					Name: "overwrite-existing-key",
 				},
 			},
-			Action: func(c *cli.Context) error {
-				conf, err := loadServerConfigAndWriteClientConfig()
-				if err != nil {
-					return err
-				}
-				captureControlCToDeleteClientConfig(conf)
-				defer deleteClientConfig(conf)
-				err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true", true)
-				if err != nil {
-					return fmt.Errorf("Failed to generate a new key: %v", err)
-				}
-				return nil
-			},
+			Action: generateAction,
 		},
 		{
-			Name:  "service",
-			Usage: "Start the CA service in the foreground",
-			Action: func(c *cli.Context) error {
-				conf, err := loadServerConfigAndWriteClientConfig()
-				if err != nil {
-					return err
-				}
-				captureControlCToDeleteClientConfig(conf)
-				defer deleteClientConfig(conf)
-				err = bot.StartBot(conf)
-				if err != nil {
-					return fmt.Errorf("CA chatbot crashed: %v", err)
-				}
-				return nil
-			},
-			Flags: []cli.Flag{},
+			Name:   "service",
+			Usage:  "Start the CA service in the foreground",
+			Action: serviceAction,
 		},
 	}
-	app.Action = func(c *cli.Context) error {
-		if c.Bool("wipe-all-configs") {
-			teams, err := shared.KBFSList("/keybase/team/")
-			if err != nil {
-				return err
-			}
-
-			semaphore := make(chan interface{}, len(teams))
-			for _, team := range teams {
-				go func(team string) {
-					filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
-					exists, _ := shared.KBFSFileExists(filename)
-					if exists {
-						err = shared.KBFSDelete(filename)
-						if err != nil {
-							fmt.Printf("%v\n", err)
-						}
-					}
-					semaphore <- 0
-				}(team)
-			}
-			for i := 0; i < len(teams); i++ {
-				<-semaphore
-			}
-		}
-		if c.Bool("wipe-logs") {
-			conf, err := loadServerConfig()
-			if err != nil {
-				return err
-			}
-			logLocation := conf.GetLogLocation()
-			if strings.HasPrefix(logLocation, "/keybase/") {
-				err = shared.KBFSDelete(logLocation)
-				if err != nil {
-					return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
-				}
-			} else {
-				err = os.Remove(logLocation)
-				if err != nil {
-					return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
-				}
-			}
-			fmt.Println("Wiped existing log file at " + logLocation)
-		}
-		return nil
-	}
+	app.Action = mainAction
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// Write a kssh config file to /keybase/team/teamname.ssh/kssh-client.config. kssh will automatically pick up
-// and use this config
+// The action for the `keybaseca backup` subcommand
+func backupAction(c *cli.Context) error {
+	fmt.Println("Are you sure you want to export the CA private key? If this key is compromised, an " +
+		"attacker could access every server that you have configured with this bot. Type \"yes\" to confirm.")
+	var response string
+	_, err := fmt.Scanln(&response)
+	if err != nil {
+		return err
+	}
+	if response != "yes" {
+		return fmt.Errorf("Did not get confirmation of key export, aborting...")
+	}
+
+	conf, err := loadServerConfig()
+	if err != nil {
+		return err
+	}
+	bytes, err := ioutil.ReadFile(conf.GetCAKeyLocation())
+	if err != nil {
+		return fmt.Errorf("Failed to load the CA key from %s: %v", conf.GetCAKeyLocation(), err)
+	}
+	klog.Log(conf, "Exported CA key to stdout")
+	fmt.Println("\nKeep this key somewhere very safe. We recommend keeping a physical copy of it in a secure place.")
+	fmt.Println("")
+	fmt.Println(string(bytes))
+	return nil
+}
+
+// The action for the `keybaseca generate` subcommand
+func generateAction(c *cli.Context) error {
+	conf, err := loadServerConfigAndWriteClientConfig()
+	if err != nil {
+		return err
+	}
+	captureControlCToDeleteClientConfig(conf)
+	defer deleteClientConfig(conf)
+	err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true", true)
+	if err != nil {
+		return fmt.Errorf("Failed to generate a new key: %v", err)
+	}
+	return nil
+}
+
+// The action for the `keybaseca service` subcommand
+func serviceAction(c *cli.Context) error {
+	conf, err := loadServerConfigAndWriteClientConfig()
+	if err != nil {
+		return err
+	}
+	captureControlCToDeleteClientConfig(conf)
+	defer deleteClientConfig(conf)
+	err = bot.StartBot(conf)
+	if err != nil {
+		return fmt.Errorf("CA chatbot crashed: %v", err)
+	}
+	return nil
+}
+
+// The action for the `keybaseca` command. Only used for hidden and unlisted flags.
+func mainAction(c *cli.Context) error {
+	if c.Bool("wipe-all-configs") {
+		teams, err := shared.KBFSList("/keybase/team/")
+		if err != nil {
+			return err
+		}
+
+		semaphore := make(chan interface{}, len(teams))
+		for _, team := range teams {
+			go func(team string) {
+				filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
+				exists, _ := shared.KBFSFileExists(filename)
+				if exists {
+					err = shared.KBFSDelete(filename)
+					if err != nil {
+						fmt.Printf("%v\n", err)
+					}
+				}
+				semaphore <- 0
+			}(team)
+		}
+		for i := 0; i < len(teams); i++ {
+			<-semaphore
+		}
+	}
+	if c.Bool("wipe-logs") {
+		conf, err := loadServerConfig()
+		if err != nil {
+			return err
+		}
+		logLocation := conf.GetLogLocation()
+		if strings.HasPrefix(logLocation, "/keybase/") {
+			err = shared.KBFSDelete(logLocation)
+			if err != nil {
+				return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
+			}
+		} else {
+			err = os.Remove(logLocation)
+			if err != nil {
+				return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
+			}
+		}
+		fmt.Println("Wiped existing log file at " + logLocation)
+	}
+	return nil
+}
+
+// Write a kssh config file such that kssh will find it and use it
 func writeClientConfig(conf config.Config) error {
 	username, err := bot.GetUsername(conf)
 	if err != nil {
@@ -219,6 +229,9 @@ func deleteClientConfig(conf config.Config) error {
 	return nil
 }
 
+// Set up a signal handler in order to catch SIGTERMS that will delete all client config files
+// when it receives a sigterm. This ensures that a simple Control-C does not create stale
+// client config files
 func captureControlCToDeleteClientConfig(conf config.Config) {
 	signalChan := make(chan os.Signal)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
@@ -234,6 +247,7 @@ func captureControlCToDeleteClientConfig(conf config.Config) {
 	}()
 }
 
+// Load and validate a server config object from the environment
 func loadServerConfig() (config.Config, error) {
 	conf := config.EnvConfig{}
 	err := config.ValidateConfig(conf)

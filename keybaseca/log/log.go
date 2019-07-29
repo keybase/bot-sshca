@@ -13,15 +13,17 @@ import (
 // Log attempts to log the given string to a file. If conf.GetStrictLogging() it will panic if it fails
 // to log to the file. If conf.GetStrictLogging() is false, it may silently fail
 func Log(conf config.Config, str string) {
+	strWithTs := fmt.Sprintf("[%s] %s", time.Now().String(), str)
+
 	if conf.GetLogLocation() == "" {
-		fmt.Println(str)
+		fmt.Print(strWithTs)
 	} else {
-		err := appendToFile(conf.GetLogLocation(), fmt.Sprintf("[%s] %s\n", time.Now().String(), str))
+		err := appendToFile(conf.GetLogLocation(), strWithTs)
 		if err != nil {
 			if conf.GetStrictLogging() {
-				panic(fmt.Errorf("Failed to log '%s' to %s: %v", str, conf.GetLogLocation(), err))
+				panic(fmt.Errorf("Failed to log '%s' to %s: %v", strings.TrimSpace(strWithTs), conf.GetLogLocation(), err))
 			} else {
-				fmt.Printf("Failed to log '%s' to %s: %v\n", str, conf.GetLogLocation(), err)
+				fmt.Printf("Failed to log '%s' to %s: %v\n", strings.TrimSpace(strWithTs), conf.GetLogLocation(), err)
 			}
 		}
 	}
