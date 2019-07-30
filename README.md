@@ -18,7 +18,10 @@ deployed on the server.
 kssh allows you to define realms of servers where access is granted based off of 
 membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
-up a third realm that grants root access to all machines. To configure kssh to work with this setup:
+up a third realm that grants root access to all machines. To configure kssh to work with this setup, we will set it up 
+according to this diagram:
+
+![Alt text](docs/Architecture Diagram.png?raw=true "Architecture Diagram")
 
 On a secured server that you wish to use to run the CA chatbot:
 
@@ -35,45 +38,39 @@ nano env.sh         # Fill in the values including the previously generated pape
 make generate
 ```
 
-This will output the public key for the CA. 
+This will output a list of steps to run on each server you wish to use with the CA chatbot. Run 
+these commands. 
 
-For each server in staging:
+Now you must define a mapping between Keybase teams the users and servers that they are
+allowed to access. If you wish to make the user foo available to anyone in team.ssh.bar,
+create the file `/etc/ssh/auth_principals/foo` with contents `bar`. 
 
-0. Create a user named `user` to use for non-root logins (`useradd user`)
-1. Place the public key in `/etc/ssh/ca.pub` 
-2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
-3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
-4. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
-5. Create the file `/etc/ssh/auth_principals/user` with contents `staging`
-6. Restart ssh `service ssh restart`
+More concretely following the current example setup:
 
-For each server in production:
+* For each server in your staging environment:
+  1. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
+  2. Create the file `/etc/ssh/auth_principals/user` with contents `staging`
+* For each server in your production environment:
+  1. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
+  2. Create the file `/etc/ssh/auth_principals/user` with contents `production`
 
-0. Create a user named `user` to use for non-root logins (`useradd user`)
-1. Place the public key in `/etc/ssh/ca.pub` 
-2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
-3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
-4. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
-5. Create the file `/etc/ssh/auth_principals/user` with contents `production`
-6. Restart ssh `service ssh restart`
-
-Now start the chatbot itself:
+Now on the server where you wish to run the chatbot, start the chatbot itself:
 
 ```bash
 make serve
 ```
 
-Now build kssh and start SSHing!
+Now build the kssh binary and start SSHing!
 
 ```bash
 go build -o bin/kssh cmd/kssh/kssh.go
-sudo cp bin/kssh /usr/local/bin/        # Optional
-bin/kssh user@staging-server-ip         # If in {TEAM}.ssh.staging
-bin/kssh user@production-server-ip      # If in {TEAM}.ssh.production
-bin/kssh root@server                    # If in {TEAM}.ssh.root_everywhere
+sudo cp bin/kssh /usr/local/bin/        # Optional but recommended
+kssh user@staging-server-ip             # If in {TEAM}.ssh.staging
+kssh user@production-server-ip          # If in {TEAM}.ssh.production
+kssh root@server                        # If in {TEAM}.ssh.root_everywhere
 ```
 
-We recommend building kssh yourself and distributing it among your team. 
+We recommend building kssh yourself and distributing the binary among your team (perhaps in Keybase Files!). 
 
 # OS Support
 
@@ -144,7 +141,7 @@ GLOBAL OPTIONS:
 
 #### Config
 
-Keybaseca is configured using environment variables (see env.md for information on all of the options). When keybaseca 
+Keybaseca is configured using environment variables (see docs/env.md for information on all of the options). When keybaseca 
 starts, it writes a client config file to `/keybase/team/{teamname for teamname in $TEAMS}/kssh-client.config`. This 
 client config file is how kssh determines which teams are using kssh and the needed information about the bot (eg the
 channel name, the name of the bot, etc). When keybaseca stops, it deletes the client config file. 
