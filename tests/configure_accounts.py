@@ -102,26 +102,29 @@ def make_user(purpose):
     Prompts the user via stdout and stderr in order to either create a new user or use an existing user
     :return: A User object
     """
-    answer = input("Would you like to create a new user to use for %s? [y/n] " % purpose).lower()
+    answer = input("TEST SETUP - Would you like to create a new user (or do you already have one with a paperkey) to use for ** %s **? [y/n] " % purpose).lower()
     if answer not in ["y", "n"]:
-        print("Invalid answer %s" % repr(answer))
+        print("TEST SETUP - Invalid answer %s" % repr(answer))
         return make_user(purpose)
     if answer == "y":
         # Guide them through making a new user
-        print("Follow the prompts in order to create a new account...")
+        print("TEST SETUP - Follow the prompts in order to create a new account...")
         home_dir = start_service()
+        example_username = "ssh" + secure_random_str(8)
+        print("TEST SETUP - we recommend the username %s" % example_username)
         os.system("keybase --home %s signup --no-email" % home_dir)
-        username = input("What is the username: ")
+        username = input("TEST SETUP - What is the username: ")
         os.system("keybase --home %s paperkey" % home_dir)
-        paperkey = input("What is the paper key: ")
+        paperkey = input("TEST SETUP - What is the paper key: ")
         return User(username, paperkey)
     else:
         # Prompt them for the username and password
-        username = input("What is the username: ")
-        paperkey = input("What is the paper key: ")
+        username = input("TEST SETUP - What is the username: ")
+        paperkey = input("TEST SETUP - What is the paper key: ")
         return User(username, paperkey)
 
 if __name__ == '__main__':
+    print("TEST SETUP - We need to do some one-time test setup.")
     ca_user = make_user("the CA bot")
     kssh_user = make_user("the kssh tester")
 
