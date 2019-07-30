@@ -49,7 +49,7 @@ class TestEnv1:
 
     @lib.outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     def test_kssh_reuse(self):
-        # Test that kssh reuses expired keys
+        # Test that kssh reuses unexpired keys
         lib.assert_contains_hash(lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
         start = time.time()
         lib.assert_contains_hash(lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
