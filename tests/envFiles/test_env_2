@@ -1,4 +1,4 @@
-# Used to test sending the audit log to KBFS
+# Used to test sending the audit log to the normal filesystem
 export CA_KEY_LOCATION="/mnt/keybase-ca-key"
 export KEY_EXPIRATION="+1h"
 export LOG_LOCATION="/mnt/ca.log"

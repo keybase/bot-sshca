@@ -1,12 +1,11 @@
 import pytest
-import requests
 
-from lib import assert_contains_hash, outputs_audit_log, run_command
+from lib import assert_contains_hash, load_env, outputs_audit_log, run_command
 
 class TestEnv2:
     @pytest.fixture(autouse=True, scope='class')
     def configure_env(self):
-        assert requests.get("http://ca-bot:8080/load_env?filename=env-2-log-to-fs").content == b"OK"
+        assert load_env(__file__)
 
     @outputs_audit_log(filename="/mnt/ca.log", expected_number=1)
     def test_kssh(self):

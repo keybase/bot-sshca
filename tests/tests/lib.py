@@ -3,6 +3,8 @@ import os
 import subprocess
 import time
 
+import requests
+
 def run_command(cmd):
     return subprocess.check_output(cmd, shell=True)
 
@@ -75,6 +77,11 @@ def outputs_audit_log(filename, expected_number):
             return ret
         return inner
     return decorator
+
+def load_env(filename):
+    # Load the environment based off of the given filename which is the path to the python test script
+    env_name = os.path.basename(filename).split(".")[0]
+    return requests.get("http://ca-bot:8080/load_env?filename=%s" % env_name).content == b"OK"
 
 # "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
 # and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to

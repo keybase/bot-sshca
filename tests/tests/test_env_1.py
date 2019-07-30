@@ -4,17 +4,15 @@ import subprocess
 import time
 
 import pytest
-import requests
 
-from lib import assert_contains_hash, EXPECTED_HASH, outputs_audit_log, run_command, simulate_two_teams
-import lib
+from lib import assert_contains_hash, EXPECTED_HASH, load_env, outputs_audit_log, run_command, simulate_two_teams
 
 test_env_1_log_filename = "/keybase/team/%s.ssh.staging/ca.log" % os.environ['SUBTEAM']
 class TestEnv1:
 
     @pytest.fixture(autouse=True, scope='class')
     def configure_env(self):
-        assert requests.get("http://ca-bot:8080/load_env?filename=env-1-integration-tests").content == b"OK"
+        assert load_env(__file__)
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     def test_kssh_staging_user(self):
@@ -53,7 +51,6 @@ class TestEnv1:
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     def test_kssh_regenerate_expired_keys(self):
         # Test that kssh reprovisions a key when the stored keys are expired
-        run_command("ls ~/")
         run_command("mv ~/tests/testFiles/expired ~/.ssh/keybase-signed-key-- && mv ~/tests/testFiles/expired.pub ~/.ssh/keybase-signed-key--.pub && mv ~/tests/testFiles/expired-cert.pub ~/.ssh/keybase-signed-key---cert.pub")
         assert_contains_hash(run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
 
