@@ -73,7 +73,7 @@ func validateChannel(conf Config, teamName string, channelName string) error {
 		if channel == channelName {
 			// The channel does exist, but the bot may or may not be in it. So join the channel in order to ensure
 			// the bot will receive chat events from it
-			err := api.JoinChannel(teamName, channelName)
+			_, err := api.JoinChannel(teamName, channelName)
 			if err != nil {
 				return fmt.Errorf("failed to join bot to the configured channel: %v", err)
 			}

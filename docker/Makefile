@@ -16,11 +16,13 @@ build: reset-permissions
 # Generate a new CA key
 generate: build
 	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
-	@echo "In order to make a server accessible via the SSH CA bot, you must now add entries to the correct authorized_keys "
-	@echo "files. An entry in an authorized keys file lists which Keybase teams are allowed to access it. For example, "
-	@echo "placing the below line in /home/david/.ssh/authorized_keys would allow people in team.ssh.david_only to log in as david"
-	@echo ""
-	@echo "cert-authority,principals=\"team.ssh.david_only\" `cat $(CURDIR)/../example-keybaseca-volume/keybase-ca-key.pub`"
+	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
+	@echo "useradd user   # The user that will be used for non-root logins"
+	@echo "echo \"`cat $(CURDIR)/../example-keybaseca-volume/keybase-ca-key.pub`\" > /etc/ssh/ca.pub"
+	@echo "echo \"TrustedUserCAKeys /etc/ssh/ca.pub\" >> /etc/ssh/sshd_config"
+	@echo "echo \"AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u\" >> /etc/ssh/sshd_config"
+	@echo "service ssh restart"
+	@echo -e "\nSee the README for information on how to define which teams are allowed to access which servers"
 
 serve: build
 	source env.sh && docker run -d --restart unless-stopped -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh

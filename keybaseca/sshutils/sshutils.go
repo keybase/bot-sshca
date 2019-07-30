@@ -120,46 +120,44 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 	return shared.SignatureResponse{SignedKey: string(data), UUID: sr.UUID}, nil
 }
 
-// Get the principals that should be placed in the signed certificate
+// Get the principals that should be placed in the signed certificate.
+// Note that this function is a security boundary since if it was bypassed an
+// attacker would be able to provision SSH keys for environments that they should not have access to.
 func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, error) {
-	// Iterate through the teams in the config file and use the last portion of the subteam as the principal
+	// Start by getting the list of teams the user is in
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve the list of teams the user is in: %v", err)
+	}
+	results, err := api.ListUserMemberships(sr.Username)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve the list of teams the user is in: %v", err)
+	}
+
+	// Maps from a team to whether or not the user is in the current team (with writer, admin, or owner permissions)
+	teamToMembership := make(map[string]bool)
+	for _, result := range results {
+		// Sadly result.Role is an integer and this is all we're given. Let's hope no one ever changes this enum out
+		// from underneath us. Admittedly, the worst that could (should) happen is that someone with minimal permissions
+		// in a team is given access (eg a reader) which wouldn't lead to a complete compromise since an attacker
+		// would still have to be added as a reader first.
+		//
+		// result.Role == 4 --> owner
+		// result.Role == 3 --> admin
+		// result.Role == 2 --> writer
+		if result.Role == 4 || result.Role == 3 || result.Role == 2 {
+			teamToMembership[result.TeamName] = true
+		}
+	}
+
+	// Iterate through the teams in the config file and use the subteam as the principal
 	// if the user is in that subteam
 	var principals []string
 	for _, team := range conf.GetTeams() {
-		members, err := getMembers(conf, team)
-		if err != nil {
-			return "", err
-		}
-		for _, member := range members {
-			if member == sr.Username {
-				principals = append(principals, team)
-			}
+		result, ok := teamToMembership[team]
+		if ok && result {
+			principals = append(principals, team)
 		}
 	}
 	return strings.Join(principals, ","), nil
-}
-
-// Get the members of the given team. Note that this function is a security boundary since if it was bypassed an
-// attacker would be able to provision SSH keys for environments that they should not have access to.
-func getMembers(conf config.Config, team string) ([]string, error) {
-	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
-	if err != nil {
-		return nil, err
-	}
-	result, err := api.ListMembersOfTeam(team)
-	if err != nil {
-		return nil, err
-	}
-	users := []string{}
-	for _, member := range result.Owners {
-		users = append(users, member.Username)
-	}
-	for _, member := range result.Admins {
-		users = append(users, member.Username)
-	}
-	for _, member := range result.Writers {
-		users = append(users, member.Username)
-	}
-	// Read only users are not listed since they shouldn't be issued SSH keys
-	return users, nil
 }

@@ -2,8 +2,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/keybase/go-keybase-chat-bot v0.0.0-20190730175146-5efa6a3480b0 h1:KxXVvIUAGFbLcfuZ4pM/61qmftaQm03ILpJIOxUO964=
-github.com/keybase/go-keybase-chat-bot v0.0.0-20190730175146-5efa6a3480b0/go.mod h1:vNc28YFzigVJod0j5EbuTtRIe7swx8vodh2yA4jZ2s8=
+github.com/keybase/go-keybase-chat-bot v0.0.0-20190730220753-8e3930228e5a h1:gZKAzUClAbcGN8rEIUkqG9vXu5g9w+qLD1gA68qOX2Y=
+github.com/keybase/go-keybase-chat-bot v0.0.0-20190730220753-8e3930228e5a/go.mod h1:vNc28YFzigVJod0j5EbuTtRIe7swx8vodh2yA4jZ2s8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
