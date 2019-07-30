@@ -32,4 +32,5 @@ confirm-clean:
 
 # Reset the permissions on the shared volume. Sudo since the permissions get messed up from the docker container chown-ing it
 reset-permissions:
-	sudo chown -R $$USER ../example-keybaseca-volume/
+	# Avoid prompting for sudo unless the permissions actually need to be chnaged by piping find to xargs
+	find ../example-keybaseca-volume/ -not -user $$USER | xargs -I {} -- sudo chown -R $$USER {}
