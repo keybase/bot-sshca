@@ -57,8 +57,8 @@ def outputs_audit_log(filename, expected_number):
             # Then run the function
             ret = func(*args, **kwargs)
 
-            # And sleep for 1 second to give KBFS some time
-            time.sleep(1)
+            # And sleep to give KBFS some time
+            time.sleep(1.5)
 
             # Then see if there are new lines using set difference. This is only safe/reasonable since we include a
             # timestamp in audit log lines.
