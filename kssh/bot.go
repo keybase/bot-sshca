@@ -42,7 +42,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			default:
 
 			}
-			err = kbc.SendMessageByTeamName(config.TeamName, shared.GenerateAckRequest(kbc.GetUsername()), getChannel(config))
+			_, err = kbc.SendMessageByTeamName(config.TeamName, shared.GenerateAckRequest(kbc.GetUsername()), getChannel(config))
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)
 			}
@@ -81,7 +81,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			if err != nil {
 				return empty, err
 			}
-			err = kbc.SendMessageByTeamName(config.TeamName, shared.SignatureRequestPreamble+string(marshaledRequest), getChannel(config))
+			_, err = kbc.SendMessageByTeamName(config.TeamName, shared.SignatureRequestPreamble+string(marshaledRequest), getChannel(config))
 			if err != nil {
 				return empty, err
 			}

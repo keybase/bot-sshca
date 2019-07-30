@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/keybase/bot-ssh-ca/keybaseca/botwrapper"
+
 	"github.com/keybase/bot-ssh-ca/keybaseca/log"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
@@ -16,14 +18,7 @@ import (
 
 // Get a running instance of the keybase chat API. Will use the configured credentials if necessary.
 func GetKBChat(conf config.Config) (*kbchat.API, error) {
-	runOptions := kbchat.RunOptions{}
-	if conf.GetKeybaseHomeDir() != "" {
-		runOptions.HomeDir = conf.GetKeybaseHomeDir()
-	}
-	if conf.GetKeybasePaperKey() != "" && conf.GetKeybaseUsername() != "" {
-		runOptions.Oneshot = &kbchat.OneshotOptions{PaperKey: conf.GetKeybasePaperKey(), Username: conf.GetKeybaseUsername()}
-	}
-	return kbchat.Start(runOptions)
+	return botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
 }
 
 // Get the username of the user that the keybaseca bot is running as
@@ -73,7 +68,7 @@ func StartBot(conf config.Config) error {
 
 		if shared.IsAckRequest(messageBody) {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
-			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.GenerateAckResponse(messageBody))
+			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
@@ -97,7 +92,7 @@ func StartBot(conf config.Config) error {
 				LogError(conf, kbc, msg, err)
 				continue
 			}
-			err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.SignatureResponsePreamble+string(response))
+			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.SignatureResponsePreamble+string(response))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
@@ -111,7 +106,7 @@ func StartBot(conf config.Config) error {
 func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
 	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.MsgID, err)
 	log.Log(conf, message)
-	e := kbc.SendMessageByConvID(msg.Message.ConversationID, message)
+	_, e := kbc.SendMessageByConvID(msg.Message.ConversationID, message)
 	if e != nil {
 		log.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
 	}

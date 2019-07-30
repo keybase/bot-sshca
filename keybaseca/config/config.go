@@ -1,12 +1,12 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/keybase/bot-ssh-ca/keybaseca/botwrapper"
 
 	"github.com/keybase/bot-ssh-ca/shared"
 )
@@ -44,7 +44,7 @@ func ValidateConfig(conf EnvConfig) error {
 		if err != nil {
 			return fmt.Errorf("Failed to parse CHAT_CHANNEL=%s: %v", conf.getChatChannel(), err)
 		}
-		err = validateChannel(team, channel)
+		err = validateChannel(&conf, team, channel)
 		if err != nil {
 			return fmt.Errorf("failed to validate CHAT_CHANNEL '%s': %v", channel, err)
 		}
@@ -59,27 +59,21 @@ func ValidateConfig(conf EnvConfig) error {
 
 // Validates the given teamName and channelName to determine whether or not the given channelName is the name
 // of a channel inside the given team. Returns nil if everything validates.
-func validateChannel(teamName string, channelName string) error {
-	cmd := exec.Command("keybase", "chat", "list-channels", "-j", teamName)
-	bytes, err := cmd.CombinedOutput()
+func validateChannel(conf Config, teamName string, channelName string) error {
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
 	if err != nil {
-		return fmt.Errorf("failed to call keybase: %v", err)
+		return err
+	}
+	result, err := api.ListChannels(teamName)
+	if err != nil {
+		return err
 	}
 
-	m := map[string]interface{}{}
-	err = json.Unmarshal(bytes, &m)
-	if err != nil {
-		return fmt.Errorf("failed to parse json output from keybase: %v", err)
-	}
-
-	channels := m["convs"].([]interface{})
-	for _, channel := range channels {
-		name := channel.(map[string]interface{})["channel"]
-		if name == channelName {
+	for _, channel := range result {
+		if channel == channelName {
 			// The channel does exist, but the bot may or may not be in it. So join the channel in order to ensure
 			// the bot will receive chat events from it
-			cmd = exec.Command("keybase", "chat", "join-channel", teamName, channelName)
-			err = cmd.Run()
+			err := api.JoinChannel(teamName, channelName)
 			if err != nil {
 				return fmt.Errorf("failed to join bot to the configured channel: %v", err)
 			}

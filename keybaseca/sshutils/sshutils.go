@@ -1,12 +1,13 @@
 package sshutils
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/keybase/bot-ssh-ca/keybaseca/botwrapper"
 
 	"github.com/keybase/bot-ssh-ca/keybaseca/log"
 
@@ -125,7 +126,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	// if the user is in that subteam
 	var principals []string
 	for _, team := range conf.GetTeams() {
-		members, err := getMembers(team)
+		members, err := getMembers(conf, team)
 		if err != nil {
 			return "", err
 		}
@@ -139,44 +140,27 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	return strings.Join(principals, ","), nil
 }
 
-type ListMembersOutput struct {
-	Members ListMembersOutputMembers `json:"members"`
-}
-
-type ListMembersOutputMembers struct {
-	Owners  []ListMembersOutputMembersCategory `json:"owners"`
-	Admins  []ListMembersOutputMembersCategory `json:"admins"`
-	Writers []ListMembersOutputMembersCategory `json:"writers"`
-}
-
-type ListMembersOutputMembersCategory struct {
-	Username string `json:"username"`
-}
-
 // Get the members of the given team. Note that this function is a security boundary since if it was bypassed an
 // attacker would be able to provision SSH keys for environments that they should not have access to.
-func getMembers(team string) ([]string, error) {
-	cmd := exec.Command("keybase", "team", "list-members", "-j", team)
-	data, err := cmd.CombinedOutput()
+func getMembers(conf config.Config, team string) ([]string, error) {
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
 	if err != nil {
 		return nil, err
 	}
-
-	jsonBody := ListMembersOutput{}
-	err = json.Unmarshal(data, &jsonBody)
+	result, err := api.ListMembersOfTeam(team)
 	if err != nil {
 		return nil, err
 	}
-
-	var users []string
-	for _, j := range jsonBody.Members.Owners {
-		users = append(users, j.Username)
+	users := []string{}
+	for _, member := range result.Owners {
+		users = append(users, member.Username)
 	}
-	for _, j := range jsonBody.Members.Admins {
-		users = append(users, j.Username)
+	for _, member := range result.Admins {
+		users = append(users, member.Username)
 	}
-	for _, j := range jsonBody.Members.Writers {
-		users = append(users, j.Username)
+	for _, member := range result.Writers {
+		users = append(users, member.Username)
 	}
+	// Read only users are not listed since they shouldn't be issued SSH keys
 	return users, nil
 }
