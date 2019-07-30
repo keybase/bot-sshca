@@ -20,7 +20,7 @@ class TestEnv1:
 
     @pytest.fixture(autouse=True, scope='class')
     def configure_env(self):
-        assert requests.get("http://ca-bot:8080/load_env?filename=env-1-simple-tests").content == b"OK"
+        assert requests.get("http://ca-bot:8080/load_env?filename=env-1-integration-tests").content == b"OK"
 
     @lib.outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     def test_kssh_staging_user(self):

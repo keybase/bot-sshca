@@ -1,4 +1,4 @@
-# Tests with a decently complex config
+# The bulk of the integration tests run with a decently complex config
 export CA_KEY_LOCATION="/mnt/keybase-ca-key"
 export KEY_EXPIRATION="+1h"
 export STRICT_LOGGING="true"
