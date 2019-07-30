@@ -49,7 +49,7 @@ def outputs_audit_log(filename, expected_number):
     def decorator(func):
         def inner(*args, **kwargs):
             cnt = 0
-            username = os.environ.get('KEYBASE_USERNAME', None)
+            username = os.environ.get('KSSH_USERNAME', None)
 
             # Make a set of the lines in the audit log before we ran
             before_lines = set(read_file(filename))
