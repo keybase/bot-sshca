@@ -4,10 +4,17 @@ import signal
 import subprocess
 import time
 
+import requests
+
 SUBTEAM = os.environ['SUBTEAM']
 SUBTEAM_SECONDARY = os.environ['SUBTEAM_SECONDARY']
-USERNAME = os.environ['KEYBASE_USERNAME']
+USERNAME = os.environ['KSSH_USERNAME']
 BOT_USERNAME = os.environ['BOT_USERNAME']
+
+# "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
+# and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
+# kssh is actually executing on the remote server.
+EXPECTED_HASH = hashlib.sha1(b"uniquestring").hexdigest().encode('utf-8')
 
 def run_command(cmd, timeout=10):
     # In order to properly run a command with a timeout and shell=True, we use Popen with a shell and group all child
@@ -75,8 +82,8 @@ def outputs_audit_log(filename, expected_number):
             # Then run the function
             ret = func(*args, **kwargs)
 
-            # And sleep for 1 second to give KBFS some time
-            time.sleep(1)
+            # And sleep to give KBFS some time
+            time.sleep(1.5)
 
             # Then see if there are new lines using set difference. This is only safe/reasonable since we include a
             # timestamp in audit log lines.
@@ -94,10 +101,10 @@ def outputs_audit_log(filename, expected_number):
         return inner
     return decorator
 
-# "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
-# and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
-# kssh is actually executing on the remote server.
-EXPECTED_HASH = hashlib.sha1(b"uniquestring").hexdigest().encode('utf-8')
+def load_env(filename):
+    # Load the environment based off of the given filename which is the path to the python test script
+    env_name = os.path.basename(filename).split(".")[0]
+    return requests.get("http://ca-bot:8080/load_env?filename=%s" % env_name).content == b"OK"
 
 def assert_contains_hash(output):
     assert EXPECTED_HASH in output

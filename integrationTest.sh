@@ -8,7 +8,7 @@ go test ./... 2>&1 | grep -v 'no test files'
 if [[ -f "tests/env.sh" ]]; then
     echo "env.sh file already exists, skipping configuring new accounts..."
 else
-    python3 tests/configure-accounts.py
+    python3 tests/configure_accounts.py
 fi
 
 
@@ -28,7 +28,7 @@ cd tests/
 source env.sh
 reset_docker
 
-mkdir -p generated-env
+rm -rf ./generated-env && mkdir -p ./generated-env
 ls envFiles/ | xargs -I {} -- bash -c 'cat envFiles/{} | envsubst > generated-env/{}'
 
 echo "Building containers..."

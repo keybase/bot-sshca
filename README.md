@@ -1,41 +1,43 @@
 # SSH CA Bot
 
-The idea here is to control SSH access to servers (without needing to install anything on them) based simply on cryptographically provable membership in Keybase teams. 
+The idea here is to control SSH access to servers (without needing to install anything on them) based simply on cryptographically provable membership in Keybase teams.
 
-SSH supports a concept of certificate authorities (CAs) where you can place a single public key on the server, and the SSH server will allow any connections with keys signed by the CA cert. This is how a lot of large companies manage SSH access securely; users can be granted SSH access to servers without having to change the keys that are deployed on the server. 
+SSH supports a concept of certificate authorities (CAs) where you can place a single public key on the server, and the SSH server will allow any connections with keys signed by the CA cert. This is how a lot of large companies manage SSH access securely; users can be granted SSH access to servers without having to change the keys that are deployed on the server.
 
 This repo provides the pieces for anyone to build this workflow:
 1. generation scripts and a guide to set up the Keybase team and server ssh configuration
 2. a wrapper around ssh (`kssh`) for any end user to get authenticated using the certificate authority
-3. a chatbot (`keybaseca`) which listens in a Keybase team for `kssh` requests. If the requester is in the team, the bot will sign the request with an expiring signature (e.g. 1 hour), and then the provisioned server should authenticate as usual. 
+3. a chatbot (`keybaseca`) which listens in a Keybase team for `kssh` requests. If the requester is in the team, the bot will sign the request with an expiring signature (e.g. 1 hour), and then the provisioned server should authenticate as usual.
 
-Removing a user's ability to access a server is as simple as removing them from the Keybase team. 
+Removing a user's ability to access a server is as simple as removing them from the Keybase team.
 
-This code is currently a work in progress and this project is not yet complete and is not ready to be used. 
+This code is currently a work in progress and this project is not yet complete and is not ready to be used.
 
 # Design
 
-There are two binaries contained in this project in the `cmd/` folder. `shared/` is go code that is shared between the 
-binaries. 
+There are two binaries contained in this project in the `cmd/` folder. `shared/` is go code that is shared between the
+binaries.
 
-## keybaseca 
+## keybaseca
 
-`keybaseca` is the CA server that exposes an interface through Keybase chat. Generate a new CA key by running 
-`keybaseca generate`. This will output the CA public key. It also writes a `kssh` (see below) config file to 
-`/keybase/team/teamname.ssh/kssh-client.config` such that `kssh` can automatically detect the config file. 
-`keybaseca service` starts the CA chatbot service. See `keybaseca/config.go` for a description of the config file. 
+`keybaseca` is the CA server that exposes an interface through Keybase chat. Generate a new CA key by running
+`keybaseca generate`. This will output the CA public key. It also writes a `kssh` (see below) config file to
+`/keybase/team/teamname.ssh/kssh-client.config` such that `kssh` can automatically detect the config file.
+`keybaseca service` starts the CA chatbot service. See `keybaseca/config.go` for a description of the config file.
 
 ## kssh
 
-`kssh` is the replacement SSH binary. It automatically pulls config files from KBFS. 
+`kssh` is the replacement SSH binary. It automatically pulls config files from KBFS.
 
 # Integration Tests
 
-This project contains integration tests that can be run via `./integrationTest.sh`. 
+This project contains integration tests that can be run via `./integrationTest.sh`.
+Running this is a great place to get familiarized with how everything works. You will need to do some
+one-time setup with keybase accounts, but a script will walk you through it.
 
-# Getting Started 
+# Getting Started
 
-kssh allows you to define realms of servers where access is granted based off of 
+kssh allows you to define realms of servers where access is granted based off of
 membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
 up a third realm that grants root access to all machines. To configure kssh to work with this setup:
@@ -55,11 +57,11 @@ nano env.sh         # Fill in the values including the previously generated pape
 make generate
 ```
 
-This will output the public key for the CA. 
+This will output the public key for the CA.
 
 For each server in staging:
 
-1. Place the public key in `/etc/ssh/ca.pub` 
+1. Place the public key in `/etc/ssh/ca.pub`
 2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
 3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
 4. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
@@ -68,7 +70,7 @@ For each server in staging:
 
 For each server in production:
 
-1. Place the public key in `/etc/ssh/ca.pub` 
+1. Place the public key in `/etc/ssh/ca.pub`
 2. Add the line `TrustedUserCAKeys /etc/ssh/ca.pub` to `/etc/ssh/sshd_config`
 3. Add the line `AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u` to `/etc/ssh/sshd_config`
 4. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
@@ -93,9 +95,9 @@ bin/kssh root@server                    # If in {TEAM}.ssh.root_everywhere
 
 # OS Support
 
-It is recommended to run the server component of this bot on linux and running it in other environments is untested. 
+It is recommended to run the server component of this bot on linux and running it in other environments is untested.
 `kssh` is tested and works correctly on linux, macOS, and Windows. If running on windows, note that there is a dependency
-on the `ssh` binary being in the path. This can be installed in a number of different ways including 
-[Chocolatey](https://chocolatey.org/packages/openssh) or the 
-[built in version](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse) on 
-modern versions of windows. 
+on the `ssh` binary being in the path. This can be installed in a number of different ways including
+[Chocolatey](https://chocolatey.org/packages/openssh) or the
+[built in version](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse) on
+modern versions of windows.

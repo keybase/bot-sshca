@@ -7,8 +7,8 @@ services:
       context: ..
       dockerfile: "tests/Dockerfile-cabot"
     environment:
-      - KEYBASE_PAPERKEY=${BOT_PAPERKEY}
-      - KEYBASE_USERNAME=${BOT_USERNAME}
+      - BOT_PAPERKEY
+      - BOT_USERNAME
     volumes:
       - app-volume:/mnt/
     user: root
@@ -22,8 +22,8 @@ services:
       context: ../
       dockerfile: "tests/Dockerfile-kssh"
     environment:
-      - PAPERKEY=${KSSH_PAPERKEY}
-      - KEYBASE_USERNAME=${KSSH_USERNAME}
+      - KSSH_PAPERKEY
+      - KSSH_USERNAME
       - BOT_USERNAME
       - SUBTEAM
       - SUBTEAM_SECONDARY

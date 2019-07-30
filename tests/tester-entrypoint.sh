@@ -12,7 +12,7 @@ done
 echo ""
 sleep 2
 
-keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
+keybase oneshot --username $KSSH_USERNAME --paperkey "$KSSH_PAPERKEY"
 
 echo "========================= Launched Keybase, starting tests... ========================="
 
