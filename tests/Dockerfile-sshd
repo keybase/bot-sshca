@@ -22,4 +22,4 @@ RUN echo -n "uniquestring" > /etc/unique
 
 EXPOSE 22
 
-CMD touch /mnt/keybase-ca-key.pub && (while inotifywait -e close_write /mnt/keybase-ca-key.pub; do echo "cert-authority,principals=\"root_everywhere\" `cat /mnt/keybase-ca-key.pub`" > /root/.ssh/authorized_keys; echo "cert-authority,principals=\"$allowed_principal\" `cat /mnt/keybase-ca-key.pub`" > /home/user/.ssh/authorized_keys; done) & /usr/sbin/sshd -D
+CMD touch /mnt/keybase-ca-key.pub && (while inotifywait -e close_write /mnt/keybase-ca-key.pub; do echo "cert-authority,principals=\"$root_everywhere_principal\" `cat /mnt/keybase-ca-key.pub`" > /root/.ssh/authorized_keys; echo "cert-authority,principals=\"$allowed_principal\" `cat /mnt/keybase-ca-key.pub`" > /home/user/.ssh/authorized_keys; done) & /usr/sbin/sshd -D

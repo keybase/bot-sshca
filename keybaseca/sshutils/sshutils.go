@@ -132,8 +132,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 		}
 		for _, member := range members {
 			if member == sr.Username {
-				subteamChunks := strings.Split(team, ".")
-				principals = append(principals, subteamChunks[len(subteamChunks)-1])
+				principals = append(principals, team)
 			}
 		}
 	}

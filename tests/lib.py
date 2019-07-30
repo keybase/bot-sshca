@@ -85,11 +85,11 @@ def outputs_audit_log(filename, expected_number):
 
             for line in new_lines:
                 line = line.decode('utf-8')
-                if line and "Processing SignatureRequest from user=%s" % USERNAME in line and "principals:staging,root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
+                if line and "Processing SignatureRequest from user=%s" % USERNAME in line and f"principals:{SUBTEAM}.ssh.staging,{SUBTEAM}.ssh.root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
                     cnt += 1
 
             if cnt != expected_number:
-                assert False, "Found %s audit log entries, expected %s!" % (cnt, expected_number)
+                assert False, "Found %s audit log entries, expected %s! Audit logs: %s" % (cnt, expected_number, new_lines)
             return ret
         return inner
     return decorator
