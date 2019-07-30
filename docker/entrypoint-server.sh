@@ -9,6 +9,6 @@ chown -R keybase:keybase /mnt
 sudo -i -u keybase bash << EOF
 nohup bash -c "run_keybase -g &"
 sleep 3
-keybase oneshot --username $KEYBASE_USERNAME --paperkey "$PAPERKEY"
-bin/keybaseca -c /mnt/keybaseca.config service
+keybase oneshot --username $KEYBASE_USERNAME --paperkey "$KEYBASE_PAPERKEY"
+source docker/env.sh && bin/keybaseca service
 EOF

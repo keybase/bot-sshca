@@ -56,7 +56,7 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 	}
 	err = json.Unmarshal(bytes, &cf)
 	if cf.TeamName == "" || cf.BotName == "" {
-		return cf, fmt.Errorf("Got a config file that is missing data: %s", string(bytes))
+		return cf, fmt.Errorf("Found a config file at %s that is missing data: %s", kbfsFilename, string(bytes))
 	}
 	return cf, err
 }
