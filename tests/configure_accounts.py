@@ -13,8 +13,6 @@ import string
 import subprocess
 import time
 
-USERNAME_PREFIX = "dworken"
-
 def secure_random_str(len):
     return ''.join([random.SystemRandom().choice(string.ascii_lowercase) for _ in range(len)])
 
