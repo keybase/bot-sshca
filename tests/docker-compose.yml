@@ -45,9 +45,9 @@ services:
     build:
       context: .
       dockerfile: "Dockerfile-sshd"
-    environment:
-      - allowed_principal=${SUBTEAM}.ssh.staging
-      - root_everywhere_principal=${SUBTEAM}.ssh.root_everywhere
+      args:
+        user_principal: ${SUBTEAM}.ssh.staging
+        root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
       - app-volume:/mnt/
   # An ssh server that will accept signed requests with the principal "prod"
@@ -57,9 +57,9 @@ services:
     build:
       context: .
       dockerfile: "Dockerfile-sshd"
-    environment:
-      - allowed_principal=${SUBTEAM}.ssh.prod
-      - root_everywhere_principal=${SUBTEAM}.ssh.root_everywhere
+      args:
+        user_principal: ${SUBTEAM}.ssh.prod
+        root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
       - app-volume:/mnt/
 volumes:
