@@ -21,7 +21,7 @@ a production environment that you want to restrict access to a smaller group of 
 up a third realm that grants root access to all machines. To configure kssh to work with this setup, we will set it up 
 according to this diagram:
 
-![Alt text](docs/Architecture Diagram.png?raw=true "Architecture Diagram")
+![Architecture Diagram](docs/Architecture Diagram.png?raw=true "Architecture Diagram")
 
 On a secured server that you wish to use to run the CA chatbot:
 
