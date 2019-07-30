@@ -15,6 +15,9 @@ services:
     command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
     ports:
       - 8080  # Used for the flask webserver that manages restarting keybaseca with different config options
+    depends_on:
+      - sshd-prod
+      - sshd-staging
   kssh:
     image: kssh
     container_name: kssh
@@ -42,12 +45,10 @@ services:
     build:
       context: .
       dockerfile: "Dockerfile-sshd"
-      args:
-        allowed_principal: staging
+    environment:
+      - allowed_principal=staging
     volumes:
       - app-volume:/mnt/
-    depends_on:
-      - ca-bot
   # An ssh server that will accept signed requests with the principal "prod"
   sshd-prod:
     image: sshd-prod
@@ -55,11 +56,9 @@ services:
     build:
       context: .
       dockerfile: "Dockerfile-sshd"
-      args:
-        allowed_principal: prod
+    environment:
+      - allowed_principal=prod
     volumes:
       - app-volume:/mnt/
-    depends_on:
-      - ca-bot
 volumes:
   app-volume:

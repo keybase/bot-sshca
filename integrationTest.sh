@@ -32,7 +32,7 @@ echo "Building containers..."
 cd ../docker/ && make && cd ../tests/
 docker-compose build
 echo "Running integration tests..."
-docker-compose up -d
+docker-compose up
 
 docker logs kssh -f | indent
 TEST_EXIT_CODE=`docker wait kssh`

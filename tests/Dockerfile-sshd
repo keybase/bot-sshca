@@ -2,7 +2,7 @@
 # It takes in a build argument and only allows keys with the build argument in the principals field
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y openssh-server
+RUN apt-get update && apt-get install -y openssh-server inotify-tools
 RUN mkdir /var/run/sshd
 
 # SSH login fix. Otherwise user is kicked off after login
@@ -14,15 +14,12 @@ RUN echo "export VISIBLE=now" >> /etc/profile
 ARG allowed_principal
 RUN mkdir /etc/ssh/auth_principals/
 RUN useradd -ms /bin/bash user
-RUN echo "$allowed_principal" > /etc/ssh/auth_principals/user
-RUN echo 'root_everywhere' > /etc/ssh/auth_principals/root
-
-# Set up the SSH server to trust the CA key based off of the files in /etc/ssh/auth_principals/
-RUN echo "TrustedUserCAKeys /etc/ssh/ca.pub\nAuthorizedPrincipalsFile /etc/ssh/auth_principals/%u" >> /etc/ssh/sshd_config
+RUN mkdir /root/.ssh/
+RUN mkdir /home/user/.ssh/
 
 # Used in the integration tests by reading the contents of this file. See test_kssh.py
 RUN echo -n "uniquestring" > /etc/unique
 
 EXPOSE 22
 
-CMD ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D
+CMD touch /mnt/keybase-ca-key.pub && (while inotifywait -e close_write /mnt/keybase-ca-key.pub; do echo "cert-authority,principals=\"root_everywhere\" `cat /mnt/keybase-ca-key.pub`" > /root/.ssh/authorized_keys; echo "cert-authority,principals=\"$allowed_principal\" `cat /mnt/keybase-ca-key.pub`" > /home/user/.ssh/authorized_keys; done) & /usr/sbin/sshd -D
