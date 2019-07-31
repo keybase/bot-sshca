@@ -50,16 +50,16 @@ these commands.
 
 Now you must define a mapping between Keybase teams the users and servers that they are
 allowed to access. If you wish to make the user foo available to anyone in team.ssh.bar,
-create the file `/etc/ssh/auth_principals/foo` with contents `bar`. 
+create the file `/etc/ssh/auth_principals/foo` with contents `team.ssh.bar`. 
 
 More concretely following the current example setup:
 
 * For each server in your staging environment:
-  1. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
-  2. Create the file `/etc/ssh/auth_principals/user` with contents `staging`
+  1. Create the file `/etc/ssh/auth_principals/root` with contents `{TEAM}.ssh.root_everywhere`
+  2. Create the file `/etc/ssh/auth_principals/user` with contents `{TEAM}.ssh.staging`
 * For each server in your production environment:
-  1. Create the file `/etc/ssh/auth_principals/root` with contents `root_everywhere`
-  2. Create the file `/etc/ssh/auth_principals/user` with contents `production`
+  1. Create the file `/etc/ssh/auth_principals/root` with contents `{TEAM}.ssh.root_everywhere`
+  2. Create the file `/etc/ssh/auth_principals/user` with contents `{TEAM}.ssh.production`
 
 Now on the server where you wish to run the chatbot, start the chatbot itself:
 
