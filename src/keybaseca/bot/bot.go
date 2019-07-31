@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/botwrapper"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/botwrapper"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/log"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/log"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/sshutils"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/config"
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/config"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 

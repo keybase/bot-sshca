@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 )
 
 // A ConfigFile that is provided by the keybaseca server process and lives in kbfs

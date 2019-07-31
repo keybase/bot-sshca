@@ -29,6 +29,6 @@ RUN /usr/lib/go-1.11/bin/go mod download
 
 COPY --chown=keybase ./ /home/keybase/
 
-RUN /usr/lib/go-1.11/bin/go build -o bin/keybaseca cmd/keybaseca/keybaseca.go
+RUN /usr/lib/go-1.11/bin/go build -o bin/keybaseca src/cmd/keybaseca/keybaseca.go
 
 USER root

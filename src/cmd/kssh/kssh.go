@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/sshutils"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/sshutils"
 
 	"github.com/google/uuid"
-	"github.com/keybase/bot-ssh-ca/kssh"
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/kssh"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 
 	"golang.org/x/crypto/ssh"
 )

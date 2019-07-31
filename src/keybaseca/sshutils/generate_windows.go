@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 	"golang.org/x/crypto/ssh"
 )
 

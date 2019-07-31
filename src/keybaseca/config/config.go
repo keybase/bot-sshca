@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/botwrapper"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/botwrapper"
 
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 )
 
 // Represents a loaded and validated config for keybaseca

@@ -29,6 +29,6 @@ COPY --chown=keybase go.sum .
 RUN /usr/lib/go-1.11/bin/go mod download
 
 COPY --chown=keybase ./ /home/keybase/
-RUN /usr/lib/go-1.11/bin/go build -o bin/kssh cmd/kssh/kssh.go
+RUN /usr/lib/go-1.11/bin/go build -o bin/kssh src/cmd/kssh/kssh.go
 
 USER root

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keybase/bot-ssh-ca/keybaseca/config"
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/config"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 )
 
 // Log attempts to log the given string to a file. If conf.GetStrictLogging() it will panic if it fails

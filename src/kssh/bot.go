@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keybase/bot-ssh-ca/shared"
+	"github.com/keybase/bot-ssh-ca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 
