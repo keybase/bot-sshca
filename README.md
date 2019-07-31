@@ -13,9 +13,16 @@ and the SSH server will allow any connections with keys signed by the CA cert. T
 manage SSH access securely; users can be granted SSH access to servers without having to change the keys that are 
 deployed on the server. 
 
-# Getting Started 
+This repo provides the pieces for anyone to build this workflow on top of Keybase:
+1. generation scripts and a guide to set up the Keybase team and server ssh configuration
+2. a wrapper around ssh (`kssh`) for any end user to get authenticated using the certificate authority
+3. a chatbot (`keybaseca`) which listens in a Keybase team for `kssh` requests. If the requester is in the team, the bot will sign the request with an expiring signature (e.g. 1 hour), and then the provisioned server should authenticate as usual.
 
-kssh allows you to define realms of servers where access is granted based off of 
+Removing a user's ability to access a server is as simple as removing them from the Keybase team.
+
+# Getting Started
+
+kssh allows you to define realms of servers where access is granted based off of
 membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
 a production environment that you want to restrict access to a smaller group of people. For this exercise we'll also set
 up a third realm that grants root access to all machines. To configure kssh to work with this setup, we will set it up 
@@ -74,7 +81,7 @@ We recommend building kssh yourself and distributing the binary among your team 
 
 # OS Support
 
-It is recommended to run the server component of this bot on linux and running it in other environments is untested. 
+It is recommended to run the server component of this bot on linux and running it in other environments is untested.
 `kssh` is tested and works correctly on linux, macOS, and Windows. If running on windows, note that there is a dependency
 on the `ssh` binary being in the path. This can be installed in a number of different ways including 
 [Chocolatey](https://chocolatey.org/packages/openssh) or the 

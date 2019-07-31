@@ -1,4 +1,4 @@
-# Used to test sending the audit log to KBFS
+# Used to test sending the audit log to the normal filesystem
 export KEY_EXPIRATION="+1h"
 export LOG_LOCATION="/mnt/ca.log"
 export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywhere"

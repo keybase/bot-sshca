@@ -7,14 +7,14 @@ endif
 
 SHELL := /bin/bash
 
-.PHONY: build generate serve clean reset-permissions confirm-clean
+.PHONY: build generate serve clean reset-permissions confirm-clean env-file-exists ca-key-exists
 
 # Build a new docker image for the CA bot
 build: reset-permissions
 	docker build -t ca -f Dockerfile-ca ..
 
 # Generate a new CA key
-generate: build
+generate: env-file-exists build
 	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
 	@echo "useradd user   # The user that will be used for non-root logins"
@@ -24,7 +24,8 @@ generate: build
 	@echo "service ssh restart"
 	@echo -e "\nSee the README for information on how to define which teams are allowed to access which servers"
 
-serve: build
+# Start the CA chatbot in the background
+serve: env-file-exists ca-key-exists build
 	source env.sh && docker run -d --restart unless-stopped -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/../example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
 	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
 
@@ -40,4 +41,13 @@ confirm-clean:
 
 # Reset the permissions on the shared volume. Sudo since the permissions get messed up from the docker container chown-ing it
 reset-permissions:
-	sudo chown -R $$USER ../example-keybaseca-volume/
+	# Avoid prompting for sudo unless the permissions actually need to be chnaged by piping find to xargs
+	find ../example-keybaseca-volume/ -not -user $$USER | xargs -I {} -- sudo chown -R $$USER {}
+
+# Asserts that env.sh exists
+env-file-exists:
+	@test -e "env.sh" || (echo "You must create and fill in env.sh prior to running make" && exit 1)
+
+# Assert that a CA key exists
+ca-key-exists:
+	@test -e "../example-keybaseca-volume/keybase-ca-key" || (echo "You must run make generate prior to make serve" && exit 1)
