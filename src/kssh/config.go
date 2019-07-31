@@ -25,22 +25,40 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 		return nil, nil, fmt.Errorf("failed to load config file(s): %v", err)
 	}
 
+	// Iterate through the listed files in parallel to speed up kssh for users with lots of teams
+	semaphore := make(chan interface{}, len(listedFiles))
+	errors := make(chan error, len(listedFiles))
 	botNameToConfig := make(map[string]ConfigFile)
 	for _, team := range listedFiles {
-		filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
-		exists, err := shared.KBFSFileExists(filename)
-		if err != nil {
-			// Treat an error as it not existing and just skip that team while searching for config files
-			exists = false
-		}
-		if exists {
-			conf, err := LoadConfig(filename)
+		go func(team string) {
+			filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
+			exists, err := shared.KBFSFileExists(filename)
 			if err != nil {
-				return nil, nil, err
+				// Treat an error as it not existing and just skip that team while searching for config files
+				exists = false
+			}
+			if exists {
+				conf, err := LoadConfig(filename)
+				if err != nil {
+					errors <- err
+				} else {
+					botNameToConfig[conf.BotName] = conf
+				}
 			}
 
-			botNameToConfig[conf.BotName] = conf
-		}
+			semaphore <- 0
+		}(team)
+	}
+	for i := 0; i < len(listedFiles); i++ {
+		<-semaphore
+	}
+
+	// Read from errors without blocking
+	select {
+	case err := <-errors:
+		return nil, nil, err
+	default:
+		// No error
 	}
 
 	var configs []ConfigFile
