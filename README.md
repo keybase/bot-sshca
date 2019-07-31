@@ -191,5 +191,3 @@ keybaseca can run in unprivileged docker containers.
 This project contains integration tests that can be run via `./integrationTest.sh`. The integration tests depend on 
 docker and docker-compose. The first time you run them, they will walk you through creating two new accounts to be 
 used in the tests. The credentials for these accounts will be stored in `tests/env.sh`. 
-
-#TODO: UPDATE DOCS TO REFERENCE FULL TEAM NAME

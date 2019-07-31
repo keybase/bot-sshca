@@ -88,7 +88,8 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 		return
 	}
 
-	keyID := sr.UUID + ":" + randomUUID.String()
+	// The key ID uniquely identifies the certificate by encoding the UUID of the request, a new UUID, and the username
+	keyID := sr.UUID + ":" + randomUUID.String() + ":" + sr.Username
 
 	log.Log(conf, fmt.Sprintf("Processing SignatureRequest from user=%s on device='%s' keyID:%s, principals:%s, expiration:%s, pubkey:%s",
 		sr.Username, sr.DeviceName, keyID, principals, conf.GetKeyExpiration(), sr.SSHPublicKey))
