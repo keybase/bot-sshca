@@ -15,7 +15,7 @@ class TestEnv4:
         # Test that it can't find any config files
         for s in ['user@sshd-staging', 'root@sshd-staging', 'user@sshd-prod', 'root@sshd-prod']:
             try:
-                run_command("""bin/kssh -q -o StrictHostKeyChecking=no %s "sha1sum /etc/unique" """ % s)
+                run_command(f"""bin/kssh -q -o StrictHostKeyChecking=no {s} "sha1sum /etc/unique" """)
                 assert False
             except subprocess.CalledProcessError as e:
                 assert b"Did not find any config files in KBFS" in e.output
@@ -27,7 +27,7 @@ class TestEnv4:
         run_command(f"echo '{client_config}' | keybase fs write /keybase/team/{SUBTEAM}.ssh/kssh-client.config")
         for s in ['user@sshd-staging', 'root@sshd-staging', 'user@sshd-prod', 'root@sshd-prod']:
             try:
-                run_command("""bin/kssh -q -o StrictHostKeyChecking=no %s "sha1sum /etc/unique" """ % s)
+                run_command(f"""bin/kssh -q -o StrictHostKeyChecking=no {s} "sha1sum /etc/unique" """)
                 assert False
             except subprocess.CalledProcessError as e:
                 assert b"Failed to get a signed key from the CA: timed out while waiting for a response from the CA" in e.output
