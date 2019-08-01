@@ -41,3 +41,12 @@ func TestIsValidCert(t *testing.T) {
 	copyKey(t, "expired")
 	assert.False(t, isValidCert(certTestFilename))
 }
+
+func BenchmarkLoadConfigs(b *testing.B) {
+	os.Remove("~/.ssh/kssh.config")
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		getConfig("")
+	}
+}
