@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/keybase/bot-ssh-ca/src/shared"
 )
@@ -29,6 +30,7 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 	semaphore := make(chan interface{}, len(listedFiles))
 	errors := make(chan error, len(listedFiles))
 	botNameToConfig := make(map[string]ConfigFile)
+	botNameToConfigMutex := sync.Mutex{}
 	for _, team := range listedFiles {
 		go func(team string) {
 			filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
@@ -42,7 +44,9 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 				if err != nil {
 					errors <- err
 				} else {
+					botNameToConfigMutex.Lock()
 					botNameToConfig[conf.BotName] = conf
+					botNameToConfigMutex.Unlock()
 				}
 			}
 
