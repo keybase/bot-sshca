@@ -17,7 +17,7 @@ build: reset-permissions
 generate: env-file-exists build
 	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
-	@echo "useradd user && mkdir -p /home/user && chown user:user /home/user  # The user that will be used for non-root logins"
+	@echo "useradd developer && mkdir -p /home/developer && chown developer:developer /home/developer  # The user that will be used for non-root logins"
 	@echo "echo \"`cat $(CURDIR)/example-keybaseca-volume/keybase-ca-key.pub`\" > /etc/ssh/ca.pub"
 	@echo "echo \"TrustedUserCAKeys /etc/ssh/ca.pub\" >> /etc/ssh/sshd_config"
 	@echo "echo \"AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u\" >> /etc/ssh/sshd_config"

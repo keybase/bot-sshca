@@ -56,10 +56,10 @@ More concretely following the current example setup:
 
 * For each server in your staging environment:
   1. Create the file `/etc/ssh/auth_principals/root` with contents `{TEAM}.ssh.root_everywhere`
-  2. Create the file `/etc/ssh/auth_principals/user` with contents `{TEAM}.ssh.staging`
+  2. Create the file `/etc/ssh/auth_principals/developer` with contents `{TEAM}.ssh.staging`
 * For each server in your production environment:
   1. Create the file `/etc/ssh/auth_principals/root` with contents `{TEAM}.ssh.root_everywhere`
-  2. Create the file `/etc/ssh/auth_principals/user` with contents `{TEAM}.ssh.production`
+  2. Create the file `/etc/ssh/auth_principals/developer` with contents `{TEAM}.ssh.production`
 
 Now on the server where you wish to run the chatbot, start the chatbot itself:
 
@@ -72,8 +72,8 @@ Now build the kssh binary and start SSHing!
 ```bash
 go build -o bin/kssh src/cmd/kssh/kssh.go
 sudo cp bin/kssh /usr/local/bin/        # Optional but recommended
-kssh user@staging-server-ip             # If in {TEAM}.ssh.staging
-kssh user@production-server-ip          # If in {TEAM}.ssh.production
+kssh developer@staging-server-ip        # If in {TEAM}.ssh.staging
+kssh developer@production-server-ip     # If in {TEAM}.ssh.production
 kssh root@server                        # If in {TEAM}.ssh.root_everywhere
 ```
 
