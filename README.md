@@ -120,7 +120,7 @@ GLOBAL OPTIONS:
 
 ## kssh
 
-`kssh` is the replacement SSH binary. kssh handles provisioning new SSH keys and is meant to be installed on each
+`kssh` is the replacement SSH binary. kssh handles provisioning (via the keybaseca-bot) new temporary SSH keys and is meant to be installed on each
 user's laptop. 
 
 ```
@@ -151,10 +151,10 @@ GLOBAL OPTIONS:
 Keybaseca is configured using environment variables (see docs/env.md for information on all of the options). When keybaseca 
 starts, it writes a client config file to `/keybase/team/{teamname for teamname in $TEAMS}/kssh-client.config`. This 
 client config file is how kssh determines which teams are using kssh and the needed information about the bot (eg the
-channel name, the name of the bot, etc). When keybaseca stops, it deletes the client config file. 
+channel name, the name of the bot, etc). When keybaseca stops, it deletes all of the client config files. 
 
 kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
-config files. It does have one local config file stored in `~/.ssh/kssh.config` that is used to store the default bot
+configuration. It does have one local config file stored in `~/.ssh/kssh.config` that is used to store the default bot
 if the `--set-default-bot` flag is used. This config file is not meant to be manually edited and is only meant to be 
 interacted with via the `--set-default-bot` and `--clear-default-bot` flags. 
 
