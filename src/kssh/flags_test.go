@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testCase struct {
@@ -76,8 +76,8 @@ func TestParseArgs(t *testing.T) {
 	for i, testCase := range testCases {
 		fmt.Printf("Running %d\n", i)
 		remaining, found, err := ParseArgs(testCase.args, cliArguments)
-		assert.Equal(t, testCase.err, err)
-		assert.Equal(t, testCase.remaining, remaining)
-		assert.Equal(t, testCase.found, found)
+		require.Equal(t, testCase.err, err)
+		require.Equal(t, testCase.remaining, remaining)
+		require.Equal(t, testCase.found, found)
 	}
 }
