@@ -10,35 +10,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var certTestFilename = "/tmp/bot-ssh-ca-test-is-valid-cert"
-
-func copyKey(t *testing.T, name string) {
+func copyKeyFromTextFixture(t *testing.T, name, destination string) {
 	priv, err := ioutil.ReadFile(fmt.Sprintf("../../../tests/testFiles/%s", name))
 	require.NoError(t, err)
-	err = ioutil.WriteFile(certTestFilename, priv, 0600)
+	err = ioutil.WriteFile(destination, priv, 0600)
 	require.NoError(t, err)
 	pub, err := ioutil.ReadFile(fmt.Sprintf("../../../tests/testFiles/%s.pub", name))
 	require.NoError(t, err)
-	err = ioutil.WriteFile(shared.KeyPathToPubKey(certTestFilename), pub, 0600)
+	err = ioutil.WriteFile(shared.KeyPathToPubKey(destination), pub, 0600)
 	require.NoError(t, err)
 	cert, err := ioutil.ReadFile(fmt.Sprintf("../../../tests/testFiles/%s-cert.pub", name))
 	require.NoError(t, err)
-	err = ioutil.WriteFile(shared.KeyPathToCert(certTestFilename), cert, 0600)
+	err = ioutil.WriteFile(shared.KeyPathToCert(destination), cert, 0600)
 	require.NoError(t, err)
 
 }
 
 func TestIsValidCert(t *testing.T) {
+	certTestFilename := "/tmp/bot-ssh-ca-test-is-valid-cert"
+
 	os.Remove(certTestFilename)
 	os.Remove(shared.KeyPathToPubKey(certTestFilename))
 	os.Remove(shared.KeyPathToCert(certTestFilename))
 
 	require.False(t, isValidCert(certTestFilename))
 
-	copyKey(t, "valid")
+	copyKeyFromTextFixture(t, "valid", certTestFilename)
 	require.True(t, isValidCert(certTestFilename))
 
-	copyKey(t, "expired")
+	copyKeyFromTextFixture(t, "expired", certTestFilename)
 	require.False(t, isValidCert(certTestFilename))
 }
 
