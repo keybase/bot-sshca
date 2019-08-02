@@ -20,9 +20,12 @@ A signature on a SSH key is a certificate that contains some additional informat
 4. A validity period where the key is considered valid only within that period of time
 5. A list of principals
 
-This list of principals is how a certificate encodes which servers are allowed to be accessed. Technically speaking, a
-list of principals is simply a list of strings. This bot places the list of teams that the user is in into the list
-of principals. As an example, here is the information encoded in a certificate created by this bot:
+A list of principals on a certificate is simply strings that are shared for access control. The field is often used 
+to encode roles a user has or groups that they are in, anything that helps the server decide whether or not to 
+allow access (and how much access to grant). We use this field to include a list of keybase teams that the user 
+is in. And the servers are configured to expect the same values (more below). As an example, here is the information 
+encoded in a certificate created by this bot:
+
 
 ```
 $ ssh-keygen -L -f  ~/.ssh/keybase-signed-key---cert.pub 

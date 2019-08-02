@@ -64,7 +64,7 @@ More concretely following the current example setup:
 Now on the server where you wish to run the chatbot, start the chatbot itself:
 
 ```bash
-make serve
+make serve    # Runs inside of docker for ease of use
 ```
 
 Now build the kssh binary and start SSHing!
