@@ -18,7 +18,7 @@ type ConfigFile struct {
 	BotName     string `json:"botname"`
 }
 
-// LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfTeamNames, err)
+// LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfBotNames, err)
 // Both lists are deduplicated based on ConfigFile.BotName
 func LoadConfigs() ([]ConfigFile, []string, error) {
 	listedFiles, err := shared.KBFSList("/keybase/team/")
@@ -73,13 +73,13 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 	}
 
 	var configs []ConfigFile
-	var teams []string
+	var botnames []string
 	for _, config := range botNameToConfig {
-		teams = append(teams, config.TeamName)
+		botnames = append(botnames, config.BotName)
 		configs = append(configs, config)
 	}
 
-	return configs, teams, nil
+	return configs, botnames, nil
 }
 
 func LoadConfig(kbfsFilename string) (ConfigFile, error) {
@@ -99,16 +99,24 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 }
 
 // A LocalConfigFile is a file that lives on the FS of the computer running kssh. It is only used if the user is
-// in multiple teams that are running the CA bot and they set a default team via `kssh --set-default-team foo`
+// in multiple teams that are running the CA bot and they set a default bot via `kssh --set-default-bot foo`
 type LocalConfigFile struct {
-	DefaultTeam string `json:"default_team"`
+	DefaultBotName string `json:"default_bot"`
+	DefaultBotTeam string `json:"default_team"`
 }
 
 // Where to store the local config file. Just stash it in ~/.ssh
 var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh.config")
 
-func SetDefaultTeam(team string) error {
-	bytes, err := json.Marshal(&LocalConfigFile{DefaultTeam: team})
+func SetDefaultBot(botname string) error {
+	if botname == "" {
+		return os.Remove(botname)
+	}
+	teamname, err := GetTeamFromBot(botname)
+	if err != nil {
+		return err
+	}
+	bytes, err := json.Marshal(&LocalConfigFile{DefaultBotName: botname, DefaultBotTeam: teamname})
 	if err != nil {
 		return err
 	}
@@ -119,18 +127,31 @@ func SetDefaultTeam(team string) error {
 	return nil
 }
 
-func GetDefaultTeam() (string, error) {
+func GetDefaultBotAndTeam() (string, string, error) {
 	if _, err := os.Stat(localConfigFileLocation); os.IsNotExist(err) {
-		return "", nil
+		return "", "", nil
 	}
 	bytes, err := ioutil.ReadFile(localConfigFileLocation)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	var lcf LocalConfigFile
 	err = json.Unmarshal(bytes, &lcf)
 	if err != nil {
+		return "", "", err
+	}
+	return lcf.DefaultBotName, lcf.DefaultBotTeam, nil
+}
+
+func GetTeamFromBot(botname string) (string, error) {
+	configs, _, err := LoadConfigs()
+	if err != nil {
 		return "", err
 	}
-	return lcf.DefaultTeam, nil
+	for _, config := range configs {
+		if config.BotName == botname {
+			return config.TeamName, nil
+		}
+	}
+	return "", fmt.Errorf("did not find a client config file matching botname=%s (is the CA bot running and are you in the correct teams?)", botname)
 }

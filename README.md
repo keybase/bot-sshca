@@ -137,11 +137,11 @@ GLOBAL OPTIONS:
    --help,               Show help
    --provision           Provision a new SSH key and add it to the ssh-agent. Useful if you need to run another 
                          program that uses SSH auth (eg scp, rsync, etc)
-   --set-default-team    Set the default team to be used for kssh. Not necessary if you are only in one team that
+   --set-default-bot     Set the default bot to be used for kssh. Not necessary if you are only in one team that
                          is using Keybase SSH CA
-   --clear-default-team  Clear the default team
-   --team                Specify a specific team to be used for kssh. Not necessary if you are only in one team that
-                         is using Keybase SSH CA
+   --clear-default-bot   Clear the default bot
+   --bot                 Specify a specific bot to be used for kssh. Not necessary if you are only in one team that
+                         is using Keybase SSH CA`)
 ```
 
 ## Architecture
@@ -154,9 +154,9 @@ client config file is how kssh determines which teams are using kssh and the nee
 channel name, the name of the bot, etc). When keybaseca stops, it deletes the client config file. 
 
 kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
-config files. It does have one local config file stored in `~/.ssh/cssh.cache` that is used to store the default team
-if the `--set-default-team` flag is set. This config file is not meant to be manually edited and is only meant to be 
-interacted with via the `--set-default-team` and `--clear-default-team` flags. 
+config files. It does have one local config file stored in `~/.ssh/kssh.config` that is used to store the default bot
+if the `--set-default-bot` flag is used. This config file is not meant to be manually edited and is only meant to be 
+interacted with via the `--set-default-bot` and `--clear-default-bot` flags. 
 
 #### Communication
 

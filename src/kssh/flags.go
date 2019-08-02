@@ -3,8 +3,8 @@ package kssh
 import "fmt"
 
 type CLIArgument struct {
-	Name        string // eg "--set-default-team"
-	HasArgument bool   // true if an argument comes after it (eg "--set-default-team foo") false if it is a boolean flag (eg "--help")
+	Name        string // eg "--foo"
+	HasArgument bool   // true if an argument comes after it (eg "--foo bar") false if it is a boolean flag (eg "--help")
 }
 
 type ParsedCLIArgument struct {

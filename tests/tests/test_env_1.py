@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from lib import assert_contains_hash, EXPECTED_HASH, load_env, outputs_audit_log, run_command, simulate_two_teams, SUBTEAM, SUBTEAM_SECONDARY
+from lib import assert_contains_hash, EXPECTED_HASH, load_env, outputs_audit_log, run_command, simulate_two_teams, SUBTEAM, SUBTEAM_SECONDARY, BOT_USERNAME
 
 test_env_1_log_filename = f"/keybase/team/{SUBTEAM}.ssh.staging/ca.log"
 class TestEnv1:
@@ -72,8 +72,8 @@ class TestEnv1:
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=0)
     @simulate_two_teams
-    def test_kssh_errors_on_two_teams(self):
-        # Test that kssh does not run if there are multiple teams, no client config, and no --team flag
+    def test_kssh_errors_on_two_bots(self):
+        # Test that kssh does not run if there are multiple bots, no kssh config, and no --bot flag
         try:
             run_command("bin/kssh root@sshd-prod")
             assert False
@@ -82,23 +82,23 @@ class TestEnv1:
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @simulate_two_teams
-    def test_kssh_team_flag(self):
-        # Test that kssh works with the --team flag
-        assert_contains_hash(run_command(f"bin/kssh --team {SUBTEAM}.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
+    def test_kssh_bot_flag(self):
+        # Test that kssh works with the --bot flag
+        assert_contains_hash(run_command(f"bin/kssh --bot {BOT_USERNAME} -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @simulate_two_teams
-    def test_kssh_set_default_team(self):
-        # Test that kssh works with the --set-default-team flag
-        run_command(f"bin/kssh --set-default-team {SUBTEAM}.ssh")
+    def test_kssh_set_default_bot(self):
+        # Test that kssh works with the --set-default-bot flag
+        run_command(f"bin/kssh --set-default-bot {BOT_USERNAME}")
         assert_contains_hash(run_command("bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @simulate_two_teams
-    def test_kssh_override_default_team(self):
-        # Test that the --team flag overrides the local config file
-        run_command(f"bin/kssh --set-default-team {SUBTEAM_SECONDARY}")
-        assert_contains_hash(run_command(f"bin/kssh --team {SUBTEAM}.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
+    def test_kssh_override_default_bot(self):
+        # Test that the --bot flag overrides the local config file
+        run_command(f"bin/kssh --set-default-bot otherbotname")
+        assert_contains_hash(run_command(f"bin/kssh --bot {BOT_USERNAME} -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     def test_keybaseca_backup(self):
         # Test the keybaseca backup command by reading and verifying the private key stored in /mnt/cakey.backup

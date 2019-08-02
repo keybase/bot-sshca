@@ -57,25 +57,25 @@ func doAction(action Action, keyPath string, remainingArgs []string) {
 	}
 }
 
-// getSignedKeyLocation returns the path of where the signed SSH key should be stored. team is the name of the team
-// specified via --team if specified. It is necessary to include the team in the filename in order to properly
-// handle how the switch team flow interacts with the isValidCert function
-func getSignedKeyLocation(team string) (string, error) {
+// getSignedKeyLocation returns the path of where the signed SSH key should be stored. botname is the name of the bot
+// specified via --bot if specified. It is necessary to include the bot in the filename in order to properly
+// handle how the switch bot flow interacts with the isValidCert function
+func getSignedKeyLocation(botname string) (string, error) {
 	signedKeyLocation := shared.ExpandPathWithTilde("~/.ssh/keybase-signed-key--")
-	if team != "" {
-		return signedKeyLocation + team, nil
+	if botname != "" {
+		return signedKeyLocation + botname, nil
 	}
-	defaultTeam, err := kssh.GetDefaultTeam()
+	defaultBot, _, err := kssh.GetDefaultBotAndTeam()
 	if err != nil {
 		return "", err
 	}
-	return signedKeyLocation + defaultTeam, nil
+	return signedKeyLocation + defaultBot, nil
 }
 
 var cliArguments = []kssh.CLIArgument{
-	{Name: "--set-default-team", HasArgument: true},
-	{Name: "--clear-default-team", HasArgument: false},
-	{Name: "--team", HasArgument: true},
+	{Name: "--set-default-bot", HasArgument: true},
+	{Name: "--clear-default-bot", HasArgument: false},
+	{Name: "--bot", HasArgument: true},
 	{Name: "--provision", HasArgument: false},
 	{Name: "--help", HasArgument: false},
 }
@@ -94,10 +94,10 @@ GLOBAL OPTIONS:
    --help,               Show help
    --provision           Provision a new SSH key and add it to the ssh-agent. Useful if you need to run another 
                          program that uses SSH auth (eg scp, rsync, etc)
-   --set-default-team    Set the default team to be used for kssh. Not necessary if you are only in one team that
+   --set-default-bot     Set the default bot to be used for kssh. Not necessary if you are only in one team that
                          is using Keybase SSH CA
-   --clear-default-team  Clear the default team
-   --team                Specify a specific team to be used for kssh. Not necessary if you are only in one team that
+   --clear-default-bot   Clear the default bot
+   --bot                 Specify a specific bot to be used for kssh. Not necessary if you are only in one team that
                          is using Keybase SSH CA`)
 }
 
@@ -108,8 +108,8 @@ const (
 	SSH
 )
 
-// Returns team, remaining arguments, action, error
-// If the argumnent requires exiting after processing, it will call os.Exit
+// Returns botname, remaining arguments, action, error
+// If the argument requires exiting after processing, it will call os.Exit
 func handleArgs(args []string) (string, []string, Action, error) {
 	remaining, found, err := kssh.ParseArgs(args, cliArguments)
 	if err != nil {
@@ -119,26 +119,26 @@ func handleArgs(args []string) (string, []string, Action, error) {
 	team := ""
 	action := SSH
 	for _, arg := range found {
-		if arg.Argument.Name == "--team" {
+		if arg.Argument.Name == "--bot" {
 			team = arg.Value
 		}
-		if arg.Argument.Name == "--set-default-team" {
-			// We exit immediately after setting the default team
-			err := kssh.SetDefaultTeam(arg.Value)
+		if arg.Argument.Name == "--set-default-bot" {
+			// We exit immediately after setting the default bot
+			err := kssh.SetDefaultBot(arg.Value)
 			if err != nil {
-				fmt.Printf("Failed to set the default team: %v\n", err)
+				fmt.Printf("Failed to set the default bot: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println("Set default team, exiting...")
+			fmt.Println("Set default bot, exiting...")
 			os.Exit(0)
 		}
-		if arg.Argument.Name == "--clear-default-team" {
-			err := kssh.SetDefaultTeam("")
+		if arg.Argument.Name == "--clear-default-bot" {
+			err := kssh.SetDefaultBot("")
 			if err != nil {
-				fmt.Printf("Failed to clear the default team: %v\n", err)
+				fmt.Printf("Failed to clear the default bot: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println("Cleared default team, exiting...")
+			fmt.Println("Cleared default bot, exiting...")
 			os.Exit(0)
 		}
 		if arg.Argument.Name == "--provision" {
@@ -152,12 +152,16 @@ func handleArgs(args []string) (string, []string, Action, error) {
 	return team, remaining, action, nil
 }
 
-// Get the kssh.ConfigFile. team is the team specified via --team if one was specified, otherwise the empty string
-func getConfig(team string) (kssh.ConfigFile, error) {
+// Get the kssh.ConfigFile. botname is the team specified via --bot if one was specified, otherwise the empty string
+func getConfig(botname string) (kssh.ConfigFile, error) {
 	empty := kssh.ConfigFile{}
 
-	// They specified a team via `kssh --team teamname.ssh ...`
-	if team != "" {
+	// They specified a bot via `kssh --bot cabot ...`
+	if botname != "" {
+		team, err := kssh.GetTeamFromBot(botname)
+		if err != nil {
+			return empty, err
+		}
 		conf, err := kssh.LoadConfig(fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename))
 		if err != nil {
 			return empty, fmt.Errorf("Failed to load config file for team=%s: %v", team, err)
@@ -165,21 +169,21 @@ func getConfig(team string) (kssh.ConfigFile, error) {
 		return conf, nil
 	}
 
-	// Check if they set a default team and retrieve the config for that team if so
-	defaultTeam, err := kssh.GetDefaultTeam()
+	// Check if they set a default bot and retrieve the config for that bot/team if so
+	defaultBot, defaultTeam, err := kssh.GetDefaultBotAndTeam()
 	if err != nil {
 		return empty, err
 	}
-	if defaultTeam != "" {
+	if defaultBot != "" && defaultTeam != "" {
 		conf, err := kssh.LoadConfig(fmt.Sprintf("/keybase/team/%s/%s", defaultTeam, shared.ConfigFilename))
 		if err != nil {
-			return empty, fmt.Errorf("Failed to load config file for default team=%s: %v", defaultTeam, err)
+			return empty, fmt.Errorf("Failed to load config file for default bot=%s, team=%s: %v", defaultBot, defaultTeam, err)
 		}
 		return conf, nil
 	}
 
-	// No specified team and no default team, fallback and load all the configs
-	configs, teams, err := kssh.LoadConfigs()
+	// No specified bot and no default bot, fallback and load all the configs
+	configs, botnames, err := kssh.LoadConfigs()
 	if err != nil {
 		return empty, fmt.Errorf("Failed to load config file(s): %v\n", err)
 	}
@@ -188,8 +192,8 @@ func getConfig(team string) (kssh.ConfigFile, error) {
 	} else if len(configs) == 1 {
 		return configs[0], nil
 	} else {
-		noDefaultTeamMessage := fmt.Sprintf("Found %v config files (%s). No default team is configured. \n"+
-			"Either specify a team via `kssh --team teamname.ssh` or set a default team via `kssh --set-default-team teamname.ssh`", len(configs), strings.Join(teams, ", "))
+		noDefaultTeamMessage := fmt.Sprintf("Found %v config files (%s). No default bot is configured. \n"+
+			"Either specify a team via `kssh --bot cabotname` or set a default bot via `kssh --set-default-bot cabotname`", len(configs), strings.Join(botnames, ", "))
 		return empty, fmt.Errorf(noDefaultTeamMessage)
 	}
 }
