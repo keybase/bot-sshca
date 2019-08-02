@@ -2,7 +2,7 @@ import pytest
 
 from lib import assert_contains_hash, load_env, outputs_audit_log, run_command
 
-class TestEnv2:
+class TestEnv2LocalAuditLog:
     @pytest.fixture(autouse=True, scope='class')
     def configure_env(self):
         assert load_env(__file__)

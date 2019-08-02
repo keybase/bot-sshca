@@ -5,7 +5,7 @@ import pytest
 
 from lib import assert_contains_hash, clear_keys, load_env, outputs_audit_log, run_command, SUBTEAM, BOT_USERNAME
 
-class TestEnv4:
+class TestEnv4UserNotInConfiguredTeams:
     @pytest.fixture(autouse=True, scope='class')
     def configure_env(self):
         load_env(__file__)
