@@ -134,8 +134,12 @@ func mainAction(c *cli.Context) error {
 		}
 
 		semaphore := make(chan interface{}, len(teams))
+		boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
 		for _, team := range teams {
 			go func(team string) {
+				// Blocks until there is room in boundChan
+				boundChan <- 0
+
 				filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
 				exists, _ := shared.KBFSFileExists(filename)
 				if exists {
@@ -145,6 +149,9 @@ func mainAction(c *cli.Context) error {
 					}
 				}
 				semaphore <- 0
+
+				// Make room in boundChan
+				<-boundChan
 			}(team)
 		}
 		for i := 0; i < len(teams); i++ {

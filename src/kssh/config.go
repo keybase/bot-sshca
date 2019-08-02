@@ -28,11 +28,15 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 
 	// Iterate through the listed files in parallel to speed up kssh for users with lots of teams
 	semaphore := make(chan interface{}, len(listedFiles))
+	boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
 	errors := make(chan error, len(listedFiles))
 	botNameToConfig := make(map[string]ConfigFile)
 	botNameToConfigMutex := sync.Mutex{}
 	for _, team := range listedFiles {
 		go func(team string) {
+			// Blocks until there is room in boundChan
+			boundChan <- 0
+
 			filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
 			exists, err := shared.KBFSFileExists(filename)
 			if err != nil {
@@ -51,6 +55,9 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 			}
 
 			semaphore <- 0
+
+			// Make room in boundChan
+			<-boundChan
 		}(team)
 	}
 	for i := 0; i < len(listedFiles); i++ {
