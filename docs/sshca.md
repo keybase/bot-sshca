@@ -109,5 +109,5 @@ ECDSA key fingerprint is SHA256:MmB6/g0vDrMkanuRc46n6JCDYPaPKHYsbDpLhQ3y1Yg.
 Are you sure you want to continue connecting (yes/no)? 
 ```
 
-Ultimately, this feature was not included as part of this project since signing host keys is significantly different 
+This feature has not been included because signing host keys is significantly different 
 from signing user keys. Despite this, it could still be a useful feature to build on top of Keybase. 
