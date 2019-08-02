@@ -120,7 +120,7 @@ GLOBAL OPTIONS:
 
 ## kssh
 
-`kssh` is the replacement SSH binary. kssh handles provisioning new SSH keys and is meant to be installed on each
+`kssh` is the replacement SSH binary. kssh handles provisioning (via the keybaseca-bot) new temporary SSH keys and is meant to be installed on each
 user's laptop. 
 
 ```
