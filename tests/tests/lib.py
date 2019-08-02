@@ -1,12 +1,36 @@
 import hashlib
 import os
+import signal
 import subprocess
 import time
 
 import requests
 
-def run_command(cmd):
-    return subprocess.check_output(cmd, shell=True)
+SUBTEAM = os.environ['SUBTEAM']
+SUBTEAM_SECONDARY = os.environ['SUBTEAM_SECONDARY']
+USERNAME = os.environ['KSSH_USERNAME']
+BOT_USERNAME = os.environ['BOT_USERNAME']
+
+# "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
+# and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
+# kssh is actually executing on the remote server.
+EXPECTED_HASH = hashlib.sha1(b"uniquestring").hexdigest().encode('utf-8')
+
+def run_command(cmd, timeout=10):
+    # In order to properly run a command with a timeout and shell=True, we use Popen with a shell and group all child
+    # processes so we can kill all of them. See:
+    # - https://stackoverflow.com/questions/36952245/subprocess-timeout-failure
+    # - https://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
+    with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, preexec_fn=os.setsid) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(process.returncode, cmd, stdout, stderr)
+            return stdout
+        except subprocess.TimeoutExpired as e:
+            os.killpg(process.pid, signal.SIGINT)
+            print(f"Output before timeout: {process.communicate()[0]}")
+            raise e
 
 def read_file(filename):
     """
@@ -16,7 +40,7 @@ def read_file(filename):
     :return:            A list of lines in the file
     """
     if filename.startswith("/keybase/"):
-        return run_command("keybase fs read %s" % filename).splitlines()
+        return run_command(f"keybase fs read {filename}").splitlines()
     with open(filename, 'rb') as f:
         return f.readlines()
 
@@ -37,11 +61,14 @@ def clear_local_config():
 def simulate_two_teams(func):
     # A decorator that simulates running the given function in an environment with two teams set up
     def inner(*args, **kwargs):
-        run_command("keybase fs cp /keybase/team/%s.ssh/kssh-client.config /keybase/team/%s/kssh-client.config" % (os.environ['SUBTEAM'], os.environ['SUBTEAM_SECONDARY']))
+        run_command(f"keybase fs read /keybase/team/{SUBTEAM}.ssh.staging/kssh-client.config | "
+                    f"sed 's/{SUBTEAM}.ssh.staging/{SUBTEAM_SECONDARY}/g' | "
+                    f"sed 's/{BOT_USERNAME}/otherbotname/g' | "
+                    f"keybase fs write /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
         try:
             ret = func(*args, **kwargs)
         finally:
-            run_command("keybase fs rm /keybase/team/%s/kssh-client.config" % os.environ['SUBTEAM_SECONDARY'])
+            run_command(f"keybase fs rm /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
         return ret
     return inner
 
@@ -51,7 +78,6 @@ def outputs_audit_log(filename, expected_number):
     def decorator(func):
         def inner(*args, **kwargs):
             cnt = 0
-            username = os.environ.get('KSSH_USERNAME', None)
 
             # Make a set of the lines in the audit log before we ran
             before_lines = set(read_file(filename))
@@ -69,11 +95,11 @@ def outputs_audit_log(filename, expected_number):
 
             for line in new_lines:
                 line = line.decode('utf-8')
-                if line and "Processing SignatureRequest from user=%s" % username in line and "principals:staging,root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
+                if line and f"Processing SignatureRequest from user={USERNAME}" in line and "principals:staging,root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
                     cnt += 1
 
             if cnt != expected_number:
-                assert False, "Found %s audit log entries, expected %s!" % (cnt, expected_number)
+                assert False, f"Found {cnt} audit log entries, expected {expected_number}!"
             return ret
         return inner
     return decorator
@@ -81,12 +107,7 @@ def outputs_audit_log(filename, expected_number):
 def load_env(filename):
     # Load the environment based off of the given filename which is the path to the python test script
     env_name = os.path.basename(filename).split(".")[0]
-    return requests.get("http://ca-bot:8080/load_env?filename=%s" % env_name).content == b"OK"
-
-# "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
-# and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
-# kssh is actually executing on the remote server.
-EXPECTED_HASH = hashlib.sha1(b"uniquestring").hexdigest().encode('utf-8')
+    return requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content == b"OK"
 
 def assert_contains_hash(output):
     assert EXPECTED_HASH in output

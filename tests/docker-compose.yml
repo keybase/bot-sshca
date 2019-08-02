@@ -24,6 +24,7 @@ services:
     environment:
       - KSSH_PAPERKEY
       - KSSH_USERNAME
+      - BOT_USERNAME
       - SUBTEAM
       - SUBTEAM_SECONDARY
     volumes:

@@ -165,27 +165,58 @@ func main() {
 // Write a kssh config file to /keybase/team/teamname.ssh/kssh-client.config. kssh will automatically pick up
 // and use this config
 func writeClientConfig(conf config.Config) error {
-	// We only write the client config into the first team since that is enough for kssh to find it. This means
-	// kssh will talk to the bot in the first team that is listed in the config file
-	filename := filepath.Join("/keybase/team/", conf.GetDefaultTeam(), shared.ConfigFilename)
 	username, err := bot.GetUsername(conf)
 	if err != nil {
 		return err
 	}
 
-	content, err := json.Marshal(kssh.ConfigFile{TeamName: conf.GetDefaultTeam(), BotName: username, ChannelName: conf.GetChannelName()})
-	if err != nil {
-		return err
+	teams := conf.GetTeams()
+	if conf.GetChatTeam() != "" {
+		// Make sure we place a client config file in the chat team which may not be in the list of teams
+		teams = append(teams, conf.GetChatTeam())
+	}
+	for _, team := range teams {
+		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
+
+		var content []byte
+		if conf.GetChatTeam() == "" {
+			// If they didn't configure a chat team, messages should be sent to any channel. This is done by having each
+			// client config reference the team it is found in
+			content, err = json.Marshal(kssh.ConfigFile{TeamName: team, BotName: username, ChannelName: ""})
+		} else {
+			// If they configured a chat team, have messages go there
+			content, err = json.Marshal(kssh.ConfigFile{TeamName: conf.GetChatTeam(), BotName: username, ChannelName: conf.GetChannelName()})
+		}
+		if err != nil {
+			return err
+		}
+
+		err = shared.KBFSWrite(filename, string(content), false)
+		if err != nil {
+			return err
+		}
 	}
 
-	return shared.KBFSWrite(filename, string(content), false)
+	return nil
 }
 
 // Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale
 // client config files
 func deleteClientConfig(conf config.Config) error {
-	filename := filepath.Join("/keybase/team/", conf.GetDefaultTeam(), shared.ConfigFilename)
-	return shared.KBFSDelete(filename)
+	teams := conf.GetTeams()
+	if conf.GetChatTeam() != "" {
+		// Make sure we delete the client config file in the chat team which may not be in the list of teams
+		teams = append(teams, conf.GetChatTeam())
+	}
+
+	for _, team := range teams {
+		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
+		err := shared.KBFSDelete(filename)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func captureControlCToDeleteClientConfig(conf config.Config) {

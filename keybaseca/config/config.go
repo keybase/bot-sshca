@@ -19,7 +19,7 @@ type Config interface {
 	GetKeybaseUsername() string
 	GetKeyExpiration() string
 	GetTeams() []string
-	GetDefaultTeam() string
+	GetChatTeam() string
 	GetChannelName() string
 	GetLogLocation() string
 	GetStrictLogging() bool
@@ -162,17 +162,6 @@ func (ef *EnvConfig) GetTeams() []string {
 	return teams
 }
 
-func (ef *EnvConfig) GetDefaultTeam() string {
-	if os.Getenv("CHAT_CHANNEL") != "" {
-		team, _, err := splitTeamChannel(os.Getenv("CHAT_CHANNEL"))
-		if err != nil {
-			panic("Failed to retrieve default team! This should never happen due to config validation...")
-		}
-		return team
-	}
-	return ef.GetTeams()[0]
-}
-
 func (ef *EnvConfig) GetLogLocation() string {
 	return os.Getenv("LOG_LOCATION")
 }
@@ -187,6 +176,17 @@ func (ef *EnvConfig) GetStrictLogging() bool {
 
 func (ef *EnvConfig) getChatChannel() string {
 	return os.Getenv("CHAT_CHANNEL")
+}
+
+func (ef *EnvConfig) GetChatTeam() string {
+	if ef.getChatChannel() == "" {
+		return ""
+	}
+	team, _, err := splitTeamChannel(os.Getenv("CHAT_CHANNEL"))
+	if err != nil {
+		panic("Failed to retrieve chat team! This should never happen due to config validation...")
+	}
+	return team
 }
 
 func (ef *EnvConfig) GetChannelName() string {

@@ -115,7 +115,7 @@ func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessag
 
 // Whether the given team is one of the specified teams in the config
 func isConfiguredTeam(conf config.Config, teamName string) bool {
-	if conf.GetDefaultTeam() == teamName {
+	if conf.GetChatTeam() != "" && conf.GetChatTeam() == teamName {
 		return true
 	}
 	for _, team := range conf.GetTeams() {

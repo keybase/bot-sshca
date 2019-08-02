@@ -5,9 +5,9 @@ import time
 
 import pytest
 
-from lib import assert_contains_hash, EXPECTED_HASH, load_env, outputs_audit_log, run_command, simulate_two_teams
+from lib import assert_contains_hash, EXPECTED_HASH, load_env, outputs_audit_log, run_command, simulate_two_teams, SUBTEAM, SUBTEAM_SECONDARY
 
-test_env_1_log_filename = "/keybase/team/%s.ssh.staging/ca.log" % os.environ['SUBTEAM']
+test_env_1_log_filename = f"/keybase/team/{SUBTEAM}.ssh.staging/ca.log"
 class TestEnv1:
 
     @pytest.fixture(autouse=True, scope='class')
@@ -84,21 +84,21 @@ class TestEnv1:
     @simulate_two_teams
     def test_kssh_team_flag(self):
         # Test that kssh works with the --team flag
-        assert_contains_hash(run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+        assert_contains_hash(run_command(f"bin/kssh --team {SUBTEAM}.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @simulate_two_teams
     def test_kssh_set_default_team(self):
         # Test that kssh works with the --set-default-team flag
-        run_command("bin/kssh --set-default-team %s.ssh" % os.environ['SUBTEAM'])
+        run_command(f"bin/kssh --set-default-team {SUBTEAM}.ssh")
         assert_contains_hash(run_command("bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     @outputs_audit_log(filename=test_env_1_log_filename, expected_number=1)
     @simulate_two_teams
     def test_kssh_override_default_team(self):
         # Test that the --team flag overrides the local config file
-        run_command("bin/kssh --set-default-team %s" % os.environ['SUBTEAM_SECONDARY'])
-        assert_contains_hash(run_command("bin/kssh --team %s.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'" % os.environ['SUBTEAM']))
+        run_command(f"bin/kssh --set-default-team {SUBTEAM_SECONDARY}")
+        assert_contains_hash(run_command(f"bin/kssh --team {SUBTEAM}.ssh -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
     def test_keybaseca_backup(self):
         # Test the keybaseca backup command by reading and verifying the private key stored in /mnt/cakey.backup
