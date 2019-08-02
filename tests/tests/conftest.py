@@ -3,6 +3,7 @@ import os
 import pytest
 
 import lib
+from lib import SUBTEAM, SUBTEAM_SECONDARY
 
 @pytest.fixture(autouse=True)
 def run_around_tests():
@@ -13,8 +14,8 @@ def run_around_tests():
 
 def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client config files stick around
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh.staging/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh.prod/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s.ssh.root_everywhere/kssh-client.config || true" % os.environ['SUBTEAM'])
-    lib.run_command("keybase fs rm /keybase/team/%s/kssh-client.config || true" % os.environ['SUBTEAM_SECONDARY'])
+    lib.run_command(f"keybase fs rm /keybase/team/{SUBTEAM}.ssh/kssh-client.config || true" )
+    lib.run_command(f"keybase fs rm /keybase/team/{SUBTEAM}.ssh.staging/kssh-client.config || true" )
+    lib.run_command(f"keybase fs rm /keybase/team/{SUBTEAM}.ssh.prod/kssh-client.config || true" )
+    lib.run_command(f"keybase fs rm /keybase/team/{SUBTEAM}.ssh.root_everywhere/kssh-client.config || true" )
+    lib.run_command(f"keybase fs rm /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config || true" )

@@ -29,7 +29,7 @@ def run_command(cmd, timeout=10):
             return stdout
         except subprocess.TimeoutExpired as e:
             os.killpg(process.pid, signal.SIGINT)
-            print("Output before timeout: %s" % process.communicate()[0])
+            print(f"Output before timeout: {process.communicate()[0]}")
             raise e
 
 def read_file(filename):
@@ -40,7 +40,7 @@ def read_file(filename):
     :return:            A list of lines in the file
     """
     if filename.startswith("/keybase/"):
-        return run_command("keybase fs read %s" % filename).splitlines()
+        return run_command(f"keybase fs read {filename}").splitlines()
     with open(filename, 'rb') as f:
         return f.readlines()
 
@@ -61,11 +61,14 @@ def clear_local_config():
 def simulate_two_teams(func):
     # A decorator that simulates running the given function in an environment with two teams set up
     def inner(*args, **kwargs):
-        run_command(f"keybase fs read /keybase/team/{SUBTEAM}.ssh.staging/kssh-client.config | sed 's/{SUBTEAM}.ssh.staging/{SUBTEAM_SECONDARY}/g' | sed 's/{BOT_USERNAME}/otherbotname/g' | keybase fs write /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
+        run_command(f"keybase fs read /keybase/team/{SUBTEAM}.ssh.staging/kssh-client.config | "
+                    f"sed 's/{SUBTEAM}.ssh.staging/{SUBTEAM_SECONDARY}/g' | "
+                    f"sed 's/{BOT_USERNAME}/otherbotname/g' | "
+                    f"keybase fs write /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
         try:
             ret = func(*args, **kwargs)
         finally:
-            run_command("keybase fs rm /keybase/team/%s/kssh-client.config" % SUBTEAM_SECONDARY)
+            run_command(f"keybase fs rm /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
         return ret
     return inner
 
@@ -92,11 +95,11 @@ def outputs_audit_log(filename, expected_number):
 
             for line in new_lines:
                 line = line.decode('utf-8')
-                if line and "Processing SignatureRequest from user=%s" % USERNAME in line and f"principals:{SUBTEAM}.ssh.staging,{SUBTEAM}.ssh.root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
+                if line and f"Processing SignatureRequest from user={USERNAME}" in line and f"principals:{SUBTEAM}.ssh.staging,{SUBTEAM}.ssh.root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
                     cnt += 1
 
             if cnt != expected_number:
-                assert False, "Found %s audit log entries, expected %s! Audit logs: %s" % (cnt, expected_number, new_lines)
+                assert False, f"Found {cnt} audit log entries, expected {expected_number}! New audit logs: {new_lines}"
             return ret
         return inner
     return decorator
@@ -104,7 +107,7 @@ def outputs_audit_log(filename, expected_number):
 def load_env(filename):
     # Load the environment based off of the given filename which is the path to the python test script
     env_name = os.path.basename(filename).split(".")[0]
-    return requests.get("http://ca-bot:8080/load_env?filename=%s" % env_name).content == b"OK"
+    return requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content == b"OK"
 
 def assert_contains_hash(output):
     assert EXPECTED_HASH in output

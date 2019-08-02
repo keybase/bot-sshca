@@ -1,4 +1,5 @@
-# Used to test sending the audit log to the normal filesystem
+# Used to test sending the audit log to the normal filesystem. The code that handles local audit log writes is different
+# from the code that handles KBFS audit log writes.
 export KEY_EXPIRATION="+1h"
 export LOG_LOCATION="/mnt/ca.log"
 export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywhere"
