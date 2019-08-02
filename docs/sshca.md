@@ -12,7 +12,7 @@ An SSH CA key is just a normal SSH key. This bot generates keys via:
 ssh-keygen -t ed25519 -f ca-key -m PEM
 ```
 
-An signature on a SSH key is a certificate that contains some additional information. A certificate contains:
+A signature on a SSH key is a certificate that contains some additional information. A certificate contains:
 
 1. The public key of the signed key
 2. A key ID that can be used to identify who the key was issued to
