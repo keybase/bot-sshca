@@ -154,7 +154,7 @@ client config file is how kssh determines which teams are using kssh and the nee
 channel name, the name of the bot, etc). When keybaseca stops, it deletes all of the client config files. 
 
 kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
-config files. It does have one local config file stored in `~/.ssh/cssh.cache` that is used to store the default team
+configuration. It does have one local config file stored in `~/.ssh/cssh.cache` that is used to store the default team
 if the `--set-default-team` flag is set. This config file is not meant to be manually edited and is only meant to be 
 interacted with via the `--set-default-team` and `--clear-default-team` flags. 
 
