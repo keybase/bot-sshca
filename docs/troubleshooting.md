@@ -30,7 +30,7 @@ that you and the chatbot are in the correct teams such that they can read and re
 # SSH rejects the connection
 
 This likely means that you have not configured the SSH server correctly. Review the directions in README.md and ensure
-that you have followed the steps correctly (sshca.md also has some additional information on how SSH CAs work that may
+that you have followed the steps correctly ([sshca.md](./sshca.md) also has some additional information on how SSH CAs work that may
 be helpful). If you would like to follow an example, see the code in the `tests/` directory which contains integration 
 tests (focus on Dockerfile-sshd for an example SSH server setup). If none of that works, the best strategy is to run
 SSH on the server on an alternate port and review the debug information. On the server run `/usr/sbin/sshd -dd -D -p 2222`
