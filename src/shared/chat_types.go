@@ -51,7 +51,6 @@ func ParseSignatureResponse(body string) (SignatureResponse, error) {
 func GenerateAckRequest(username string) string {
 	return "AckRequest--" + username
 }
-
 func GenerateAckResponse(ackRequest string) string {
 	return strings.Replace(ackRequest, "AckRequest", "Ack", 1)
 }
