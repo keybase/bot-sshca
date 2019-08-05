@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/keybase/bot-ssh-ca/src/keybaseca/bot"
@@ -133,7 +134,8 @@ func mainAction(c *cli.Context) error {
 			return err
 		}
 
-		semaphore := make(chan interface{}, len(teams))
+		semaphore := sync.WaitGroup{}
+		semaphore.Add(len(teams))
 		boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
 		for _, team := range teams {
 			go func(team string) {
@@ -148,15 +150,13 @@ func mainAction(c *cli.Context) error {
 						fmt.Printf("%v\n", err)
 					}
 				}
-				semaphore <- 0
+				semaphore.Done()
 
 				// Make room in boundChan
 				<-boundChan
 			}(team)
 		}
-		for i := 0; i < len(teams); i++ {
-			<-semaphore
-		}
+		semaphore.Wait()
 	}
 	if c.Bool("wipe-logs") {
 		conf, err := loadServerConfig()

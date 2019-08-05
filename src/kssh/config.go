@@ -27,7 +27,8 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 	}
 
 	// Iterate through the listed files in parallel to speed up kssh for users with lots of teams
-	semaphore := make(chan interface{}, len(allTeamsFromKBFS))
+	semaphore := sync.WaitGroup{}
+	semaphore.Add(len(allTeamsFromKBFS))
 	boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
 	errors := make(chan error, len(allTeamsFromKBFS))
 	botNameToConfig := make(map[string]ConfigFile)
@@ -54,15 +55,13 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 				}
 			}
 
-			semaphore <- 0
+			semaphore.Done()
 
 			// Make room in boundChan
 			<-boundChan
 		}(team)
 	}
-	for i := 0; i < len(allTeamsFromKBFS); i++ {
-		<-semaphore
-	}
+	semaphore.Wait()
 
 	// Read from errors without blocking
 	select {
