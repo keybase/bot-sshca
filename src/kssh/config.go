@@ -88,11 +88,14 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 	}
 	bytes, err := shared.KBFSRead(kbfsFilename)
 	if err != nil {
-		return cf, err
+		return cf, fmt.Errorf("found a config file at %s that could not be read: %v", kbfsFilename, err)
 	}
 	err = json.Unmarshal(bytes, &cf)
+	if err != nil {
+		return cf, fmt.Errorf("failed to parse config file at %s: %v", kbfsFilename, err)
+	}
 	if cf.TeamName == "" || cf.BotName == "" {
-		return cf, fmt.Errorf("Found a config file at %s that is missing data: %s", kbfsFilename, string(bytes))
+		return cf, fmt.Errorf("found a config file at %s that is missing data: %s", kbfsFilename, string(bytes))
 	}
 	return cf, err
 }
