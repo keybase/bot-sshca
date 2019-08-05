@@ -46,7 +46,7 @@ make generate
 ```
 
 This will output a list of configuration steps to run on each server you wish to use with the CA chatbot. Run 
-these commands. These commands create a new user to use with kssh (the `developer` user), add the CA's public key to the
+[these](./docker/Makefile) commands. These commands create a new user to use with kssh (the `developer` user), add the CA's public key to the
 server, and configure the server to trust the public key. 
 
 Now you must define a mapping between Keybase teams the users and servers that they are

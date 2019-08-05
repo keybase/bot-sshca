@@ -33,11 +33,14 @@ func TestIsValidCert(t *testing.T) {
 	os.Remove(shared.KeyPathToPubKey(certTestFilename))
 	os.Remove(shared.KeyPathToCert(certTestFilename))
 
+	// Test that when the cert files don't exist it is not a valid cert
 	require.False(t, isValidCert(certTestFilename))
 
+	// Test that a valid cert signed for the next 100 years is a valid cert
 	copyKeyFromTextFixture(t, "valid", certTestFilename)
 	require.True(t, isValidCert(certTestFilename))
 
+	// Test that an expired cert is not valid
 	copyKeyFromTextFixture(t, "expired", certTestFilename)
 	require.False(t, isValidCert(certTestFilename))
 }
