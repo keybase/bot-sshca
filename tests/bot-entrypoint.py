@@ -2,7 +2,7 @@
 
 """
 This file is the main process running inside of the ca-bot container for the integration tests. This allows the kssh
-container to specify that the tests sholuld run with a specific set of environment variables. This allows us to easily
+container to specify that the tests should run with a specific set of environment variables. This allows us to easily
 run integration tests for different keybaseca config options.
 """
 
