@@ -103,7 +103,7 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 // A LocalConfigFile is a file that lives on the FS of the computer running kssh. It is only used if the user is
 // in multiple teams that are running the CA bot and they set a default bot via `kssh --set-default-bot foo`
 // Note that we store the team in here (even though it wasn't specified by the user) so that we can avoid doing a
-// a call to `LoadConfigs` if a default it set (since `LoadConfigs can be very slow if the user is in a large number
+// a call to `LoadConfigs` if a default is set (since `LoadConfigs can be very slow if the user is in a large number
 // of teams).
 type LocalConfigFile struct {
 	DefaultBotName string `json:"default_bot"`
