@@ -21,18 +21,18 @@ type ConfigFile struct {
 // LoadConfigs loads client configs from KBFS. Returns a (listOfConfigFiles, listOfBotNames, err)
 // Both lists are deduplicated based on ConfigFile.BotName
 func LoadConfigs() ([]ConfigFile, []string, error) {
-	listedFiles, err := shared.KBFSList("/keybase/team/")
+	allTeamsFromKBFS, err := shared.KBFSList("/keybase/team/")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config file(s): %v", err)
 	}
 
 	// Iterate through the listed files in parallel to speed up kssh for users with lots of teams
-	semaphore := make(chan interface{}, len(listedFiles))
+	semaphore := make(chan interface{}, len(allTeamsFromKBFS))
 	boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
-	errors := make(chan error, len(listedFiles))
+	errors := make(chan error, len(allTeamsFromKBFS))
 	botNameToConfig := make(map[string]ConfigFile)
 	botNameToConfigMutex := sync.Mutex{}
-	for _, team := range listedFiles {
+	for _, team := range allTeamsFromKBFS {
 		go func(team string) {
 			// Blocks until there is room in boundChan
 			boundChan <- 0
@@ -60,7 +60,7 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 			<-boundChan
 		}(team)
 	}
-	for i := 0; i < len(listedFiles); i++ {
+	for i := 0; i < len(allTeamsFromKBFS); i++ {
 		<-semaphore
 	}
 
