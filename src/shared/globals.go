@@ -1,3 +1,3 @@
 package shared
 
-var ConfigFilename = "kssh-client.config"
+const ConfigFilename = "kssh-client.config"

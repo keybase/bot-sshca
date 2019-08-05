@@ -100,6 +100,19 @@ class TestEnv1:
         run_command(f"bin/kssh --set-default-bot otherbotname")
         assert_contains_hash(run_command(f"bin/kssh --bot {BOT_USERNAME} -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
 
+    @outputs_audit_log(filename=test_env_1_log_filename, expected_number=0)
+    @simulate_two_teams
+    def test_kssh_clear_default_bot(self):
+        # Test that kssh --clear-default-bot clears the default bot
+        run_command(f"bin/kssh --set-default-bot {BOT_USERNAME}")
+        run_command("bin/kssh --clear-default-bot")
+        try:
+            # No default set and no bot specified so it will error out
+            run_command("bin/kssh root@sshd-prod")
+            assert False
+        except subprocess.CalledProcessError as e:
+            assert b"Found 2 config files" in e.output
+
     def test_keybaseca_backup(self):
         # Test the keybaseca backup command by reading and verifying the private key stored in /mnt/cakey.backup
         run_command("mkdir -p /tmp/ssh/")

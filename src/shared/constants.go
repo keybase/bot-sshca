@@ -1,3 +1,3 @@
 package shared
 
-var BoundedParallelismLimit = 50
+const BoundedParallelismLimit = 50

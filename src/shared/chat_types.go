@@ -15,7 +15,7 @@ type SignatureRequest struct {
 }
 
 // The preamble used at the start of signature request messages
-var SignatureRequestPreamble = "Signature_Request:"
+const SignatureRequestPreamble = "Signature_Request:"
 
 func ParseSignatureRequest(body string) (SignatureRequest, error) {
 	if !strings.HasPrefix(body, SignatureRequestPreamble) {
@@ -35,7 +35,7 @@ type SignatureResponse struct {
 }
 
 // The preamble used at the start of signature response messages
-var SignatureResponsePreamble = "Signature_Response:"
+const SignatureResponsePreamble = "Signature_Response:"
 
 func ParseSignatureResponse(body string) (SignatureResponse, error) {
 	if !strings.HasPrefix(body, SignatureResponsePreamble) {

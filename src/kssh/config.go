@@ -115,7 +115,7 @@ var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh.config")
 
 func SetDefaultBot(botname string) error {
 	if botname == "" {
-		return os.Remove(botname)
+		return os.Remove(localConfigFileLocation)
 	}
 	teamname, err := GetTeamFromBot(botname)
 	if err != nil {
