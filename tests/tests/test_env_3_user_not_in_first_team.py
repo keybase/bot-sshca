@@ -1,18 +1,23 @@
 import pytest
 
-from lib import assert_contains_hash, clear_keys, load_env, outputs_audit_log, run_command
+from lib import UtilitiesLib
+from lib import SUBTEAM, SUBTEAM_SECONDARY, USERNAME, BOT_USERNAME, EXPECTED_HASH
 
 class TestEnv3UserNotInFirstTeam:
     @pytest.fixture(autouse=True, scope='class')
-    def configure_env(self):
-        load_env(__file__)
+    def configure_env(self, test_lib):
+        assert test_lib.load_env(__file__)
 
-    @outputs_audit_log(filename="/mnt/ca.log", expected_number=3)
-    def test_kssh(self):
+    @pytest.fixture(autouse=True, scope='class')
+    def test_lib(self):
+        return UtilitiesLib(SUBTEAM, SUBTEAM_SECONDARY, USERNAME, BOT_USERNAME, EXPECTED_HASH)
+
+    def test_kssh(self, test_lib):
         # Test ksshing which tests that it is correctly finding a client config
-        clear_keys()
-        assert_contains_hash(run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
-        clear_keys()
-        assert_contains_hash(run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
-        clear_keys()
-        assert_contains_hash(run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
+        with test_lib.outputs_audit_log(filename="/mnt/ca.log", expected_number=3):
+            test_lib.clear_keys()
+            test_lib.assert_contains_hash(test_lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
+            test_lib.clear_keys()
+            test_lib.assert_contains_hash(test_lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
+            test_lib.clear_keys()
+            test_lib.assert_contains_hash(test_lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
