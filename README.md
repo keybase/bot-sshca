@@ -165,12 +165,11 @@ keybaseca will only accept communication in the specified team and channel. If t
 is not specified then keybaseca will accept messages in any channel of any team listed in the `TEAMS` environment variable.
 All communication happens via the Go chatbot library. 
 
-Prior to sending a `SignatureRequest`, kssh sends a series of AckRequest messages. An AckRequest message is sent until 
-kssh receives an Ack from keybaseca. This is done in order to ensure that kssh has correctly connected to the chat channel
-and that the bot is responding to messages. In order to ensure that kssh is receiving an Ack in response to the AckRequests
-that it sent, the AckRequest includes the username of the user using kssh. Afterwards, a SignatureRequest packet is sent
-and keybaseca parses it and returns a signed key. Note that only public keys and signatures are sent over Keybase chat
-and private keys never leave the devices they were generated on. 
+Prior to sending a `SignatureRequest`, kssh sends a series of `AckRequest` messages. An `AckRequest` message is sent until 
+kssh receives an `Ack` from keybaseca. This is done in order to ensure that kssh has correctly connected to the chat channel
+and that the bot is responding to messages. Afterwards, a `SignatureRequest` packet is sent and keybaseca parses it and 
+returns a signed key. Note that only public keys and signatures are sent over Keybase chat and private keys never 
+leave the devices they were generated on. 
 
 #### SSH Operations
 
