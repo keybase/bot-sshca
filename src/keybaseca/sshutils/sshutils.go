@@ -138,17 +138,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	// Maps from a team to whether or not the user is in the current team (with writer, admin, or owner permissions)
 	teamToMembership := make(map[string]bool)
 	for _, result := range results {
-		// Sadly result.Role is an integer and this is all we're given. Let's hope no one ever changes this enum out
-		// from underneath us. Admittedly, the worst that could (should) happen is that someone with minimal permissions
-		// in a team is given access (eg a reader) which wouldn't lead to a complete compromise since an attacker
-		// would still have to be added as a reader first.
-		//
-		// result.Role == 4 --> owner
-		// result.Role == 3 --> admin
-		// result.Role == 2 --> writer
-		if result.Role == 4 || result.Role == 3 || result.Role == 2 {
-			teamToMembership[result.TeamName] = true
-		}
+		teamToMembership[result.TeamName] = true
 	}
 
 	// Iterate through the teams in the config file and use the subteam as the principal
