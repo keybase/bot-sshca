@@ -156,7 +156,7 @@ channel name, the name of the bot, etc). When keybaseca stops, it deletes all of
 
 kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
 configuration. It does have one local config file stored in `~/.ssh/kssh.config` that is used to store the default bot
-if the `--set-default-bot` flag is used. This config file is not meant to be manually edited and is only meant to be 
+if the kssh user has access to multiple running keybaseca bots. This config file is not meant to be manually edited and is only meant to be 
 interacted with via the `--set-default-bot` and `--clear-default-bot` flags. 
 
 #### Communication
