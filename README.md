@@ -42,12 +42,12 @@ keybase paperkey    # Generate a new paper key
 # and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
 # different users
 nano env.sh         # Fill in the values including the previously generated paper key
-make generate
+make generate       # Generate a new CA key
 ```
 
-This will output a list of configuration steps to run on each server you wish to use with the CA chatbot. Run 
-[these](./docker/Makefile) commands. These commands create a new user to use with kssh (the `developer` user), add the CA's public key to the
-server, and configure the server to trust the public key. 
+Running `make generate` will output a list of configuration steps to run on each server you wish to use with the CA chatbot. 
+These commands create a new user to use with kssh (the `developer` user), add the CA's public key to the server, and 
+configure the server to trust the public key. 
 
 Now you must define a mapping between Keybase teams the users and servers that they are
 allowed to access. If you wish to make the user foo available to anyone in team.ssh.bar,
