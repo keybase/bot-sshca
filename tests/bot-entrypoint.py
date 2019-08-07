@@ -28,7 +28,7 @@ def load_env():
         "bin/keybaseca service &"
     ) % (shlex.quote(path)))
     # Sleep so keybaseca has time to start
-    time.sleep(2)
+    time.sleep(3)
     return "OK"
 
 if __name__ == '__main__':

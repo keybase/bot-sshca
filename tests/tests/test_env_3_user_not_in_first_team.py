@@ -1,23 +1,22 @@
 import pytest
 
-from lib import UtilitiesLib
-from lib import SUBTEAM, SUBTEAM_SECONDARY, USERNAME, BOT_USERNAME, EXPECTED_HASH
+from lib import TestConfig, load_env, outputs_audit_log, clear_keys, outputs_audit_log, assert_contains_hash, run_command
 
 class TestEnv3UserNotInFirstTeam:
     @pytest.fixture(autouse=True, scope='class')
-    def configure_env(self, test_lib):
-        assert test_lib.load_env(__file__)
+    def configure_env(self):
+        assert load_env(__file__)
 
     @pytest.fixture(autouse=True, scope='class')
-    def test_lib(self):
-        return UtilitiesLib(SUBTEAM, SUBTEAM_SECONDARY, USERNAME, BOT_USERNAME, EXPECTED_HASH)
+    def test_config(self):
+        return TestConfig.getDefaultTestConfig()
 
-    def test_kssh(self, test_lib):
+    def test_kssh(self, test_config):
         # Test ksshing which tests that it is correctly finding a client config
-        with test_lib.outputs_audit_log(filename="/mnt/ca.log", expected_number=3):
-            test_lib.clear_keys()
-            test_lib.assert_contains_hash(test_lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
-            test_lib.clear_keys()
-            test_lib.assert_contains_hash(test_lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
-            test_lib.clear_keys()
-            test_lib.assert_contains_hash(test_lib.run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
+        with outputs_audit_log(test_config, filename="/mnt/ca.log", expected_number=3):
+            clear_keys()
+            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
+            clear_keys()
+            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
+            clear_keys()
+            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
