@@ -161,7 +161,7 @@ interacted with via the `--set-default-bot` and `--clear-default-bot` flags.
 
 #### Communication
 
-kssh and keybaseca communicate with each other over Keybase chat. If the `CHAT_CHANNEL` environment variable is specified,
+kssh and keybaseca communicate with each other over Keybase chat. If the `CHAT_CHANNEL` environment variable is specified in keybaseca's environment,
 keybaseca will only accept communication in the specified team and channel. If the `CHAT_CHANNEL` environment variable
 is not specified then keybaseca will accept messages in any channel of any team listed in the `TEAMS` environment variable.
 All communication happens via the Go chatbot library. 
