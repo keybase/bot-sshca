@@ -9,7 +9,7 @@ When kssh starts, it has to search every team you are in for a `kssh-client.conf
 that is needed in order to communicate with the CA chatbot. If you are only in a few teams, this is relatively fast 
 (1-2 seconds for <10 teams) but this can become much slower as the number of teams increases (6 seconds for 100 teams
 in my benchmarks). This complex start up procedure can be avoided by setting a default bot via 
-`kssh --set-default-bot catbotname` which should reduce kssh's startup time considerably. 
+`kssh --set-default-bot cabotname` which should reduce kssh's startup time considerably. 
 
 # kssh times out
 
