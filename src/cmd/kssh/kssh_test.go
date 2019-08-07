@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func copyKeyFromTextFixture(t *testing.T, name, destination string) {
+func copyKeyFromTestFixture(t *testing.T, name, destination string) {
 	priv, err := ioutil.ReadFile(fmt.Sprintf("../../../tests/testFiles/%s", name))
 	require.NoError(t, err)
 	err = ioutil.WriteFile(destination, priv, 0600)
@@ -37,11 +37,11 @@ func TestIsValidCert(t *testing.T) {
 	require.False(t, isValidCert(certTestFilename))
 
 	// Test that a valid cert signed for the next 100 years is a valid cert
-	copyKeyFromTextFixture(t, "valid", certTestFilename)
+	copyKeyFromTestFixture(t, "valid", certTestFilename)
 	require.True(t, isValidCert(certTestFilename))
 
 	// Test that an expired cert is not valid
-	copyKeyFromTextFixture(t, "expired", certTestFilename)
+	copyKeyFromTestFixture(t, "expired", certTestFilename)
 	require.False(t, isValidCert(certTestFilename))
 }
 
