@@ -82,8 +82,8 @@ def load_env(filename: str):
     env_name = os.path.basename(filename).split(".")[0]
     return requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content == b"OK"
 
-def assert_contains_hash(hash: bytes, output: bytes):
-    assert hash in output
+def assert_contains_hash(expected_hash: bytes, output: bytes):
+    assert expected_hash in output
 
 @contextmanager
 def simulate_two_teams(tc: TestConfig):
