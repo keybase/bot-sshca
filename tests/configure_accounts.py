@@ -56,7 +56,7 @@ class User:
         :param username:    The username of the user to be invited
         :return:            None
         """
-        assert b"Success!" in self._run_command("team", "add-member", team, "--user=%s" % username, "--role=admin")
+        assert b"Success!" in self._run_command("team", "add-member", team, "--user=%s" % username, "--role=writer")
 
     def create_team_and_invite(self, team, username):
         """

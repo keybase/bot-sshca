@@ -138,7 +138,10 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	// Maps from a team to whether or not the user is in the current team (with writer, admin, or owner permissions)
 	teamToMembership := make(map[string]bool)
 	for _, result := range results {
-		teamToMembership[result.TeamName] = true
+		if result.Role != 0 {
+			// result.Role == 0 means they are an impicit admin in the team and are not actually a member
+			teamToMembership[result.TeamName] = true
+		}
 	}
 
 	// Iterate through the teams in the config file and use the subteam as the principal
