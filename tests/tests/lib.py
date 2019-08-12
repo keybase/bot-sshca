@@ -1,22 +1,41 @@
+from contextlib import contextmanager
 import hashlib
 import os
 import signal
 import subprocess
 import time
+from typing import List
 
 import requests
 
-SUBTEAM = os.environ['SUBTEAM']
-SUBTEAM_SECONDARY = os.environ['SUBTEAM_SECONDARY']
-USERNAME = os.environ['KSSH_USERNAME']
-BOT_USERNAME = os.environ['BOT_USERNAME']
+def getDefaultExpectedHash() -> bytes:
+    # "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
+    # and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
+    # kssh is actually executing on the remote server.
+    return hashlib.sha1(b"uniquestring").hexdigest().encode('utf-8')
 
-# "uniquestring" is stored in /etc/unique of the SSH server. We then run the command `sha1sum /etc/unique` via kssh
-# and assert that the output contains the sha1 hash of uniquestring. This checks to make sure the command given to
-# kssh is actually executing on the remote server.
-EXPECTED_HASH = hashlib.sha1(b"uniquestring").hexdigest().encode('utf-8')
+class TestConfig:
+    # Not actually a test class so mark it to be skipped
+    __test__ = False
 
-def run_command(cmd, timeout=10):
+    def __init__(self, subteam, subteam_secondary, username, bot_username, expected_hash):
+        self.subteam = subteam
+        self.subteam_secondary = subteam_secondary
+        self.username = username
+        self.bot_username = bot_username
+        self.expected_hash = expected_hash
+
+    @staticmethod
+    def getDefaultTestConfig():
+        return TestConfig(
+            os.environ['SUBTEAM'],
+            os.environ['SUBTEAM_SECONDARY'],
+            os.environ['KSSH_USERNAME'],
+            os.environ['BOT_USERNAME'],
+            getDefaultExpectedHash()
+        )
+
+def run_command(cmd: str, timeout: int=10) -> bytes:
     # In order to properly run a command with a timeout and shell=True, we use Popen with a shell and group all child
     # processes so we can kill all of them. See:
     # - https://stackoverflow.com/questions/36952245/subprocess-timeout-failure
@@ -32,7 +51,7 @@ def run_command(cmd, timeout=10):
             print(f"Output before timeout: {process.communicate()[0]}")
             raise e
 
-def read_file(filename):
+def read_file(filename: str) -> List[bytes]:
     """
     Read the contents of the given filename to a list of strings. If it is a normal file,
     uses the standard open() function. Otherwise, uses `keybase fs read`.
@@ -58,56 +77,50 @@ def clear_local_config():
     except subprocess.CalledProcessError:
         pass
 
-def simulate_two_teams(func):
-    # A decorator that simulates running the given function in an environment with two teams set up
-    def inner(*args, **kwargs):
-        run_command(f"keybase fs read /keybase/team/{SUBTEAM}.ssh.staging/kssh-client.config | "
-                    f"sed 's/{SUBTEAM}.ssh.staging/{SUBTEAM_SECONDARY}/g' | "
-                    f"sed 's/{BOT_USERNAME}/otherbotname/g' | "
-                    f"keybase fs write /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
-        try:
-            ret = func(*args, **kwargs)
-        finally:
-            run_command(f"keybase fs rm /keybase/team/{SUBTEAM_SECONDARY}/kssh-client.config")
-        return ret
-    return inner
-
-def outputs_audit_log(filename, expected_number):
-    # A decorator that asserts that the given function triggers expected_number of audit logs to be added to '/keybase/team/team.ssh.prod/ca.log'
-    # Note that fuse is not running in the container so this has to use `keybase fs read`
-    def decorator(func):
-        def inner(*args, **kwargs):
-            cnt = 0
-
-            # Make a set of the lines in the audit log before we ran
-            before_lines = set(read_file(filename))
-
-            # Then run the function
-            ret = func(*args, **kwargs)
-
-            # And sleep to give KBFS some time
-            time.sleep(1.5)
-
-            # Then see if there are new lines using set difference. This is only safe/reasonable since we include a
-            # timestamp in audit log lines.
-            after_lines = set(read_file(filename))
-            new_lines = after_lines - before_lines
-
-            for line in new_lines:
-                line = line.decode('utf-8')
-                if line and f"Processing SignatureRequest from user={USERNAME}" in line and "principals:staging,root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
-                    cnt += 1
-
-            if cnt != expected_number:
-                assert False, f"Found {cnt} audit log entries, expected {expected_number}!"
-            return ret
-        return inner
-    return decorator
-
-def load_env(filename):
+def load_env(filename: str):
     # Load the environment based off of the given filename which is the path to the python test script
     env_name = os.path.basename(filename).split(".")[0]
     return requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content == b"OK"
 
-def assert_contains_hash(output):
-    assert EXPECTED_HASH in output
+def assert_contains_hash(expected_hash: bytes, output: bytes):
+    assert expected_hash in output
+
+@contextmanager
+def simulate_two_teams(tc: TestConfig):
+    # A context manager that simulates running the given function in an environment with two teams set up
+    run_command(f"keybase fs read /keybase/team/{tc.subteam}.ssh.staging/kssh-client.config | "
+                     f"sed 's/{tc.subteam}.ssh.staging/{tc.subteam_secondary}/g' | "
+                     f"sed 's/{tc.bot_username}/otherbotname/g' | "
+                     f"keybase fs write /keybase/team/{tc.subteam_secondary}/kssh-client.config")
+    try:
+        yield
+    finally:
+        run_command(f"keybase fs rm /keybase/team/{tc.subteam_secondary}/kssh-client.config")
+
+@contextmanager
+def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
+    # A context manager that asserts that the given function triggers expected_number of audit logs to be added to '/keybase/team/team.ssh.prod/ca.log'
+    # Note that fuse is not running in the container so this has to use `keybase fs read`
+
+    # Make a set of the lines in the audit log before we ran
+    before_lines = set(read_file(filename))
+
+    # Then run the code inside the context manager
+    yield
+
+    # And sleep to give KBFS some time
+    time.sleep(1.5)
+
+    # Then see if there are new lines using set difference. This is only safe/reasonable since we include a
+    # timestamp in audit log lines.
+    after_lines = set(read_file(filename))
+    new_lines = after_lines - before_lines
+
+    cnt = 0
+    for line in new_lines:
+        line = line.decode('utf-8')
+        if line and f"Processing SignatureRequest from user={tc.username}" in line and f"principals:{tc.subteam}.ssh.staging,{tc.subteam}.ssh.root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
+            cnt += 1
+
+    if cnt != expected_number:
+        assert False, f"Found {cnt} audit log entries, expected {expected_number}! New audit logs: {new_lines}"

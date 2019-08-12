@@ -1,5 +1,11 @@
 #!/bin/python3
 
+"""
+This file is the main process running inside of the ca-bot container for the integration tests. This allows the kssh
+container to specify that the tests should run with a specific set of environment variables. This allows us to easily
+run integration tests for different keybaseca config options.
+"""
+
 import os
 import shlex
 import time
@@ -21,7 +27,8 @@ def load_env():
         "echo yes | bin/keybaseca backup > /mnt/cakey.backup\n"
         "bin/keybaseca service &"
     ) % (shlex.quote(path)))
-    time.sleep(2)
+    # Sleep so keybaseca has time to start
+    time.sleep(3)
     return "OK"
 
 if __name__ == '__main__':

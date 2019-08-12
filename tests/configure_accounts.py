@@ -56,7 +56,7 @@ class User:
         :param username:    The username of the user to be invited
         :return:            None
         """
-        assert b"Success!" in self._run_command("team", "add-member", team, "--user=%s" % username, "--role=admin")
+        assert b"Success!" in self._run_command("team", "add-member", team, "--user=%s" % username, "--role=writer")
 
     def create_team_and_invite(self, team, username):
         """
@@ -112,10 +112,10 @@ def make_user(purpose):
         home_dir = start_service()
         example_username = "ssh" + secure_random_str(8)
         print("TEST SETUP - we recommend the username %s" % example_username)
-        os.system("keybase --home %s signup --no-email" % home_dir)
-        username = input("TEST SETUP - What is the username: ")
+        os.system("keybase --home %s signup --no-email --username %s" % (home_dir, example_username))
+        username = input("TEST SETUP - Confirm your username: ")
         os.system("keybase --home %s paperkey" % home_dir)
-        paperkey = input("TEST SETUP - What is the paper key: ")
+        paperkey = input("TEST SETUP - Confirm your paper key: ")
         return User(username, paperkey)
     else:
         # Prompt them for the username and password

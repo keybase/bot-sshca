@@ -28,9 +28,6 @@ cd tests/
 source env.sh
 reset_docker
 
-rm -rf ./generated-env && mkdir -p ./generated-env
-ls envFiles/ | xargs -I {} -- bash -c 'cat envFiles/{} | envsubst > generated-env/{}'
-
 echo "Building containers..."
 cd ../docker/ && make && cd ../tests/
 docker-compose build

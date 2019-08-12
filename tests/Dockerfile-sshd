@@ -11,11 +11,12 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
 
-ARG allowed_principal
+ARG user_principal
+ARG root_principal
 RUN mkdir /etc/ssh/auth_principals/
 RUN useradd -ms /bin/bash user
-RUN echo "$allowed_principal" > /etc/ssh/auth_principals/user
-RUN echo 'root_everywhere' > /etc/ssh/auth_principals/root
+RUN echo "${user_principal}" > /etc/ssh/auth_principals/user
+RUN echo "${root_principal}" > /etc/ssh/auth_principals/root
 
 # Set up the SSH server to trust the CA key based off of the files in /etc/ssh/auth_principals/
 RUN echo "TrustedUserCAKeys /etc/ssh/ca.pub\nAuthorizedPrincipalsFile /etc/ssh/auth_principals/%u" >> /etc/ssh/sshd_config
