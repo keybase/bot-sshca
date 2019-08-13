@@ -1,7 +1,5 @@
 # SSH CA Bot
 
-# This code is currently a work in progress and this project is not yet complete and is not ready to be used. 
-
 See [keybase.io/blog/keybase-ssh-ca](https://keybase.io/blog/keybase-ssh-ca) for a full announcement and description
 of the code in this repository. 
 
@@ -28,7 +26,7 @@ a production environment that you want to restrict access to a smaller group of 
 up a third realm that grants root access to all machines. To configure kssh to work with this setup, we will set it up 
 according to this diagram:
 
-![Architecture Diagram](docs/Architecture Diagram.png?raw=true "Architecture Diagram")
+![Architecture Diagram](https://raw.githubusercontent.com/keybase/bot-sshca/master/docs/Architecture%20Diagram.png "Architecture Diagram")
 
 On a secured server that you wish to use to run the CA chatbot:
 
