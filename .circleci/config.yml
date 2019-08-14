@@ -1,0 +1,7 @@
+version: 2
+jobs:
+  build:
+    machine:
+      image: ubuntu-1804
+  steps:
+    - run: ./integrationTest.sh
