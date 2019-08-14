@@ -79,37 +79,57 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 		return
 	}
 
-	tempFilename, err := getTempFilename("keybase-ca-signed-key")
-	if err != nil {
-		return
-	}
-	err = ioutil.WriteFile(shared.KeyPathToPubKey(tempFilename), []byte(sr.SSHPublicKey), 0600)
-	if err != nil {
-		return
-	}
-
 	// The key ID uniquely identifies the certificate by encoding the UUID of the request, a new UUID, and the username
+	// Use both their uuid and our uuid to ensure it is unique
 	keyID := sr.UUID + ":" + randomUUID.String() + ":" + sr.Username
 
 	log.Log(conf, fmt.Sprintf("Processing SignatureRequest from user=%s on device='%s' keyID:%s, principals:%s, expiration:%s, pubkey:%s",
 		sr.Username, sr.DeviceName, keyID, principals, conf.GetKeyExpiration(), sr.SSHPublicKey))
-	cmd := exec.Command("ssh-keygen",
-		"-s", conf.GetCAKeyLocation(), // The CA key
-		"-I", keyID, // The ID of the signed key. Use their uuid and our uuid to ensure it is unique
-		"-n", principals, // The allowed principals
-		"-V", conf.GetKeyExpiration(), // The configured key expiration
-		"-N", "", // No password on the key
-		shared.KeyPathToPubKey(tempFilename), // The location of where to put the key
-	)
-	err = cmd.Run()
+	signature, err := SignKey(conf.GetCAKeyLocation(), keyID, principals, conf.GetKeyExpiration(), sr.SSHPublicKey)
+
+	return shared.SignatureResponse{SignedKey: signature, UUID: sr.UUID}, nil
+}
+
+// Sign an SSH public key with the given data. Do so without any operations that rely on Keybase in order to ensure
+// that running `keybaseca sign` works even if Keybase is down.
+func SignKey(caKeyLocation, keyID, principals, expiration, publicKey string) (signature string, err error) {
+	// Just a little bit of validation to give a nice error message
+	if strings.Contains(publicKey, "PRIVATE KEY") {
+		return "", fmt.Errorf("SignKey expects a public key (not a private key)")
+	}
+
+	// Write the public key to a temporary file
+	tempFilename, err := getTempFilename("keybase-ca-signed-key")
+	if err != nil {
+		return
+	}
+	err = ioutil.WriteFile(shared.KeyPathToPubKey(tempFilename), []byte(publicKey), 0600)
 	if err != nil {
 		return
 	}
 
-	data, err := ioutil.ReadFile(shared.KeyPathToCert(tempFilename))
+	// Note that we use ssh-keygen rather than Go's builtin SSH library since Go's SSH library does not support ed25519
+	// SSH keys.
+	cmd := exec.Command("ssh-keygen",
+		"-s", caKeyLocation, // The CA key
+		"-I", keyID, // A unique key ID
+		"-n", principals, // The allowed principals
+		"-V", expiration, // The expiration period for the key
+		"-N", "", // No password on the key
+		shared.KeyPathToPubKey(tempFilename), // The location of the public key
+	)
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("ssh-keygen error: %s (%v)", strings.TrimSpace(string(bytes)), err)
+	}
+
+	// Read the certificate from the file
+	signatureBytes, err := ioutil.ReadFile(shared.KeyPathToCert(tempFilename))
 	if err != nil {
 		return
 	}
+
+	// Delete the certificate and the pub key from the filesystem
 	err = os.Remove(shared.KeyPathToPubKey(tempFilename))
 	if err != nil {
 		return
@@ -118,7 +138,8 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 	if err != nil {
 		return
 	}
-	return shared.SignatureResponse{SignedKey: string(data), UUID: sr.UUID}, nil
+
+	return string(signatureBytes), nil
 }
 
 // Get the principals that should be placed in the signed certificate.

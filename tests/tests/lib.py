@@ -4,7 +4,7 @@ import os
 import signal
 import subprocess
 import time
-from typing import List
+from typing import List, Set
 
 import requests
 
@@ -18,12 +18,13 @@ class TestConfig:
     # Not actually a test class so mark it to be skipped
     __test__ = False
 
-    def __init__(self, subteam, subteam_secondary, username, bot_username, expected_hash):
-        self.subteam = subteam
-        self.subteam_secondary = subteam_secondary
-        self.username = username
-        self.bot_username = bot_username
-        self.expected_hash = expected_hash
+    def __init__(self, subteam, subteam_secondary, username, bot_username, expected_hash, subteams):
+        self.subteam: str = subteam
+        self.subteam_secondary: str = subteam_secondary
+        self.username: str = username
+        self.bot_username: str = bot_username
+        self.expected_hash: bytes = expected_hash
+        self.subteams: List[str] = subteams
 
     @staticmethod
     def getDefaultTestConfig():
@@ -32,7 +33,8 @@ class TestConfig:
             os.environ['SUBTEAM_SECONDARY'],
             os.environ['KSSH_USERNAME'],
             os.environ['BOT_USERNAME'],
-            getDefaultExpectedHash()
+            getDefaultExpectedHash(),
+            [os.environ['SUBTEAM'] + postfix for postfix in [".ssh.prod", ".ssh.staging", ".ssh.root_everywhere"]]
         )
 
 def run_command(cmd: str, timeout: int=10) -> bytes:
@@ -124,3 +126,17 @@ def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
 
     if cnt != expected_number:
         assert False, f"Found {cnt} audit log entries, expected {expected_number}! New audit logs: {new_lines}"
+
+def get_principals(certificateFilename: str) -> Set[str]:
+    inPrincipalsSection = False
+    principalsIndentationLevel = 16
+    foundPrincipals: Set[str] = set()
+    for line in run_command(f"cat {certificateFilename} | ssh-keygen -L -f /dev/stdin").splitlines():
+        if line.strip().startswith(b"Principals:"):
+            inPrincipalsSection = True
+            continue
+        if len(line) - len(line.lstrip()) != principalsIndentationLevel:
+            inPrincipalsSection = False
+        if inPrincipalsSection:
+            foundPrincipals.add(line.strip().decode('utf-8'))
+    return foundPrincipals

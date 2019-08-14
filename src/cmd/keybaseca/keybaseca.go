@@ -12,6 +12,8 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/google/uuid"
+
 	"github.com/keybase/bot-ssh-ca/src/keybaseca/bot"
 	"github.com/keybase/bot-ssh-ca/src/keybaseca/config"
 	klog "github.com/keybase/bot-ssh-ca/src/keybaseca/log"
@@ -59,6 +61,22 @@ func main() {
 			Name:   "service",
 			Usage:  "Start the CA service in the foreground",
 			Action: serviceAction,
+		},
+		{
+			Name:  "sign",
+			Usage: "Sign a given public key with all permissions without a dependency on Keybase",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:     "public-key",
+					Usage:    "The path to the public key you wish to sign. Eg `~/.ssh/id_rsa.pub`",
+					Required: true,
+				},
+				cli.BoolFlag{
+					Name:  "overwrite",
+					Usage: "Overwrite the existing certificate on the filesystem",
+				},
+			},
+			Action: signAction,
 		},
 	}
 	app.Action = mainAction
@@ -126,6 +144,46 @@ func serviceAction(c *cli.Context) error {
 	return nil
 }
 
+// The action for the `keybaseca sign` subcommand
+func signAction(c *cli.Context) error {
+	// Skip validation of the config since that relies on Keybase's servers
+	conf := config.EnvConfig{}
+	principals := strings.Join(conf.GetTeams(), ",")
+	expiration := conf.GetKeyExpiration()
+	randomUUID, err := uuid.NewRandom()
+	if err != nil {
+		return fmt.Errorf("Failed to generate unique key ID: %v", err)
+	}
+
+	// Read the public key from the specified file
+	filename := c.String("public-key")
+	pubKey, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("Failed to read file at %s to get the public key: %v", filename, err)
+	}
+
+	// Sign the public key
+	signature, err := sshutils.SignKey(conf.GetCAKeyLocation(), randomUUID.String()+":keybaseca-sign", principals, expiration, string(pubKey))
+	if err != nil {
+		return fmt.Errorf("Failed to sign key: %v", err)
+	}
+
+	// Either store it in a file or print it to stdout
+	certPath := shared.KeyPathToCert(shared.PubKeyPathToKeyPath(filename))
+	_, err = os.Stat(certPath)
+	if os.IsNotExist(err) || c.Bool("overwrite") {
+		err = ioutil.WriteFile(certPath, []byte(signature), 0600)
+		if err != nil {
+			return fmt.Errorf("Failed to write certificate to file: %v", err)
+		}
+		fmt.Printf("Provisioned new certificate in %s\n", certPath)
+	} else {
+		fmt.Printf("Provisioned new certificate. Place this in %s in order to use it with ssh.\n", certPath)
+		fmt.Printf("\n```\n%s```\n", signature)
+	}
+	return nil
+}
+
 // The action for the `keybaseca` command. Only used for hidden and unlisted flags.
 func mainAction(c *cli.Context) error {
 	if c.Bool("wipe-all-configs") {
@@ -157,8 +215,7 @@ func mainAction(c *cli.Context) error {
 			}(team)
 		}
 		semaphore.Wait()
-	}
-	if c.Bool("wipe-logs") {
+	} else if c.Bool("wipe-logs") {
 		conf, err := loadServerConfig()
 		if err != nil {
 			return err
@@ -176,6 +233,8 @@ func mainAction(c *cli.Context) error {
 			}
 		}
 		fmt.Println("Wiped existing log file at " + logLocation)
+	} else {
+		cli.ShowAppHelpAndExit(c, 1)
 	}
 	return nil
 }

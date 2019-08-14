@@ -39,8 +39,9 @@ and on the client run `kssh -p 2222 user@server` and inspect the debug logs.
 ## Keybase is down
 
 If Keybase is down, the bot will not work since it relies on Keybase chat for communication. In this scenario, you can 
-manually sign SSH keys with the CA key. Place the CA private key in `~/cakey` and the CA public key in `~/cakey.pub`. 
-Then run the command:
+manually sign SSH keys with the CA key. This can be done via `keybaseca sign --public-key /path/to/key.pub`. Alternatively,
+this can be done manually without relying on any of the tooling in this repository. To do so, place the CA private key 
+in `~/cakey` and the CA public key in `~/cakey.pub`. Then run the command:
 
 ```bash
 ssh-keygen \
@@ -55,7 +56,7 @@ ssh-keygen \
   # Specify the password on the CA key (if exported via `keybaseca backup` there is no password)
   -N "" \
   # The location of the public key you wish to sign
-  ~/.ssh/id_rsa.pub
+  /path/to/key.pub
 ```
 
-You can then use the signed SSH key to SSH via `ssh -i ~/.ssh/id_rsa user@server`. 
+You can then use the signed SSH key to SSH via `ssh -i /path/to/key.pub user@server`. 
