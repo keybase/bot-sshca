@@ -3,6 +3,7 @@ jobs:
   build:
     machine:
       image: ubuntu-1804
-  steps:
-    - checkout
-    - run: "./integrationTest.sh"
+  test:
+    steps:
+      - checkout
+      - run: "./integrationTest.sh"
