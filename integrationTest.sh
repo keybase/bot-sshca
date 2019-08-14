@@ -2,6 +2,13 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# Unit tests first
+set +u
+if [ -z "$CIRCLECI" ]; then
+  go test ./... 2>&1 | grep -v 'no test files'
+fi
+set -u
+
 if [[ -f "tests/env.sh" ]]; then
     echo "env.sh file already exists, skipping configuring new accounts..."
 else
