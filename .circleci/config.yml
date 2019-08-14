@@ -5,6 +5,7 @@ jobs:
       image: circleci/classic:latest
     steps:
       - checkout
+      - run: "./.circleci/init-env.sh > tests/env.sh"
       - run: "./integrationTest.sh"
   unit:
     docker:
