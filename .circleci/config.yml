@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     machine:
-      image: ubuntu-1804:latest
+      image: circleci/classic:latest
     steps:
       - checkout
       - run: "./integrationTest.sh"
