@@ -4,4 +4,5 @@ jobs:
     machine:
       image: ubuntu-1804
   steps:
-    - run: ./integrationTest.sh
+    - checkout
+    - run: "./integrationTest.sh"
