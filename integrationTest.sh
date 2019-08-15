@@ -8,10 +8,16 @@ if [ -z "$CIRCLECI" ]; then
   go test ./... 2>&1 | grep -v 'no test files'
 fi
 
-if [[ -f "tests/env.sh" ]] || [ -n "$CIRCLECI" ]; then
-    echo "env.sh already configured, skipping configuring new accounts..."
+if [[ -f "tests/env.sh" ]]; then
+  echo "env.sh already exists, skipping configuring new accounts..."
+  source tests/env.sh
 else
+  if [ -n "$CIRCLECI" ]; then
+    echo "Running in circle with configured environment variables"
+  else
     python3 tests/configure_accounts.py
+    source tests/env.sh
+  fi
 fi
 set -u
 
@@ -28,7 +34,6 @@ reset_docker() {
 }
 
 cd tests/
-source env.sh
 reset_docker
 
 echo "Building containers..."
