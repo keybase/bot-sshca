@@ -7,14 +7,13 @@ set +u
 if [ -z "$CIRCLECI" ]; then
   go test ./... 2>&1 | grep -v 'no test files'
 fi
-set -u
 
-if [[ -f "tests/env.sh" ]]; then
-    echo "env.sh file already exists, skipping configuring new accounts..."
+if [[ -f "tests/env.sh" ]] || [ -z "$CIRCLECI" ]; then
+    echo "env.sh already configured, skipping configuring new accounts..."
 else
     python3 tests/configure_accounts.py
 fi
-
+set -u
 
 # Some colors for pretty output
 RED='\033[0;31m'

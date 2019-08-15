@@ -9,6 +9,7 @@ services:
     environment:
       - BOT_PAPERKEY
       - BOT_USERNAME
+      - SUBTEAM
     volumes:
       - app-volume:/shared/
     user: root

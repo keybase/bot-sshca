@@ -7,7 +7,6 @@ IFS=$'\n\t'
 touch /shared/.keep
 
 # Generate the env files that will be used for tests
-source tests/env.sh
 mkdir -p tests/generated-env
 ls tests/envFiles/ | xargs -I {} -- bash -c 'cat tests/envFiles/{} | envsubst > tests/generated-env/{}'
 
