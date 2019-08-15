@@ -135,14 +135,14 @@ class TestMultiTeamStrictLogging:
 
     def test_keybaseca_sign(self, test_config):
         # Stdout contains a useful message
-        with open('/mnt/keybaseca-sign.out') as f:
+        with open('/shared/keybaseca-sign.out') as f:
             assert "Provisioned new certificate" in f.read()
 
         # SSH with that certificate should just work for every team
-        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /mnt/userkey user@sshd-prod 'sha1sum /etc/unique'"))
-        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /mnt/userkey root@sshd-prod 'sha1sum /etc/unique'"))
-        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /mnt/userkey user@sshd-staging 'sha1sum /etc/unique'"))
-        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /mnt/userkey root@sshd-prod 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey user@sshd-prod 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey root@sshd-prod 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey user@sshd-staging 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey root@sshd-prod 'sha1sum /etc/unique'"))
 
         # Checking that it actually contains the correct principals
-        assert get_principals("/mnt/userkey-cert.pub") == set(test_config.subteams)
+        assert get_principals("/shared/userkey-cert.pub") == set(test_config.subteams)
