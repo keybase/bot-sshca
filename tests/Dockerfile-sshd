@@ -1,4 +1,4 @@
-# This dockerfile builds an openssh server that will accept SSH keys signed by the key provided in /mnt/keybase-ca-key.pub
+# This dockerfile builds an openssh server that will accept SSH keys signed by the key provided in /shared/keybase-ca-key.pub
 # It takes in a build argument and only allows keys with the build argument in the principals field
 FROM ubuntu:18.04
 
@@ -26,4 +26,4 @@ RUN echo -n "uniquestring" > /etc/unique
 
 EXPOSE 22
 
-CMD ln -sf /mnt/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D
+CMD ln -sf /shared/keybase-ca-key.pub /etc/ssh/ca.pub && /usr/sbin/sshd -D

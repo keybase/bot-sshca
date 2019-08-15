@@ -9,10 +9,11 @@ services:
     environment:
       - BOT_PAPERKEY
       - BOT_USERNAME
+      - SUBTEAM
     volumes:
-      - app-volume:/mnt/
+      - app-volume:/shared/
     user: root
-    command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
+    command: "sh -c 'chown -R keybase:keybase /shared && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
     ports:
       - 8080  # Used for the flask webserver that manages restarting keybaseca with different config options
     depends_on:
@@ -31,7 +32,7 @@ services:
       - SUBTEAM
       - SUBTEAM_SECONDARY
     volumes:
-      - app-volume:/mnt/
+      - app-volume:/shared/
     user: keybase
     command: "bash tests/tester-entrypoint.sh"
     depends_on:
@@ -49,7 +50,7 @@ services:
         user_principal: ${SUBTEAM}.ssh.staging
         root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
-      - app-volume:/mnt/
+      - app-volume:/shared/
   # An ssh server that will accept signed requests with the principal "prod"
   sshd-prod:
     image: sshd-prod
@@ -61,6 +62,6 @@ services:
         user_principal: ${SUBTEAM}.ssh.prod
         root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
-      - app-volume:/mnt/
+      - app-volume:/shared/
 volumes:
   app-volume:

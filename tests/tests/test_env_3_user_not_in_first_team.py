@@ -13,7 +13,7 @@ class TestEnv3UserNotInFirstTeam:
 
     def test_kssh(self, test_config):
         # Test ksshing which tests that it is correctly finding a client config
-        with outputs_audit_log(test_config, filename="/mnt/ca.log", expected_number=3):
+        with outputs_audit_log(test_config, filename="/shared/ca.log", expected_number=3):
             clear_keys()
             assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
             clear_keys()

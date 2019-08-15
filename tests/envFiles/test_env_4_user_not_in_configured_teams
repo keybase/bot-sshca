@@ -1,7 +1,8 @@
 # Used to test the behavior of the chatbot when the user is not in any of the listed teams. Meant to ensure that the
 # bot does not respond to messages from users outside of the teams (a security regression test). 
 export KEY_EXPIRATION="+1h"
-export LOG_LOCATION="/mnt/ca.log"
+export LOG_LOCATION="/shared/ca.log"
 export TEAMS="$SUBTEAM.ssh.prod"
 export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
 export KEYBASE_USERNAME="$BOT_USERNAME"
+export CA_KEY_LOCATION="/shared/keybase-ca-key"
