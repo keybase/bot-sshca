@@ -31,3 +31,4 @@ workflows:
     jobs:
       - integration
       - unit
+      - lint
