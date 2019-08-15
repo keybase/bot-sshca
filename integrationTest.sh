@@ -8,6 +8,7 @@ if [ -z "$CIRCLECI" ]; then
   go test ./... 2>&1 | grep -v 'no test files'
 fi
 
+# Ensure we have the correct environment variables
 if [[ -f "tests/env.sh" ]]; then
   echo "env.sh already exists, skipping configuring new accounts..."
   source tests/env.sh
@@ -28,6 +29,7 @@ NC='\033[0m'
 
 # A function used to indent the log output from the tests
 indent() { sed 's/^/    /'; }
+# Reset docker and wipe all volumes
 reset_docker() {
     docker-compose down -v
     docker system prune -f
