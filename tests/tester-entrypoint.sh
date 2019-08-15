@@ -4,7 +4,13 @@ IFS=$'\n\t'
 
 nohup bash -c "run_keybase -g &"
 
-sleep 10
+# Sleep until the CA bot has started
+while ! [ -f /mnt/ready ];
+do
+    sleep 1
+done
+echo ""
+sleep 2
 
 keybase oneshot --username $KSSH_USERNAME --paperkey "$KSSH_PAPERKEY"
 

@@ -80,14 +80,7 @@ def clear_local_config():
 def load_env(filename: str):
     # Load the environment based off of the given filename which is the path to the python test script
     env_name = os.path.basename(filename).split(".")[0]
-    for i in range(5):
-        try:
-            if requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content == b"OK":
-                return True
-        except Exception:
-            pass
-        time.sleep(i)
-    raise Exception("Failed to load environment!")
+    return requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content == b"OK"
 
 def assert_contains_hash(expected_hash: bytes, output: bytes):
     assert expected_hash in output

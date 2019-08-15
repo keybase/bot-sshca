@@ -14,4 +14,5 @@ ls tests/envFiles/ | xargs -I {} -- bash -c 'cat tests/envFiles/{} | envsubst > 
 nohup bash -c "run_keybase -g &"
 sleep 3
 keybase oneshot --username $BOT_USERNAME --paperkey "$BOT_PAPERKEY"
+touch /mnt/ready
 python3 tests/bot-entrypoint.py
