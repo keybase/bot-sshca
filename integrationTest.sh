@@ -36,6 +36,8 @@ echo "Building containers..."
 cd ../docker/ && make && cd ../tests/
 docker-compose build
 echo "Running integration tests..."
+rm -rf /tmp/bot-ssh-ca-integration-volume
+mkdir -p /tmp/bot-ssh-ca-integration-volume
 docker-compose up
 
 docker logs kssh -f | indent

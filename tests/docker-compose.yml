@@ -10,7 +10,7 @@ services:
       - BOT_PAPERKEY
       - BOT_USERNAME
     volumes:
-      - app-volume:/mnt/
+      - bot-ssh-ca-integration-volume:/mnt/
     user: root
     command: "sh -c 'chown -R keybase:keybase /mnt && su keybase -c \"bash tests/bot-entrypoint.sh\"'"
     ports:
@@ -31,14 +31,14 @@ services:
       - SUBTEAM
       - SUBTEAM_SECONDARY
     volumes:
-      - app-volume:/mnt/
+      - bot-ssh-ca-integration-volume:/mnt/
     user: keybase
     command: "bash tests/tester-entrypoint.sh"
     depends_on:
       - sshd-staging
       - sshd-prod
       - ca-bot
-  # An ssh server that will accept signed requests with the principal "staging"
+  # An ssh server that will accept signed requests with the principal "team.ssh.staging"
   sshd-staging:
     image: sshd-staging
     container_name: sshd-staging
@@ -49,8 +49,8 @@ services:
         user_principal: ${SUBTEAM}.ssh.staging
         root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
-      - app-volume:/mnt/
-  # An ssh server that will accept signed requests with the principal "prod"
+      - bot-ssh-ca-integration-volume:/mnt/
+  # An ssh server that will accept signed requests with the principal "team.ssh.prod"
   sshd-prod:
     image: sshd-prod
     container_name: sshd-prod
@@ -61,6 +61,4 @@ services:
         user_principal: ${SUBTEAM}.ssh.prod
         root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
-      - app-volume:/mnt/
-volumes:
-  app-volume:
+      - bot-ssh-ca-integration-volume:/mnt/
