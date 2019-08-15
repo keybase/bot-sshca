@@ -148,6 +148,10 @@ func serviceAction(c *cli.Context) error {
 func signAction(c *cli.Context) error {
 	// Skip validation of the config since that relies on Keybase's servers
 	conf := config.EnvConfig{}
+	err := config.ValidateConfig(conf, true)
+	if err != nil {
+		return fmt.Errorf("Invalid config: %v", err)
+	}
 	principals := strings.Join(conf.GetTeams(), ",")
 	expiration := conf.GetKeyExpiration()
 	randomUUID, err := uuid.NewRandom()
@@ -186,7 +190,8 @@ func signAction(c *cli.Context) error {
 
 // The action for the `keybaseca` command. Only used for hidden and unlisted flags.
 func mainAction(c *cli.Context) error {
-	if c.Bool("wipe-all-configs") {
+	switch {
+	case c.Bool("wipe-all-configs"):
 		teams, err := shared.KBFSList("/keybase/team/")
 		if err != nil {
 			return err
@@ -215,7 +220,7 @@ func mainAction(c *cli.Context) error {
 			}(team)
 		}
 		semaphore.Wait()
-	} else if c.Bool("wipe-logs") {
+	case c.Bool("wipe-logs"):
 		conf, err := loadServerConfig()
 		if err != nil {
 			return err
@@ -233,7 +238,7 @@ func mainAction(c *cli.Context) error {
 			}
 		}
 		fmt.Println("Wiped existing log file at " + logLocation)
-	} else {
+	default:
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 	return nil
@@ -316,7 +321,7 @@ func captureControlCToDeleteClientConfig(conf config.Config) {
 // Load and validate a server config object from the environment
 func loadServerConfig() (config.Config, error) {
 	conf := config.EnvConfig{}
-	err := config.ValidateConfig(conf)
+	err := config.ValidateConfig(conf, false)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to validate config: %v", err)
 	}
