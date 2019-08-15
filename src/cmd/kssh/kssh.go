@@ -53,7 +53,7 @@ func doAction(action Action, keyPath string, remainingArgs []string) {
 			fmt.Printf("%v\n", err)
 			os.Exit(1)
 		}
-		fmt.Printf("Provisioned new SSH key at %s", keyPath)
+		fmt.Printf("Provisioned new SSH key at %s\n", keyPath)
 	}
 }
 
