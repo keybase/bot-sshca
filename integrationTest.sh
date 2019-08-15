@@ -8,7 +8,7 @@ if [ -z "$CIRCLECI" ]; then
   go test ./... 2>&1 | grep -v 'no test files'
 fi
 
-if [[ -f "tests/env.sh" ]] || [ -z "$CIRCLECI" ]; then
+if [[ -f "tests/env.sh" ]] || [ -n "$CIRCLECI" ]; then
     echo "env.sh already configured, skipping configuring new accounts..."
 else
     python3 tests/configure_accounts.py
