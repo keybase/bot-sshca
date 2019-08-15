@@ -1,7 +1,8 @@
 # Used to test sending the audit log to the normal filesystem. The code that handles local audit log writes is different
 # from the code that handles KBFS audit log writes.
 export KEY_EXPIRATION="+1h"
-export LOG_LOCATION="/mnt/ca.log"
+export LOG_LOCATION="/shared/ca.log"
 export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywhere"
 export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
 export KEYBASE_USERNAME="$BOT_USERNAME"
+export CA_KEY_LOCATION="/shared/keybase-ca-key"

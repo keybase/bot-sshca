@@ -5,7 +5,7 @@ IFS=$'\n\t'
 nohup bash -c "run_keybase -g &"
 
 # Sleep until the CA bot has started
-while ! [ -f /mnt/ready ];
+while ! [ -f /shared/ready ];
 do
     sleep 1
 done

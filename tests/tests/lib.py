@@ -54,7 +54,8 @@ def run_command(cmd: str, timeout: int=10) -> bytes:
 def read_file(filename: str) -> List[bytes]:
     """
     Read the contents of the given filename to a list of strings. If it is a normal file,
-    uses the standard open() function. Otherwise, uses `keybase fs read`.
+    uses the standard open() function. Otherwise, uses `keybase fs read`. This is because
+    fuse is not running in the container so a normal open call will not work for KBFS.
     :param filename:    The name of the file to read
     :return:            A list of lines in the file
     """
@@ -99,8 +100,8 @@ def simulate_two_teams(tc: TestConfig):
 
 @contextmanager
 def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
-    # A context manager that asserts that the given function triggers expected_number of audit logs to be added to '/keybase/team/team.ssh.prod/ca.log'
-    # Note that fuse is not running in the container so this has to use `keybase fs read`
+    # A context manager that asserts that the given function triggers expected_number of audit logs to be added to the
+    # log at the given filename
 
     # Make a set of the lines in the audit log before we ran
     before_lines = set(read_file(filename))

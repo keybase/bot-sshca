@@ -111,10 +111,10 @@ class TestMultiTeamStrictLogging:
                 assert b"Found 2 config files" in e.output
 
     def test_keybaseca_backup(self, test_config):
-        # Test the keybaseca backup command by reading and verifying the private key stored in /mnt/cakey.backup
+        # Test the keybaseca backup command by reading and verifying the private key stored in /shared/cakey.backup
         run_command("mkdir -p /tmp/ssh/")
         run_command("chown -R keybase:keybase /tmp/ssh/")
-        with open('/mnt/cakey.backup') as f:
+        with open('/shared/cakey.backup') as f:
             keyLines = []
             add = False
             for line in f:

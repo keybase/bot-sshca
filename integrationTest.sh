@@ -36,9 +36,6 @@ echo "Building containers..."
 cd ../docker/ && make && cd ../tests/
 docker-compose build
 echo "Running integration tests..."
-# Make an empty host mounted volume for shared data
-rm -rf /tmp/bot-ssh-ca-integration-volume
-mkdir -p /tmp/bot-ssh-ca-integration-volume
 docker-compose up -d
 
 docker logs kssh -f | indent

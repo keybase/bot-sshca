@@ -24,7 +24,7 @@ def load_env():
         "bin/keybaseca --wipe-all-configs\n"
         "bin/keybaseca --wipe-logs || true\n"
         "bin/keybaseca generate --overwrite-existing-key\n"
-        "echo yes | bin/keybaseca backup > /mnt/cakey.backup\n"
+        "echo yes | bin/keybaseca backup > /shared/cakey.backup\n"
         "bin/keybaseca service &"
     ) % (shlex.quote(path)))
     # Sleep so keybaseca has time to start
