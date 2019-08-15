@@ -43,7 +43,7 @@ func KBFSFileExists(kbfsFilename string) (bool, error) {
 	if strings.Contains(string(bytes), "ERROR file does not exist") {
 		return false, nil
 	}
-	return false, fmt.Errorf("failed to stat %s: %s (%v)", kbfsFilename, string(bytes), err)
+	return false, fmt.Errorf("failed to stat %s: %s (%v)", kbfsFilename, strings.TrimSpace(string(bytes)), err)
 }
 
 func KBFSRead(kbfsFilename string) ([]byte, error) {
@@ -54,7 +54,7 @@ func KBFSRead(kbfsFilename string) ([]byte, error) {
 	cmd := exec.Command("keybase", "fs", "read", kbfsFilename)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %s (%v)", kbfsFilename, string(bytes), err)
+		return nil, fmt.Errorf("failed to read %s: %s (%v)", kbfsFilename, strings.TrimSpace(string(bytes)), err)
 	}
 	return bytes, nil
 }
@@ -63,7 +63,7 @@ func KBFSDelete(filename string) error {
 	cmd := exec.Command("keybase", "fs", "rm", filename)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to delete the file at %s: %s (%v)", filename, string(bytes), err)
+		return fmt.Errorf("failed to delete the file at %s: %s (%v)", filename, strings.TrimSpace(string(bytes)), err)
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	cmd.Stdin = strings.NewReader(string(contents))
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to write to file at %s: %s (%v)", filename, string(bytes), err)
+		return fmt.Errorf("failed to write to file at %s: %s (%v)", filename, strings.TrimSpace(string(bytes)), err)
 	}
 	return nil
 }
@@ -96,7 +96,7 @@ func KBFSList(path string) ([]string, error) {
 	cmd := exec.Command("keybase", "fs", "ls", "-1", "--nocolor", path)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list files in /keybase/team/: %s (%v)", string(output), err)
+		return nil, fmt.Errorf("failed to list files in /keybase/team/: %s (%v)", strings.TrimSpace(string(output)), err)
 	}
 	var ret []string
 	for _, s := range strings.Split(string(output), "\n") {

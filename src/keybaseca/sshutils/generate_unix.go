@@ -5,6 +5,7 @@ package sshutils
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 // Generate a new SSH key. Places the private key at filename and the public key at filename.pub. If `overwrite`,
@@ -15,7 +16,7 @@ func generateNewSSHKey(filename string) error {
 	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", filename, "-m", "PEM", "-N", "")
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("ssh-keygen failed: %s (%v)", string(bytes), err)
+		return fmt.Errorf("ssh-keygen failed: %s (%v)", strings.TrimSpace(string(bytes)), err)
 	}
 	return nil
 }

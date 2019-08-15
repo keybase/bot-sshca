@@ -16,7 +16,7 @@ func Log(conf config.Config, str string) {
 	strWithTs := fmt.Sprintf("[%s] %s", time.Now().String(), str)
 
 	if conf.GetLogLocation() == "" {
-		fmt.Print(strWithTs)
+		fmt.Print(strWithTs + "\n")
 	} else {
 		err := appendToFile(conf.GetLogLocation(), strWithTs)
 		if err != nil {

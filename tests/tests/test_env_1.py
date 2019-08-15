@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from lib import TestConfig, load_env, outputs_audit_log, assert_contains_hash, run_command, simulate_two_teams
+from lib import TestConfig, load_env, outputs_audit_log, assert_contains_hash, run_command, simulate_two_teams, get_principals
 
 test_env_1_log_filename = f"/keybase/team/{TestConfig.getDefaultTestConfig().subteam}.ssh.staging/ca.log"
 class TestMultiTeamStrictLogging:
@@ -71,6 +71,7 @@ class TestMultiTeamStrictLogging:
             """)
             assert_contains_hash(test_config.expected_hash, output)
             assert hashlib.sha1(b"foo").hexdigest().encode('utf-8') in output
+        assert get_principals("~/.ssh/keybase-signed-key---cert.pub") == set([test_config.subteam + ".ssh.staging", test_config.subteam + ".ssh.root_everywhere"])
 
     def test_kssh_errors_on_two_bots(self, test_config):
         # Test that kssh does not run if there are multiple bots, no kssh config, and no --bot flag
@@ -110,7 +111,7 @@ class TestMultiTeamStrictLogging:
             except subprocess.CalledProcessError as e:
                 assert b"Found 2 config files" in e.output
 
-    def test_keybaseca_backup(self, test_config):
+    def test_keybaseca_backup(self):
         # Test the keybaseca backup command by reading and verifying the private key stored in /shared/cakey.backup
         run_command("mkdir -p /tmp/ssh/")
         run_command("chown -R keybase:keybase /tmp/ssh/")
@@ -131,3 +132,17 @@ class TestMultiTeamStrictLogging:
         run_command("chmod 0600 /tmp/ssh/cakey")
         output = run_command("ssh-keygen -y -e -f /tmp/ssh/cakey")
         assert b"BEGIN SSH2 PUBLIC KEY" in output
+
+    def test_keybaseca_sign(self, test_config):
+        # Stdout contains a useful message
+        with open('/shared/keybaseca-sign.out') as f:
+            assert "Provisioned new certificate" in f.read()
+
+        # SSH with that certificate should just work for every team
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey user@sshd-prod 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey root@sshd-prod 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey user@sshd-staging 'sha1sum /etc/unique'"))
+        assert_contains_hash(test_config.expected_hash, run_command(f"ssh -q -o StrictHostKeyChecking=no -i /shared/userkey root@sshd-prod 'sha1sum /etc/unique'"))
+
+        # Checking that it actually contains the correct principals
+        assert get_principals("/shared/userkey-cert.pub") == set(test_config.subteams)

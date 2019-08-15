@@ -25,7 +25,9 @@ type Config interface {
 	GetStrictLogging() bool
 }
 
-func ValidateConfig(conf EnvConfig) error {
+// Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
+// to function without any reliance on Keybase).
+func ValidateConfig(conf EnvConfig, offline bool) error {
 	if len(conf.GetTeams()) == 0 {
 		return fmt.Errorf("must specify at least one team via the TEAMS environment variable")
 	}
@@ -33,13 +35,13 @@ func ValidateConfig(conf EnvConfig) error {
 		// Only a basic check for this since ssh will error out later on if it is bogus
 		return fmt.Errorf("KEY_EXPIRATION must be of the form `+<number><unit> where unit is one of `m`, `h`, `d`, `w`. Eg `+1h`. ")
 	}
-	if conf.GetLogLocation() != "" {
+	if conf.GetLogLocation() != "" && !offline {
 		err := validatePath(conf.GetLogLocation())
 		if err != nil {
 			return fmt.Errorf("LOG_LOCATION '%s' is not a valid path: %v", conf.GetLogLocation(), err)
 		}
 	}
-	if conf.getChatChannel() != "" {
+	if conf.getChatChannel() != "" && !offline {
 		team, channel, err := splitTeamChannel(conf.getChatChannel())
 		if err != nil {
 			return fmt.Errorf("Failed to parse CHAT_CHANNEL=%s: %v", conf.getChatChannel(), err)
