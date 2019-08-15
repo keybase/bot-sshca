@@ -6,3 +6,4 @@ export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywher
 export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
 export KEYBASE_USERNAME="$BOT_USERNAME"
 export CHAT_CHANNEL="$SUBTEAM.ssh#ssh-provision"
+export CA_KEY_LOCATION="/shared/keybase-ca-key"

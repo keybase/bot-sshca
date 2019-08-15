@@ -13,5 +13,5 @@ class TestEnv2LocalAuditLog:
 
     def test_kssh(self, test_config):
         # Test ksshing into staging as user
-        with outputs_audit_log(test_config, filename="/mnt/ca.log", expected_number=1):
+        with outputs_audit_log(test_config, filename="/shared/ca.log", expected_number=1):
             assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
