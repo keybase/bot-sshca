@@ -301,6 +301,7 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
 	if useConfig {
+		warnAboutAlternateConfig(remainingArgs)
 		argumentList = append(argumentList, "-F", kssh.AlternateSSHConfigFile)
 	}
 
@@ -317,4 +318,14 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 		os.Exit(1)
 	}
 	os.Exit(0)
+}
+
+func warnAboutAlternateConfig(arguments []string) {
+	for _, arg := range arguments {
+		if arg == "-F" {
+			fmt.Println("Warning: kssh uses the -F argument in order to implement support for default SSH users. It " +
+				"is not supported to run kssh with a default user and the -F flag. Either do not use the -F flag or run" +
+				"`kssh --clear-default-user` to reset the default SSH user. ")
+		}
+	}
 }
