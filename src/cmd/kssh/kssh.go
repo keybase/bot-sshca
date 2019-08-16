@@ -77,6 +77,8 @@ var cliArguments = []kssh.CLIArgument{
 	{Name: "--clear-default-bot", HasArgument: false},
 	{Name: "--bot", HasArgument: true},
 	{Name: "--provision", HasArgument: false},
+	{Name: "--set-default-user", HasArgument: true},
+	{Name: "--clear-default-user", HasArgument: false},
 	{Name: "--help", HasArgument: false},
 }
 
@@ -98,7 +100,10 @@ GLOBAL OPTIONS:
                          is using Keybase SSH CA
    --clear-default-bot   Clear the default bot
    --bot                 Specify a specific bot to be used for kssh. Not necessary if you are only in one team that
-                         is using Keybase SSH CA`)
+                         is using Keybase SSH CA
+   --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
+					     a default SSH user 
+   --clear-default-user  Clear the default SSH user`)
 }
 
 type Action int
@@ -121,6 +126,24 @@ func handleArgs(args []string) (string, []string, Action, error) {
 	for _, arg := range found {
 		if arg.Argument.Name == "--bot" {
 			team = arg.Value
+		}
+		if arg.Argument.Name == "--set-default-user" {
+			err := kssh.SetDefaultSSHUser(arg.Value)
+			if err != nil {
+				fmt.Printf("Failed to set the default ssh user: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Set default ssh user, exiting...")
+			os.Exit(0)
+		}
+		if arg.Argument.Name == "--clear-default-user" {
+			err := kssh.SetDefaultSSHUser("")
+			if err != nil {
+				fmt.Printf("Failed to clear the default ssh user: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Cleared default ssh user, exiting...")
+			os.Exit(0)
 		}
 		if arg.Argument.Name == "--set-default-bot" {
 			// We exit immediately after setting the default bot
@@ -257,17 +280,38 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 	return nil
 }
 
-// Run SSH with the given key. Calls os.Exit if SSH returns
+// Run SSH with the given key. Calls os.Exit and does not return.
 func runSSHWithKey(keyPath string, remainingArgs []string) {
-	fmt.Printf("\n") // a new line to separate kssh output from ssh output
+	// Create a config file for the default user if necessary
+	useConfig, err := kssh.CreateDefaultUserConfigFile()
+	if err != nil {
+		fmt.Printf("Failed to set default user: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Add the key to the ssh-agent in case we are doing multiple connections (eg via the `-J` flag)
+	err = kssh.AddKeyToSSHAgent(keyPath)
+	if err != nil {
+		fmt.Printf("Failed to add SSH key to the SSH agent: %v\n", err)
+		os.Exit(1)
+	}
+
+	// A new line to separate kssh output from ssh output
+	fmt.Printf("\n")
+
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
+	if useConfig {
+		argumentList = append(argumentList, "-F", kssh.AlternateSSHConfigFile)
+	}
+
 	argumentList = append(argumentList, remainingArgs...)
 
 	cmd := exec.Command("ssh", argumentList...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	err := cmd.Run()
+	err = cmd.Run()
+
 	if err != nil {
 		fmt.Printf("SSH exited with err: %v\n", err)
 		os.Exit(1)

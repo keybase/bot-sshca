@@ -37,7 +37,21 @@ class TestConfig:
             [os.environ['SUBTEAM'] + postfix for postfix in [".ssh.prod", ".ssh.staging", ".ssh.root_everywhere"]]
         )
 
-def run_command(cmd: str, timeout: int=10) -> bytes:
+def run_command_with_agent(cmd: str) -> bytes:
+    """
+    Run the given command in a shell session with a running ssh-agent
+    :param cmd:     The command to run
+    :return:        The stdout of the process
+    """
+    return run_command("eval `ssh-agent` && " + cmd)
+
+def run_command(cmd: str, timeout: int=15) -> bytes:
+    """
+    Run the given command in a shell with the given timeout
+    :param cmd:         The command to run
+    :param timeout:     The timeout in seconds
+    :return:            The stdout of the process
+    """
     # In order to properly run a command with a timeout and shell=True, we use Popen with a shell and group all child
     # processes so we can kill all of them. See:
     # - https://stackoverflow.com/questions/36952245/subprocess-timeout-failure
@@ -46,6 +60,7 @@ def run_command(cmd: str, timeout: int=10) -> bytes:
         try:
             stdout, stderr = process.communicate(timeout=timeout)
             if process.returncode != 0:
+                print(f"Output before return: {repr(stdout)}, {repr(stderr)}")
                 raise subprocess.CalledProcessError(process.returncode, cmd, stdout, stderr)
             return stdout
         except subprocess.TimeoutExpired as e:

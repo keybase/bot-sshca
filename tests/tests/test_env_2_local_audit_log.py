@@ -1,6 +1,6 @@
 import pytest
 
-from lib import TestConfig, load_env, outputs_audit_log, assert_contains_hash, run_command
+from lib import TestConfig, load_env, outputs_audit_log, assert_contains_hash, run_command_with_agent
 
 class TestEnv2LocalAuditLog:
     @pytest.fixture(autouse=True, scope='class')
@@ -14,4 +14,4 @@ class TestEnv2LocalAuditLog:
     def test_kssh(self, test_config):
         # Test ksshing into staging as user
         with outputs_audit_log(test_config, filename="/shared/ca.log", expected_number=1):
-            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
+            assert_contains_hash(test_config.expected_hash, run_command_with_agent("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))

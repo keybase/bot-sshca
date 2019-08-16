@@ -109,40 +109,91 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 type LocalConfigFile struct {
 	DefaultBotName string `json:"default_bot"`
 	DefaultBotTeam string `json:"default_team"`
+	DefaultSSHUser string `json:"default_ssh_user"`
 }
 
 // Where to store the local config file. Just stash it in ~/.ssh
 var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh.config")
 
-func SetDefaultBot(botname string) error {
-	if botname == "" {
-		return os.Remove(localConfigFileLocation)
+func GetDefaultSSHUser() (string, error) {
+	lcf, err := getCurrentConfig()
+	if err != nil {
+		return "", err
 	}
-	teamname, err := GetTeamFromBot(botname)
+
+	return lcf.DefaultSSHUser, nil
+}
+
+func SetDefaultSSHUser(username string) error {
+	if strings.ContainsAny(username, " \t\n\r'\"") {
+		return fmt.Errorf("invalid username: %s", username)
+	}
+
+	lcf, err := getCurrentConfig()
 	if err != nil {
 		return err
 	}
-	bytes, err := json.Marshal(&LocalConfigFile{DefaultBotName: botname, DefaultBotTeam: teamname})
+
+	lcf.DefaultSSHUser = username
+	return writeConfig(lcf)
+}
+
+func writeConfig(lcf LocalConfigFile) error {
+	bytes, err := json.Marshal(&lcf)
+	if err != nil {
+		return fmt.Errorf("failed to marshal json into config file: %v", err)
+	}
+
+	// Create ~/.ssh/ if it does not yet exist
+	err = MakeDotSSH()
 	if err != nil {
 		return err
 	}
+
 	err = ioutil.WriteFile(localConfigFileLocation, bytes, 0600)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write config file: %v", err)
 	}
 	return nil
 }
 
-func GetDefaultBotAndTeam() (string, string, error) {
+func getCurrentConfig() (lcf LocalConfigFile, err error) {
 	if _, err := os.Stat(localConfigFileLocation); os.IsNotExist(err) {
-		return "", "", nil
+		return lcf, nil
 	}
 	bytes, err := ioutil.ReadFile(localConfigFileLocation)
 	if err != nil {
-		return "", "", err
+		return lcf, fmt.Errorf("failed to read local config file: %v", err)
 	}
-	var lcf LocalConfigFile
 	err = json.Unmarshal(bytes, &lcf)
+	if err != nil {
+		return lcf, fmt.Errorf("failed to parse local config file: %v", err)
+	}
+	return lcf, nil
+}
+
+func SetDefaultBot(botname string) error {
+	teamname := ""
+	var err error
+	if botname != "" {
+		teamname, err = GetTeamFromBot(botname)
+		if err != nil {
+			return err
+		}
+	}
+
+	lcf, err := getCurrentConfig()
+	if err != nil {
+		return err
+	}
+	lcf.DefaultBotName = botname
+	lcf.DefaultBotTeam = teamname
+
+	return writeConfig(lcf)
+}
+
+func GetDefaultBotAndTeam() (string, string, error) {
+	lcf, err := getCurrentConfig()
 	if err != nil {
 		return "", "", err
 	}

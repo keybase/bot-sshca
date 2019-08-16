@@ -1,6 +1,6 @@
 import pytest
 
-from lib import TestConfig, load_env, outputs_audit_log, clear_keys, outputs_audit_log, assert_contains_hash, run_command
+from lib import TestConfig, load_env, outputs_audit_log, clear_keys, outputs_audit_log, assert_contains_hash, run_command_with_agent
 
 class TestEnv3UserNotInFirstTeam:
     @pytest.fixture(autouse=True, scope='class')
@@ -15,8 +15,8 @@ class TestEnv3UserNotInFirstTeam:
         # Test ksshing which tests that it is correctly finding a client config
         with outputs_audit_log(test_config, filename="/shared/ca.log", expected_number=3):
             clear_keys()
-            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
+            assert_contains_hash(test_config.expected_hash, run_command_with_agent("""bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging "sha1sum /etc/unique" """))
             clear_keys()
-            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
+            assert_contains_hash(test_config.expected_hash, run_command_with_agent("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-staging "sha1sum /etc/unique" """))
             clear_keys()
-            assert_contains_hash(test_config.expected_hash, run_command("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
+            assert_contains_hash(test_config.expected_hash, run_command_with_agent("""bin/kssh -q -o StrictHostKeyChecking=no root@sshd-prod "sha1sum /etc/unique" """))
