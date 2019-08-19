@@ -89,11 +89,18 @@ modern versions of windows.
 
 # Using kssh with jumpboxes and bastion hosts
 
-kssh does work correctly with jumpboxes and bastion hosts as long as they are configured to trust the SSH CA. For example, 
-the command `kssh -J dev@jumpbox.example.com dev@server.internal` does work correctly. If you use an SSH config
-to manage your jumpbox configuration in a way that relies on using a specific user, it may be useful to specify a default
-user for kssh to use. For example, `kssh --set-default-user dev` will make it so that `kssh -J jumpbox.example.com server.internal`
-works correctly. 
+kssh should work correctly with jumpboxes and bastion hosts as long as they are configured to trust the SSH CA and the usernames are correct. For example:
+
+```
+kssh -J developer@jumpbox.example.com developer@server.internal
+```
+
+This can also be made easier by setting the kssh default ssh-username locally, then you won't have to specify it for each server. 
+
+```
+kssh --set-default-user developer
+kssh -J jumpbox.example.com server.internal
+```
 
 # Contributing
 
