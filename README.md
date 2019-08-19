@@ -87,6 +87,21 @@ on the `ssh` binary being in the path. This can be installed in a number of diff
 [built in version](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse) on 
 modern versions of windows. 
 
+# Using kssh with jumpboxes and bastion hosts
+
+kssh should work correctly with jumpboxes and bastion hosts as long as they are configured to trust the SSH CA and the usernames are correct. For example:
+
+```
+kssh -J developer@jumpbox.example.com developer@server.internal
+```
+
+This can also be made easier by setting the kssh default ssh-username locally, then you won't have to specify it for each server. 
+
+```
+kssh --set-default-user developer
+kssh -J jumpbox.example.com server.internal
+```
+
 # Contributing
 
 There are two separate binaries built from the code in this repo:
@@ -153,9 +168,9 @@ client config file is how kssh determines which teams are using kssh and the nee
 channel name, the name of the bot, etc). When keybaseca stops, it deletes all of the client config files. 
 
 kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
-configuration. It does have one local config file stored in `~/.ssh/kssh.config` that is used to store the default bot
-if the kssh user has access to multiple running keybaseca bots. This config file is not meant to be manually edited and is only meant to be 
-interacted with via the `--set-default-bot` and `--clear-default-bot` flags. 
+configuration. It does have one local config file stored in `~/.ssh/kssh-config.json` that is used to store a few settings 
+for kssh. By default, this config file is not used. It is only created and meant to be interacted with via the 
+`--set-default-bot`, `--clear-default-bot`, `--set-default-user`, `--clear-default-user` flags. 
 
 #### Communication
 

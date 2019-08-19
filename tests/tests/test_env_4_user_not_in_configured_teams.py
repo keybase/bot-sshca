@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from lib import TestConfig, load_env, outputs_audit_log, run_command
+from lib import TestConfig, load_env, outputs_audit_log, run_command, run_command_with_agent
 
 class TestEnv4UserNotInConfiguredTeams:
     @pytest.fixture(autouse=True, scope='class')
@@ -19,7 +19,7 @@ class TestEnv4UserNotInConfiguredTeams:
         with outputs_audit_log(test_config, filename="/shared/ca.log", expected_number=0):
             for s in ['user@sshd-staging', 'root@sshd-staging', 'user@sshd-prod', 'root@sshd-prod']:
                 try:
-                    run_command(f"""bin/kssh -q -o StrictHostKeyChecking=no {s} "sha1sum /etc/unique" """)
+                    run_command_with_agent(f"""bin/kssh -q -o StrictHostKeyChecking=no {s} "sha1sum /etc/unique" """)
                     assert False
                 except subprocess.CalledProcessError as e:
                     assert b"Did not find any config files in KBFS" in e.output
@@ -32,7 +32,7 @@ class TestEnv4UserNotInConfiguredTeams:
             run_command(f"echo '{client_config}' | keybase fs write /keybase/team/{test_config.subteam}.ssh/kssh-client.config")
             for s in ['user@sshd-staging', 'root@sshd-staging', 'user@sshd-prod', 'root@sshd-prod']:
                 try:
-                    run_command(f"""bin/kssh -q -o StrictHostKeyChecking=no {s} "sha1sum /etc/unique" """)
+                    run_command_with_agent(f"""bin/kssh -q -o StrictHostKeyChecking=no {s} "sha1sum /etc/unique" """)
                     assert False
                 except subprocess.CalledProcessError as e:
                     assert b"Failed to get a signed key from the CA: timed out while waiting for a response from the CA" in e.output

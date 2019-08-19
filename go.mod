@@ -9,5 +9,4 @@ require (
 	github.com/urfave/cli v1.21.0
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 	golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e // indirect
-	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
