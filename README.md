@@ -87,6 +87,14 @@ on the `ssh` binary being in the path. This can be installed in a number of diff
 [built in version](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse) on 
 modern versions of windows. 
 
+# Using kssh with jumpboxes and bastion hosts
+
+kssh does work correctly with jumpboxes and bastion hosts as long as they are configured to trust the SSH CA. For example, 
+the command `kssh -J dev@jumpbox.example.com dev@server.internal` does work correctly. If you use an SSH config
+to manage your jumpbox configuration in a way that relies on using a specific user, it may be useful to specify a default
+user for kssh to use. For example, `kssh --set-default-user dev` will make it so that `kssh -J jumpbox.example.com server.internal`
+works correctly. 
+
 # Contributing
 
 There are two separate binaries built from the code in this repo:

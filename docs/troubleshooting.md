@@ -60,9 +60,3 @@ ssh-keygen \
 ```
 
 You can then use the signed SSH key to SSH via `ssh -i /path/to/key.pub user@server`. 
-
-## Using kssh with jumpboxes and bastion hosts
-
-kssh does work correctly with jumpboxes and bastion hosts. Eg the command `kssh -J jumpbox.example.com server.internal`
-does work correctly. If using this with an SSH config, it may be useful to use `kssh --set-default-user foo` in order
-to specify a user to use for all kssh connections. 
