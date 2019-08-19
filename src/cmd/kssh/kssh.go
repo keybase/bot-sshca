@@ -283,10 +283,19 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 // Run SSH with the given key. Calls os.Exit and does not return.
 func runSSHWithKey(keyPath string, remainingArgs []string) {
 	// Create a config file for the default user if necessary
-	useConfig, err := kssh.CreateDefaultUserConfigFile()
+	useConfig := false
+	user, err := kssh.GetDefaultSSHUser()
 	if err != nil {
-		fmt.Printf("Failed to set default user: %v\n", err)
+		fmt.Printf("Failed to retrieve default SSH user: %v\n", err)
 		os.Exit(1)
+	}
+	if user != "" {
+		useConfig = true
+		err = kssh.CreateDefaultUserConfigFile()
+		if err != nil {
+			fmt.Printf("Failed to set default user: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// Add the key to the ssh-agent in case we are doing multiple connections (eg via the `-J` flag)

@@ -113,7 +113,7 @@ type LocalConfigFile struct {
 }
 
 // Where to store the local config file. Just stash it in ~/.ssh
-var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh.config")
+var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh-config.json")
 
 func GetDefaultSSHUser() (string, error) {
 	lcf, err := getCurrentConfig()

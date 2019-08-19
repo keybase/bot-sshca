@@ -91,7 +91,7 @@ def clear_keys():
 def clear_local_config():
     # Clear kssh's local config file
     try:
-        run_command("rm -rf ~/.ssh/kssh.config")
+        run_command("rm -rf ~/.ssh/kssh-config.json")
     except subprocess.CalledProcessError:
         pass
 

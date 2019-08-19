@@ -20,44 +20,45 @@ func AddKeyToSSHAgent(keyPath string) error {
 
 var AlternateSSHConfigFile = shared.ExpandPathWithTilde("~/.ssh/kssh-config")
 
-func CreateDefaultUserConfigFile() (bool, error) {
+// Create an SSH config file that inherits from the default SSH config file but sets a default SSH user
+func CreateDefaultUserConfigFile() error {
 	user, err := GetDefaultSSHUser()
 	if err != nil {
-		return false, err
+		return err
 	}
 	if user == "" {
-		return false, nil
+		return nil
 	}
 
 	err = MakeDotSSH()
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if _, err := os.Stat(shared.ExpandPathWithTilde("~/.ssh/config")); os.IsNotExist(err) {
 		f, err := os.OpenFile(shared.ExpandPathWithTilde("~/.ssh/config"), os.O_RDONLY|os.O_CREATE, 0644)
 		if err != nil {
-			return false, fmt.Errorf("failed to touch ~/.ssh/config: %v", err)
+			return fmt.Errorf("failed to touch ~/.ssh/config: %v", err)
 		}
 		f.Close()
 	}
 
-	config := fmt.Sprintf("# kssh config file\n"+
+	config := fmt.Sprintf("# kssh config file to set a default SSH user\n"+
 		"Include config\n"+
 		"Host *\n"+
 		"  User %s\n", user)
 
 	f, err := os.OpenFile(AlternateSSHConfigFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return false, err
+		return err
 	}
 	defer f.Close()
 	_, err = f.WriteString(config)
 	if err != nil {
-		return false, err
+		return err
 	}
 	fmt.Printf("Using default ssh user %s\n", user)
-	return true, nil
+	return nil
 }
 
 func MakeDotSSH() error {
