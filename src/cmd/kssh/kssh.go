@@ -282,7 +282,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 
 // Run SSH with the given key. Calls os.Exit and does not return.
 func runSSHWithKey(keyPath string, remainingArgs []string) {
-	// Create a config file for the default user if necessary
+	// Determine whether a default SSH user has been specified and configure it if so
 	useConfig := false
 	user, err := kssh.GetDefaultSSHUser()
 	if err != nil {
@@ -309,8 +309,8 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	fmt.Printf("\n")
 
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
+	checkAndWarnOnUnspecifiedBehavior(useConfig, remainingArgs)
 	if useConfig {
-		warnAboutAlternateConfig(remainingArgs)
 		argumentList = append(argumentList, "-F", kssh.AlternateSSHConfigFile)
 	}
 
@@ -329,12 +329,15 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	os.Exit(0)
 }
 
-func warnAboutAlternateConfig(arguments []string) {
-	for _, arg := range arguments {
-		if arg == "-F" {
-			fmt.Println("Warning: kssh uses the -F argument in order to implement support for default SSH users. It " +
-				"is not supported to run kssh with a default user and the -F flag. Either do not use the -F flag or run" +
-				"`kssh --clear-default-user` to reset the default SSH user. ")
+func checkAndWarnOnUnspecifiedBehavior(useConfig bool, arguments []string) {
+	if useConfig {
+		for _, arg := range arguments {
+			if arg == "-F" {
+				fmt.Println("Warning: You passed a -F flag, but kssh also uses this argument in " +
+					"order to implement support for a default SSH username, which you're also using. " +
+					"Either do not use the -F flag or run `kssh --clear-default-user` to reset the " +
+					"default SSH user and delegate this to the running CA bot.")
+			}
 		}
 	}
 }
