@@ -15,8 +15,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// Generate a new SSH key. Places the private key at filename and the public key at filename.pub. If `overwrite`,
-// it will overwrite the existing key. If `printPubKey` it will print out the generated public key to stdout.
+// Generate a new SSH key. Places the private key at filename and the public key at filename.pub.
 // On windows, we use 2048 bit rsa keys. go's ssh library doesn't support ed25519 and ssh-keygen isn't built in.
 func generateNewSSHKey(filename string) error {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)

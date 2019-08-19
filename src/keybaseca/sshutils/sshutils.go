@@ -17,6 +17,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Generate a new ssh key. Store the private key at filename and the public key at filename.pub. If overwrite, it will
+// overwrite anything at filename or filename.pub. If printPubKey, it will print the generated public key to stdout.
 func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error {
 	_, err := os.Stat(filename)
 	if err == nil {
@@ -46,8 +48,10 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 	return nil
 }
 
-func Generate(conf config.Config, overwrite bool, printPubKey bool) error {
-	err := GenerateNewSSHKey(conf.GetCAKeyLocation(), overwrite, printPubKey)
+// Generate a new CA key based off of the data in the config. If overwrite, it will overwrite the current CA key. Prints
+// the generated public key to stdout.
+func Generate(conf config.Config, overwrite bool) error {
+	err := GenerateNewSSHKey(conf.GetCAKeyLocation(), overwrite, true)
 	if err == nil {
 		log.Log(conf, fmt.Sprintf("Wrote new SSH CA key to %s", conf.GetCAKeyLocation()))
 	}
@@ -69,6 +73,8 @@ func getTempFilename(pattern string) (string, error) {
 	return tempFilename, nil
 }
 
+// Process a given SignatureRequest into a SignatureResponse or an error. This consists of validating the signature request,
+// determining the correct principals, and signing the provided public key.
 func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (resp shared.SignatureResponse, err error) {
 	randomUUID, err := uuid.NewRandom()
 	if err != nil {

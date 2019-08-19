@@ -6,14 +6,17 @@ import (
 	"strings"
 )
 
+// Returns the location of the public key associated with the given private key
 func KeyPathToPubKey(keyPath string) string {
 	return keyPath + ".pub"
 }
 
+// Returns the location of the signature associated with the given private key
 func KeyPathToCert(keyPath string) string {
 	return keyPath + "-cert.pub"
 }
 
+// Returns the location of the private key associated with the given public key
 func PubKeyPathToKeyPath(pubKeyPath string) string {
 	return strings.Replace(pubKeyPath, ".pub", "", 1)
 }

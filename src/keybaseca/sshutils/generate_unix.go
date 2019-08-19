@@ -8,8 +8,7 @@ import (
 	"strings"
 )
 
-// Generate a new SSH key. Places the private key at filename and the public key at filename.pub. If `overwrite`,
-// it will overwrite the existing key. If `printPubKey` it will print out the generated public key to stdout.
+// Generate a new SSH key. Places the private key at filename and the public key at filename.pub.
 // On unix, we use ed25519 keys since they may be more secure (and are smaller). The go crypto ssh library
 // does not support ed25519 keys so we use ssh-keygen in order to generate the key.
 func generateNewSSHKey(filename string) error {
