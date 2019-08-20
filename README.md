@@ -1,10 +1,14 @@
 # SSH CA Bot
 
+[![License](https://img.shields.io/badge/license-BSD-success.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![CircleCI](https://circleci.com/gh/keybase/bot-sshca.svg?style=shield)](https://circleci.com/gh/keybase/bot-sshca)
+[![Go ReportCard](https://goreportcard.com/badge/github.com/keybase/bot-sshca)](https://goreportcard.com/report/github.com/keybase/bot-sshca)
+
 See [keybase.io/blog/keybase-ssh-ca](https://keybase.io/blog/keybase-ssh-ca) for a full announcement and description
 of the code in this repository. 
 
-The idea here is to control SSH access to servers (without needing to install anything on them) based simply on 
-cryptographically provable membership in Keybase teams. 
+This repository provides the tooling to control SSH access to servers (without needing to install anything 
+on them) based simply on cryptographically provable membership in Keybase teams. 
 
 SSH supports a concept of certificate authorities (CAs) where you can place a single public key on the server, 
 and the SSH server will allow any connections with keys signed by the CA cert. This is how a lot of large companies 
