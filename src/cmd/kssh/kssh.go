@@ -291,7 +291,7 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	}
 	if user != "" {
 		useConfig = true
-		err = kssh.CreateDefaultUserConfigFile()
+		err = kssh.CreateDefaultUserConfigFile(keyPath)
 		if err != nil {
 			fmt.Printf("Failed to set default user: %v\n", err)
 			os.Exit(1)

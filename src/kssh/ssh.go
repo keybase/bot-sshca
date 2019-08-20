@@ -21,7 +21,7 @@ func AddKeyToSSHAgent(keyPath string) error {
 var AlternateSSHConfigFile = shared.ExpandPathWithTilde("~/.ssh/kssh-config")
 
 // Create an SSH config file that inherits from the default SSH config file but sets a default SSH user
-func CreateDefaultUserConfigFile() error {
+func CreateDefaultUserConfigFile(keyPath string) error {
 	user, err := GetDefaultSSHUser()
 	if err != nil {
 		return err
@@ -43,10 +43,13 @@ func CreateDefaultUserConfigFile() error {
 		f.Close()
 	}
 
+	// This config file sets a default ssh user and a default ssh key. This ensures that kssh's signed key will be
+	// attempted before any other keys in the ssh-agent
 	config := fmt.Sprintf("# kssh config file to set a default SSH user\n"+
 		"Include config\n"+
 		"Host *\n"+
-		"  User %s\n", user)
+		"  User %s\n"+
+		"  IdentityFile %s\n", user, keyPath)
 
 	f, err := os.OpenFile(AlternateSSHConfigFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
