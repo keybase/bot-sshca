@@ -43,13 +43,13 @@ func CreateDefaultUserConfigFile(keyPath string) error {
 		f.Close()
 	}
 
-	// This config file sets a default ssh user and a default ssh key. This ensures that kssh's signed key will be
-	// attempted before any other keys in the ssh-agent
+	// This config file sets a default ssh user and a default ssh key. This ensures that kssh's signed key will be used.
 	config := fmt.Sprintf("# kssh config file to set a default SSH user\n"+
 		"Include config\n"+
 		"Host *\n"+
 		"  User %s\n"+
-		"  IdentityFile %s\n", user, keyPath)
+		"  IdentityFile %s\n"+
+		"  IdentitiesOnly yes\n", user, keyPath)
 
 	f, err := os.OpenFile(AlternateSSHConfigFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
