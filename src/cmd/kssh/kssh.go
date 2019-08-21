@@ -69,7 +69,7 @@ func provision(keyPath string) {
 	}
 	err = kssh.CreateDefaultUserConfigFile(keyPath)
 	if err != nil {
-		fmt.Printf("Failed to create ssh config file default user: %v\n", err)
+		fmt.Printf("Failed to create the ssh config file for the default user: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Printf("Provisioned new SSH key at %s\n", keyPath)
