@@ -52,12 +52,30 @@ func doAction(action Action, keyPath string, remainingArgs []string) {
 	if action == SSH {
 		runSSHWithKey(keyPath, remainingArgs)
 	} else if action == Provision {
-		err := kssh.AddKeyToSSHAgent(keyPath)
-		if err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("Provisioned new SSH key at %s\n", keyPath)
+		provision(keyPath)
+	}
+}
+
+func provision(keyPath string) {
+	err := kssh.AddKeyToSSHAgent(keyPath)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+	user, err := kssh.GetDefaultSSHUser()
+	if err != nil {
+		fmt.Printf("Failed to retrieve default SSH user: %v\n", err)
+		os.Exit(1)
+	}
+	err = kssh.CreateDefaultUserConfigFile(keyPath)
+	if err != nil {
+		fmt.Printf("Failed to create ssh config file default user: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Provisioned new SSH key at %s\n", keyPath)
+	if user != "" {
+		fmt.Println("See docs/troubleshooting.md for information on configuring scp, rsync, etc to " +
+			"use the configured kssh default user")
 	}
 }
 

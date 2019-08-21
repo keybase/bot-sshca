@@ -60,3 +60,42 @@ ssh-keygen \
 ```
 
 You can then use the signed SSH key to SSH via `ssh -i /path/to/key.pub user@server`. 
+
+## Default Users and kssh --provision
+
+Default users are implemented using a custom SSH config file that inherits from the default one. This means that if you
+run:
+
+```bash
+kssh --set-default-user developer
+kssh --provision
+scp foo server:~/
+```
+
+It will not use the default user. There are two ways to work around this. If you do not need the default user to be kssh
+specific (eg if kssh is your primary way of accessing certain servers), then you can simply configure this default user
+globally by adding the below lines to `~/.ssh/config`
+
+```bash
+Host *
+  User developer
+```
+
+If you do not want to do this, you can run scp with the kssh specific config file via:
+
+```bash
+scp -F ~/.ssh/kssh-config foo server:~/
+```
+
+Or analogously for rsync:
+
+```bash
+rsync -e "ssh -F $HOME/.ssh/kssh-config" foo server:~/
+```
+
+It may be useful to define aliases in your bashrc to simplify this:
+
+```bash
+alias kscp='scp -F ~/.ssh/kssh-config'
+alias krsync='rsync -e "ssh -F $HOME/.ssh/kssh-config"'
+```
