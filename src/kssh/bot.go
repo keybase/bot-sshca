@@ -51,7 +51,6 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		}
 	}()
 
-	fmt.Println("Requesting signature from the CA....")
 	hasBeenAcked := false
 	startTime := time.Now()
 	for {
@@ -97,7 +96,6 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 				// someone else's signature request
 				continue
 			}
-			fmt.Println("Received signature from the CA!")
 			return resp, nil
 		}
 	}

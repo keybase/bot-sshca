@@ -61,7 +61,6 @@ func CreateDefaultUserConfigFile(keyPath string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Using default ssh user %s\n", user)
 	return nil
 }
 

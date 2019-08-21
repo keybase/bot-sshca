@@ -5,6 +5,9 @@ import "fmt"
 type CLIArgument struct {
 	Name        string // eg "--foo"
 	HasArgument bool   // true if an argument comes after it (eg "--foo bar") false if it is a boolean flag (eg "--help")
+	Preserve    bool   // true if you wish to preserve this argument into the list of remaining arguments even if found
+	// eg if your command takes in a `-v` flag and the subcommand also takes in a `-v` flag
+	// incompatible with HasArgument: true
 }
 
 type ParsedCLIArgument struct {
@@ -19,6 +22,12 @@ type ParsedCLIArgument struct {
 //
 // Returns: a list of the remaining unparsed arguments, a list of the parsed arguments, error
 func ParseArgs(args []string, cliArguments []CLIArgument) ([]string, []ParsedCLIArgument, error) {
+	for _, cliArg := range cliArguments {
+		if cliArg.Preserve && cliArg.HasArgument {
+			return nil, nil, fmt.Errorf("cannot specify Preserve and HasArgument for argument %s", cliArg.Name)
+		}
+	}
+
 	remainingArguments := []string{}
 	found := []ParsedCLIArgument{}
 OUTER:
@@ -36,6 +45,9 @@ OUTER:
 					i++
 				}
 				found = append(found, parsed)
+				if cliArg.Preserve {
+					remainingArguments = append(remainingArguments, arg)
+				}
 				continue OUTER
 			}
 		}

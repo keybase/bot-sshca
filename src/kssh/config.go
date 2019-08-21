@@ -227,3 +227,7 @@ func GetTeamFromBot(botname string) (string, error) {
 	}
 	return "", fmt.Errorf("did not find a client config file matching botname=%s (is the CA bot running and are you in the correct teams?)", botname)
 }
+
+type RuntimeConfig struct {
+	Debug bool
+}
