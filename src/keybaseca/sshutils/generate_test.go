@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Test generating a new SSH key
 func TestGenerateNewSSHKey(t *testing.T) {
 	filename := "/tmp/bot-ssh-ca-integration-test-generate-key"
 	os.Remove(filename)

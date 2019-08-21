@@ -103,6 +103,8 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 	}
 }
 
+// Get the configured channel name from the given config file. Returns either a pointer to the channel name string
+// or a null pointer.
 func getChannel(config ConfigFile) *string {
 	var channel *string
 	if config.ChannelName != "" {

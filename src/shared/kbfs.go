@@ -22,6 +22,7 @@ func supportsFuse() bool {
 	return err1 == nil && err2 == nil && err3 == nil && err4 == nil
 }
 
+// Returns whether the given KBFS file exists
 func KBFSFileExists(kbfsFilename string) (bool, error) {
 	if supportsFuse() {
 		// Note that this code is not tested via integration tests since fuse does not run in docker. Handle with care.
@@ -46,6 +47,7 @@ func KBFSFileExists(kbfsFilename string) (bool, error) {
 	return false, fmt.Errorf("failed to stat %s: %s (%v)", kbfsFilename, strings.TrimSpace(string(bytes)), err)
 }
 
+// Reads the specified KBFS file into a byte array
 func KBFSRead(kbfsFilename string) ([]byte, error) {
 	if supportsFuse() {
 		// Note that this code is not tested via integration tests since fuse does not run in docker. Handle with care.
@@ -59,6 +61,7 @@ func KBFSRead(kbfsFilename string) ([]byte, error) {
 	return bytes, nil
 }
 
+// Delete the specified KBFS file
 func KBFSDelete(filename string) error {
 	cmd := exec.Command("keybase", "fs", "rm", filename)
 	bytes, err := cmd.CombinedOutput()
@@ -68,6 +71,8 @@ func KBFSDelete(filename string) error {
 	return nil
 }
 
+// Write contents to the specified KBFS file. If appendToFile, appends onto the end of the file. Otherwise, overwrites
+// and truncates the file.
 func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	var cmd *exec.Cmd
 	if appendToFile {
@@ -92,6 +97,7 @@ func KBFSWrite(filename string, contents string, appendToFile bool) error {
 	return nil
 }
 
+// List KBFS files in the given KBFS path
 func KBFSList(path string) ([]string, error) {
 	cmd := exec.Command("keybase", "fs", "ls", "-1", "--nocolor", path)
 	output, err := cmd.CombinedOutput()

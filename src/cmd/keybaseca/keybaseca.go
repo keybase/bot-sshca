@@ -122,7 +122,7 @@ func generateAction(c *cli.Context) error {
 	}
 	captureControlCToDeleteClientConfig(conf)
 	defer deleteClientConfig(conf)
-	err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true", true)
+	err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true")
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new key: %v", err)
 	}

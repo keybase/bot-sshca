@@ -9,6 +9,7 @@ import (
 	"github.com/keybase/bot-ssh-ca/src/shared"
 )
 
+// Add the SSH key at the given location to the currently running SSH agent. Errors if there is no running ssh-agent.
 func AddKeyToSSHAgent(keyPath string) error {
 	cmd := exec.Command("ssh-add", keyPath)
 	bytes, err := cmd.CombinedOutput()
@@ -64,6 +65,7 @@ func CreateDefaultUserConfigFile(keyPath string) error {
 	return nil
 }
 
+// Make the ~/.ssh/ folder if it does not exist
 func MakeDotSSH() error {
 	if _, err := os.Stat(shared.ExpandPathWithTilde("~/.ssh/")); os.IsNotExist(err) {
 		err = os.Mkdir(shared.ExpandPathWithTilde("~/.ssh/"), 0700)
