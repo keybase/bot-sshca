@@ -3,16 +3,24 @@ package kssh
 import "fmt"
 
 type CLIArgument struct {
-	Name        string // eg "--foo"
-	HasArgument bool   // true if an argument comes after it (eg "--foo bar") false if it is a boolean flag (eg "--help")
-	Preserve    bool   // true if you wish to preserve this argument into the list of remaining arguments even if found
+	// The name of the flag eg "--foo"
+	Name string
+
+	// HasArgument:true if an argument comes after it (eg "--foo bar") false if it is a boolean flag (eg "--help")
+	HasArgument bool
+
+	// Preserve:true if you wish to preserve this argument into the list of remaining arguments even if found
 	// eg if your command takes in a `-v` flag and the subcommand also takes in a `-v` flag
-	// incompatible with HasArgument: true
+	// incompatible with HasArgument: true but only because that has not been built
+	Preserve bool
 }
 
 type ParsedCLIArgument struct {
+	// The CLIArgument that was found and parsed
 	Argument CLIArgument
-	Value    string
+
+	// The value associated with it if HasArgument:true. Otherwise an empty string.
+	Value string
 }
 
 // ParseArgs parses os.Args for use with kssh. This is handwritten rather than using go's flag library (or
