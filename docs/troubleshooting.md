@@ -96,6 +96,6 @@ rsync -e "ssh -F $HOME/.ssh/kssh-config" foo server:~/
 It may be useful to define aliases in your bashrc to simplify this:
 
 ```bash
-alias kscp='scp -F ~/.ssh/kssh-config'
-alias krsync='rsync -e "ssh -F $HOME/.ssh/kssh-config"'
+alias kscp='kssh --provision && scp -F ~/.ssh/kssh-config'
+alias krsync='kssh --provision && rsync -e "ssh -F $HOME/.ssh/kssh-config"'
 ```
