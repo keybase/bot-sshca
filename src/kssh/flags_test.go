@@ -19,6 +19,7 @@ func TestParseArgs(t *testing.T) {
 		{Name: "--arg-with-value", HasArgument: true},
 		{Name: "--arg2-with-value", HasArgument: true},
 		{Name: "--arg-without-value", HasArgument: false},
+		{Name: "--preserved-flag", Preserve: true},
 	}
 	testCases := []testCase{
 		// No arguments
@@ -70,6 +71,16 @@ func TestParseArgs(t *testing.T) {
 			err:       fmt.Errorf("argument --arg-with-value requires a value"),
 			remaining: nil,
 			found:     nil,
+		},
+		// Preserve:true
+		{
+			args:      []string{"--preserved-flag", "--arg-without-value", "unused"},
+			err:       nil,
+			remaining: []string{"--preserved-flag", "unused"},
+			found: []ParsedCLIArgument{
+				{Argument: CLIArgument{Name: "--preserved-flag", HasArgument: false, Preserve: true}, Value: ""},
+				{Argument: CLIArgument{Name: "--arg-without-value", HasArgument: false}, Value: ""},
+			},
 		},
 	}
 

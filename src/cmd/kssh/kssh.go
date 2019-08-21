@@ -13,11 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/keybase/bot-ssh-ca/src/kssh"
 	"github.com/keybase/bot-ssh-ca/src/shared"
+	log "github.com/sirupsen/logrus"
 
 	"golang.org/x/crypto/ssh"
 )
 
 func main() {
+	kssh.InitLogging()
 	team, remainingArgs, action, err := handleArgs(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
@@ -29,7 +31,9 @@ func main() {
 		os.Exit(1)
 	}
 	if isValidCert(keyPath) {
+		log.WithField("keyPath", keyPath).Debug("Reusing unexpired certificate")
 		doAction(action, keyPath, remainingArgs)
+		os.Exit(0)
 	}
 	config, err := getConfig(team)
 	if err != nil {
@@ -80,6 +84,7 @@ var cliArguments = []kssh.CLIArgument{
 	{Name: "--set-default-user", HasArgument: true},
 	{Name: "--clear-default-user", HasArgument: false},
 	{Name: "--help", HasArgument: false},
+	{Name: "-v", HasArgument: false, Preserve: true},
 }
 
 func generateHelpPage() string {
@@ -93,7 +98,8 @@ VERSION:
    0.0.1
 
 GLOBAL OPTIONS:
-   --help,               Show help
+   --help                Show help
+   -v                    Enable kssh and ssh debug logs
    --provision           Provision a new SSH key and add it to the ssh-agent. Useful if you need to run another 
                          program that uses SSH auth (eg scp, rsync, etc)
    --set-default-bot     Set the default bot to be used for kssh. Not necessary if you are only in one team that
@@ -170,6 +176,9 @@ func handleArgs(args []string) (string, []string, Action, error) {
 		if arg.Argument.Name == "--help" {
 			fmt.Println(generateHelpPage())
 			os.Exit(0)
+		}
+		if arg.Argument.Name == "-v" {
+			log.SetLevel(log.DebugLevel)
 		}
 	}
 	return team, remaining, action, nil
@@ -249,7 +258,7 @@ func isValidCert(keyPath string) bool {
 
 // Provision a new signed SSH key with the given config
 func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
-	fmt.Println("Generating a new SSH key...")
+	log.Debug("Generating a new SSH key...")
 	err := sshutils.GenerateNewSSHKey(keyPath, true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new SSH key: %v", err)
@@ -264,6 +273,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 		return fmt.Errorf("Failed to generate a new UUID for the SignatureRequest: %v", err)
 	}
 
+	log.Debug("Requesting signature from the CA....")
 	resp, err := kssh.GetSignedKey(config, shared.SignatureRequest{
 		UUID:         randomUUID.String(),
 		SSHPublicKey: string(pubKey),
@@ -271,6 +281,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to get a signed key from the CA: %v", err)
 	}
+	log.Debug("Received signature from the CA!")
 
 	err = ioutil.WriteFile(shared.KeyPathToCert(keyPath), []byte(resp.SignedKey), 0600)
 	if err != nil {
@@ -291,7 +302,7 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 	}
 	if user != "" {
 		useConfig = true
-		err = kssh.CreateDefaultUserConfigFile()
+		err = kssh.CreateDefaultUserConfigFile(keyPath)
 		if err != nil {
 			fmt.Printf("Failed to set default user: %v\n", err)
 			os.Exit(1)
@@ -305,13 +316,11 @@ func runSSHWithKey(keyPath string, remainingArgs []string) {
 		os.Exit(1)
 	}
 
-	// A new line to separate kssh output from ssh output
-	fmt.Printf("\n")
-
 	argumentList := []string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}
 	checkAndWarnOnUnspecifiedBehavior(useConfig, remainingArgs)
 	if useConfig {
 		argumentList = append(argumentList, "-F", kssh.AlternateSSHConfigFile)
+		log.WithField("user", user).Debug("Using default ssh user")
 	}
 
 	argumentList = append(argumentList, remainingArgs...)
@@ -333,7 +342,7 @@ func checkAndWarnOnUnspecifiedBehavior(useConfig bool, arguments []string) {
 	if useConfig {
 		for _, arg := range arguments {
 			if arg == "-F" {
-				fmt.Println("Warning: You passed a -F flag, but kssh also uses this argument in " +
+				log.Warn("Warning: You passed a -F flag, but kssh also uses this argument in " +
 					"order to implement support for a default SSH username, which you're also using. " +
 					"Either do not use the -F flag or run `kssh --clear-default-user` to reset the " +
 					"default SSH user and delegate this to the running CA bot.")

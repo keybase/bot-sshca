@@ -152,14 +152,18 @@ VERSION:
    0.0.1
 
 GLOBAL OPTIONS:
-   --help,               Show help
+   --help                Show help
+   -v                    Enable kssh and ssh debug logs
    --provision           Provision a new SSH key and add it to the ssh-agent. Useful if you need to run another 
                          program that uses SSH auth (eg scp, rsync, etc)
    --set-default-bot     Set the default bot to be used for kssh. Not necessary if you are only in one team that
                          is using Keybase SSH CA
    --clear-default-bot   Clear the default bot
    --bot                 Specify a specific bot to be used for kssh. Not necessary if you are only in one team that
-                         is using Keybase SSH CA`)
+                         is using Keybase SSH CA
+   --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
+					     a default SSH user 
+   --clear-default-user  Clear the default SSH user
 ```
 
 ## Architecture
