@@ -13,12 +13,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/keybase/bot-ssh-ca/src/kssh"
 	"github.com/keybase/bot-ssh-ca/src/shared"
+	log "github.com/sirupsen/logrus"
 
 	"golang.org/x/crypto/ssh"
 )
 
 func main() {
-	team, remainingArgs, action, runtimeConfig, err := handleArgs(os.Args[1:])
+	kssh.InitLogging()
+	team, remainingArgs, action, err := handleArgs(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		os.Exit(1)
@@ -29,32 +31,33 @@ func main() {
 		os.Exit(1)
 	}
 	if isValidCert(keyPath) {
-		kssh.DebugLog(runtimeConfig, "Reusing unexpired certificate")
-		doAction(runtimeConfig, action, keyPath, remainingArgs)
+		log.WithField("keyPath", keyPath).Debug("Reusing unexpired certificate")
+		doAction(action, keyPath, remainingArgs)
+		os.Exit(0)
 	}
 	config, err := getConfig(team)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
-	err = provisionNewKey(runtimeConfig, config, keyPath)
+	err = provisionNewKey(config, keyPath)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
-	doAction(runtimeConfig, action, keyPath, remainingArgs)
+	doAction(action, keyPath, remainingArgs)
 }
 
-func doAction(runtimeConfig kssh.RuntimeConfig, action Action, keyPath string, remainingArgs []string) {
+func doAction(action Action, keyPath string, remainingArgs []string) {
 	if action == SSH {
-		runSSHWithKey(runtimeConfig, keyPath, remainingArgs)
+		runSSHWithKey(keyPath, remainingArgs)
 	} else if action == Provision {
 		err := kssh.AddKeyToSSHAgent(keyPath)
 		if err != nil {
 			fmt.Printf("%v\n", err)
 			os.Exit(1)
 		}
-		kssh.DebugLog(runtimeConfig, "Provisioned new SSH key at %s\n", keyPath)
+		fmt.Printf("Provisioned new SSH key at %s\n", keyPath)
 	}
 }
 
@@ -116,15 +119,14 @@ const (
 	SSH
 )
 
-// Returns botname, remaining arguments, action, runtimeConfig, error
+// Returns botname, remaining arguments, action, error
 // If the argument requires exiting after processing, it will call os.Exit
-func handleArgs(args []string) (string, []string, Action, kssh.RuntimeConfig, error) {
+func handleArgs(args []string) (string, []string, Action, error) {
 	remaining, found, err := kssh.ParseArgs(args, cliArguments)
 	if err != nil {
-		return "", nil, 0, kssh.RuntimeConfig{}, fmt.Errorf("Failed to parse provided arguments: %v", err)
+		return "", nil, 0, fmt.Errorf("Failed to parse provided arguments: %v", err)
 	}
 
-	debug := false
 	team := ""
 	action := SSH
 	for _, arg := range found {
@@ -176,10 +178,10 @@ func handleArgs(args []string) (string, []string, Action, kssh.RuntimeConfig, er
 			os.Exit(0)
 		}
 		if arg.Argument.Name == "-v" {
-			debug = true
+			log.SetLevel(log.DebugLevel)
 		}
 	}
-	return team, remaining, action, kssh.RuntimeConfig{Debug: debug}, nil
+	return team, remaining, action, nil
 }
 
 // Get the kssh.ConfigFile. botname is the team specified via --bot if one was specified, otherwise the empty string
@@ -255,8 +257,8 @@ func isValidCert(keyPath string) bool {
 }
 
 // Provision a new signed SSH key with the given config
-func provisionNewKey(runtimeConfig kssh.RuntimeConfig, config kssh.ConfigFile, keyPath string) error {
-	kssh.DebugLog(runtimeConfig, "Generating a new SSH key...")
+func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
+	log.Debug("Generating a new SSH key...")
 	err := sshutils.GenerateNewSSHKey(keyPath, true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new SSH key: %v", err)
@@ -271,7 +273,7 @@ func provisionNewKey(runtimeConfig kssh.RuntimeConfig, config kssh.ConfigFile, k
 		return fmt.Errorf("Failed to generate a new UUID for the SignatureRequest: %v", err)
 	}
 
-	kssh.DebugLog(runtimeConfig, "Requesting signature from the CA....")
+	log.Debug("Requesting signature from the CA....")
 	resp, err := kssh.GetSignedKey(config, shared.SignatureRequest{
 		UUID:         randomUUID.String(),
 		SSHPublicKey: string(pubKey),
@@ -279,7 +281,7 @@ func provisionNewKey(runtimeConfig kssh.RuntimeConfig, config kssh.ConfigFile, k
 	if err != nil {
 		return fmt.Errorf("Failed to get a signed key from the CA: %v", err)
 	}
-	kssh.DebugLog(runtimeConfig, "Received signature from the CA!")
+	log.Debug("Received signature from the CA!")
 
 	err = ioutil.WriteFile(shared.KeyPathToCert(keyPath), []byte(resp.SignedKey), 0600)
 	if err != nil {
@@ -290,7 +292,7 @@ func provisionNewKey(runtimeConfig kssh.RuntimeConfig, config kssh.ConfigFile, k
 }
 
 // Run SSH with the given key. Calls os.Exit and does not return.
-func runSSHWithKey(runtimeConfig kssh.RuntimeConfig, keyPath string, remainingArgs []string) {
+func runSSHWithKey(keyPath string, remainingArgs []string) {
 	// Determine whether a default SSH user has been specified and configure it if so
 	useConfig := false
 	user, err := kssh.GetDefaultSSHUser()
@@ -318,7 +320,7 @@ func runSSHWithKey(runtimeConfig kssh.RuntimeConfig, keyPath string, remainingAr
 	checkAndWarnOnUnspecifiedBehavior(useConfig, remainingArgs)
 	if useConfig {
 		argumentList = append(argumentList, "-F", kssh.AlternateSSHConfigFile)
-		kssh.DebugLog(runtimeConfig, "Using default ssh user %s", user)
+		log.WithField("user", user).Debug("Using default ssh user")
 	}
 
 	argumentList = append(argumentList, remainingArgs...)
@@ -340,7 +342,7 @@ func checkAndWarnOnUnspecifiedBehavior(useConfig bool, arguments []string) {
 	if useConfig {
 		for _, arg := range arguments {
 			if arg == "-F" {
-				fmt.Println("Warning: You passed a -F flag, but kssh also uses this argument in " +
+				log.Warn("Warning: You passed a -F flag, but kssh also uses this argument in " +
 					"order to implement support for a default SSH username, which you're also using. " +
 					"Either do not use the -F flag or run `kssh --clear-default-user` to reset the " +
 					"default SSH user and delegate this to the running CA bot.")

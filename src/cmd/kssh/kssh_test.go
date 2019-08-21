@@ -23,7 +23,6 @@ func copyKeyFromTestFixture(t *testing.T, name, destination string) {
 	require.NoError(t, err)
 	err = ioutil.WriteFile(shared.KeyPathToCert(destination), cert, 0600)
 	require.NoError(t, err)
-
 }
 
 func TestIsValidCert(t *testing.T) {
