@@ -164,6 +164,7 @@ GLOBAL OPTIONS:
    --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
 					     a default SSH user 
    --clear-default-user  Clear the default SSH user
+   --set-keybase-binary  Run kssh with a specific keybase binary rather than resolving via $PATH 
 ```
 
 ## Architecture

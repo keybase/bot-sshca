@@ -12,6 +12,8 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/constants"
+
 	"github.com/google/uuid"
 
 	"github.com/keybase/bot-ssh-ca/src/keybaseca/bot"
@@ -192,7 +194,7 @@ func signAction(c *cli.Context) error {
 func mainAction(c *cli.Context) error {
 	switch {
 	case c.Bool("wipe-all-configs"):
-		teams, err := shared.KBFSList("/keybase/team/")
+		teams, err := constants.GetDefaultKBFSOperationsStruct().KBFSList("/keybase/team/")
 		if err != nil {
 			return err
 		}
@@ -206,9 +208,9 @@ func mainAction(c *cli.Context) error {
 				boundChan <- 0
 
 				filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
-				exists, _ := shared.KBFSFileExists(filename)
+				exists, _ := constants.GetDefaultKBFSOperationsStruct().KBFSFileExists(filename)
 				if exists {
-					err = shared.KBFSDelete(filename)
+					err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(filename)
 					if err != nil {
 						fmt.Printf("%v\n", err)
 					}
@@ -227,7 +229,7 @@ func mainAction(c *cli.Context) error {
 		}
 		logLocation := conf.GetLogLocation()
 		if strings.HasPrefix(logLocation, "/keybase/") {
-			err = shared.KBFSDelete(logLocation)
+			err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(logLocation)
 			if err != nil {
 				return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
 			}
@@ -272,7 +274,7 @@ func writeClientConfig(conf config.Config) error {
 			return err
 		}
 
-		err = shared.KBFSWrite(filename, string(content), false)
+		err = constants.GetDefaultKBFSOperationsStruct().KBFSWrite(filename, string(content), false)
 		if err != nil {
 			return err
 		}
@@ -292,7 +294,7 @@ func deleteClientConfig(conf config.Config) error {
 
 	for _, team := range teams {
 		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
-		err := shared.KBFSDelete(filename)
+		err := constants.GetDefaultKBFSOperationsStruct().KBFSDelete(filename)
 		if err != nil {
 			return err
 		}
