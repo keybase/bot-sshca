@@ -156,3 +156,15 @@ class TestMultiTeamStrictLogging:
         assert_contains_hash(test_config.expected_hash, run_command_with_agent("bin/kssh -q -o StrictHostKeyChecking=no -J sshd-staging sshd-prod 'sha1sum /etc/unique'"))
         # Reset the default user
         run_command_with_agent("bin/kssh --clear-default-user")
+
+    def test_kssh_alternate_binary(self, test_config):
+        # Test it by creating another keybase binary earlier in the path and running kssh. This isn't a perfect test but it is
+        # enough to smoketest it
+        run_command("echo '#!/bin/bash' | sudo tee /usr/local/bin/keybase")
+        run_command("sudo chmod +x /usr/local/bin/keybase")
+        try:
+            run_command("bin/kssh --set-keybase-binary /usr/bin/keybase")
+            assert_contains_hash(test_config.expected_hash, run_command_with_agent("bin/kssh -q -o StrictHostKeyChecking=no user@sshd-staging 'sha1sum /etc/unique'"))
+            run_command("bin/kssh --set-keybase-binary ''")
+        finally:
+            run_command("sudo rm /usr/local/bin/keybase")

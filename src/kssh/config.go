@@ -150,6 +150,17 @@ func GetDefaultSSHUser() (string, error) {
 }
 
 // Set the default SSH user to use for kssh connections.
+func SetKeybaseBinaryPath(path string) error {
+	lcf, err := getCurrentConfig()
+	if err != nil {
+		return err
+	}
+
+	lcf.KeybaseBinPath = path
+	return writeConfig(lcf)
+}
+
+// Set the default SSH user to use for kssh connections.
 func SetDefaultSSHUser(username string) error {
 	if strings.ContainsAny(username, " \t\n\r'\"") {
 		return fmt.Errorf("invalid username: %s", username)

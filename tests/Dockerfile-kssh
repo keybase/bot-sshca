@@ -18,10 +18,13 @@ USER keybase
 # Install go
 USER root
 RUN add-apt-repository ppa:gophers/archive -y
-RUN apt-get update
-RUN apt-get install golang-1.11-go git sudo python3 python3-pip -y
+RUN apt-get update -y
+RUN apt-get install golang-1.11-go git sudo python3 python3-pip sudo -y
 RUN pip3 install pytest requests
-USER keybase
+
+# Make it so the keybase user has passwordless sudo so it can move the keybase binary around
+RUN echo "keybase ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/keybase && \
+    chmod 0440 /etc/sudoers.d/keybase
 
 # Install go dependencies (speeds up future builds)
 COPY --chown=keybase go.mod .
