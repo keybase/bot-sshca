@@ -24,6 +24,8 @@ jobs:
       - run: go get golang.org/x/tools/cmd/goimports
       - run: "! goimports ./... 2>&1 | read"
       - run: "! go mod tidy ./... 2>&1 | read"
+      - run: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+      - run: "! golangci-lint 2>&1 | read" 
 workflows:
   version: 2
   build:
