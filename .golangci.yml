@@ -1,0 +1,8 @@
+linters:
+  enable: 
+    - gocritic
+    - goconst
+    - gocyclo
+    - misspell
+    - unparam
+    - golint
