@@ -23,7 +23,7 @@ type ConfigFile struct {
 // Both lists are deduplicated based on ConfigFile.BotName. Runs the KBFS operations in parallel
 // to speed up loading configs.
 func LoadConfigs() ([]ConfigFile, []string, error) {
-	allTeamsFromKBFS, err := shared.KBFSList("/keybase/team/")
+	allTeamsFromKBFS, err := GetKBFSOperationsStruct().KBFSList("/keybase/team/")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config file(s): %v", err)
 	}
@@ -41,7 +41,7 @@ func LoadConfigs() ([]ConfigFile, []string, error) {
 			boundChan <- 0
 
 			filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
-			exists, err := shared.KBFSFileExists(filename)
+			exists, err := GetKBFSOperationsStruct().KBFSFileExists(filename)
 			if err != nil {
 				// Treat an error as it not existing and just skip that team while searching for config files
 				exists = false
@@ -89,7 +89,7 @@ func LoadConfig(kbfsFilename string) (ConfigFile, error) {
 	if !strings.HasPrefix(kbfsFilename, "/keybase/") {
 		return cf, fmt.Errorf("cannot load a kssh config from outside of KBFS")
 	}
-	bytes, err := shared.KBFSRead(kbfsFilename)
+	bytes, err := GetKBFSOperationsStruct().KBFSRead(kbfsFilename)
 	if err != nil {
 		return cf, fmt.Errorf("found a config file at %s that could not be read: %v", kbfsFilename, err)
 	}
@@ -117,6 +117,23 @@ type LocalConfigFile struct {
 	DefaultBotName string `json:"default_bot"`
 	DefaultBotTeam string `json:"default_team"`
 	DefaultSSHUser string `json:"default_ssh_user"`
+	KeybaseBinPath string `json:"keybase_binary"`
+}
+
+func GetKeybaseBinaryPath() string {
+	lcf, err := getCurrentConfig()
+	if err != nil {
+		return "keybase"
+	}
+
+	if lcf.KeybaseBinPath != "" {
+		return lcf.KeybaseBinPath
+	}
+	return "keybase"
+}
+
+func GetKBFSOperationsStruct() *shared.KBFSOperation {
+	return &shared.KBFSOperation{KeybaseBinaryPath: GetKeybaseBinaryPath()}
 }
 
 // Where to store the local config file. Just stash it in ~/.ssh rather than making a ~/.kssh folder
