@@ -93,7 +93,7 @@ func (ko *KBFSOperation) KBFSWrite(filename string, contents string, appendToFil
 		cmd = exec.Command(ko.KeybaseBinaryPath, "fs", "write", filename)
 	}
 
-	cmd.Stdin = strings.NewReader(string(contents))
+	cmd.Stdin = strings.NewReader(contents)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to write to file at %s: %s (%v)", filename, strings.TrimSpace(string(bytes)), err)
