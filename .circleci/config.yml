@@ -43,11 +43,11 @@ workflows:
       - integration
       - unit
       - lint
-      - publish-github-release
-#        requires:
-#          - integration
-#          - unit
-#          - lint
-#        filters:
-      #      branches:
-      #        only: master
+      - publish-github-release:
+          requires:
+            - integration
+            - unit
+            - lint
+#          filters:
+#            branches:
+#              only: master
