@@ -98,7 +98,7 @@ func backupAction(c *cli.Context) error {
 		return err
 	}
 	if response != "yes" {
-		return fmt.Errorf("Did not get confirmation of key export, aborting...")
+		return fmt.Errorf("Did not get confirmation of key export, aborting")
 	}
 
 	conf, err := loadServerConfig()
@@ -118,12 +118,11 @@ func backupAction(c *cli.Context) error {
 
 // The action for the `keybaseca generate` subcommand
 func generateAction(c *cli.Context) error {
-	conf, err := loadServerConfigAndWriteClientConfig()
+	conf, err := loadServerConfig()
 	if err != nil {
 		return err
 	}
 	captureControlCToDeleteClientConfig(conf)
-	defer deleteClientConfig(conf)
 	err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true")
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new key: %v", err)
@@ -138,12 +137,11 @@ func serviceAction(c *cli.Context) error {
 		return err
 	}
 	captureControlCToDeleteClientConfig(conf)
-	defer deleteClientConfig(conf)
 	err = bot.StartBot(conf)
 	if err != nil {
 		return fmt.Errorf("CA chatbot crashed: %v", err)
 	}
-	return nil
+	return deleteClientConfig(conf)
 }
 
 // The action for the `keybaseca sign` subcommand

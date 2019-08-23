@@ -246,13 +246,14 @@ func getConfig(botname string) (kssh.ConfigFile, error) {
 	// No specified bot and no default bot, fallback and load all the configs
 	configs, botnames, err := kssh.LoadConfigs()
 	if err != nil {
-		return empty, fmt.Errorf("Failed to load config file(s): %v\n", err)
+		return empty, fmt.Errorf("Failed to load config file(s): %v", err)
 	}
-	if len(configs) == 0 {
+	switch len(configs) {
+	case 0:
 		return empty, fmt.Errorf("Did not find any config files in KBFS (is `keybaseca service` running?)")
-	} else if len(configs) == 1 {
+	case 1:
 		return configs[0], nil
-	} else {
+	default:
 		noDefaultTeamMessage := fmt.Sprintf("Found %v config files (%s). No default bot is configured. \n"+
 			"Either specify a team via `kssh --bot cabotname` or set a default bot via `kssh --set-default-bot cabotname`", len(configs), strings.Join(botnames, ", "))
 		return empty, fmt.Errorf(noDefaultTeamMessage)

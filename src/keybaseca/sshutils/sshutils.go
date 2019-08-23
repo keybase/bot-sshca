@@ -92,6 +92,9 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 	log.Log(conf, fmt.Sprintf("Processing SignatureRequest from user=%s on device='%s' keyID:%s, principals:%s, expiration:%s, pubkey:%s",
 		sr.Username, sr.DeviceName, keyID, principals, conf.GetKeyExpiration(), sr.SSHPublicKey))
 	signature, err := SignKey(conf.GetCAKeyLocation(), keyID, principals, conf.GetKeyExpiration(), sr.SSHPublicKey)
+	if err != nil {
+		return
+	}
 
 	return shared.SignatureResponse{SignedKey: signature, UUID: sr.UUID}, nil
 }

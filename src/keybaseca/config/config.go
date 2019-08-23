@@ -101,7 +101,11 @@ func validatePath(path string) error {
 		if err != nil {
 			return fmt.Errorf("path is not writable: %v", err)
 		}
-		constants.GetDefaultKBFSOperationsStruct().KBFSDelete(path)
+
+		err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(path)
+		if err != nil {
+			return fmt.Errorf("failed to delete temp file: %v", err)
+		}
 		return nil
 	}
 	_, err := os.Stat(path)
