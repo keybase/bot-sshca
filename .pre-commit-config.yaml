@@ -1,10 +1,11 @@
 repos:
 -   repo: https://github.com/keybase/pre-commit-golang
-    rev: b8194ff9d85455a702480677ada13ac4dbe94146
+    rev: 314766a2c26b7f32641addbdb0e7e451320ff1f0
     hooks:
     -   id: go-fmt
     -   id: go-vet
     -   id: go-lint
+    -   id: golangci-lint
 -   repo: https://github.com/troian/pre-commit-golang
     rev: ab57c5db44bbeeae1031a2e9c2889367f8387d59
     hooks:
@@ -13,7 +14,3 @@ repos:
     rev: f16f18866390cba642e8af6073ed59504aeada5c
     hooks:
     -   id: go-mod-tidy
--   repo: https://github.com/golangci/golangci-lint
-    rev: d2b1eea2c6171a1a1141a448a745335ce2e928a1
-    hooks:
-    -   id: golangci-lint

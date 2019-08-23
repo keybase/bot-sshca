@@ -1,6 +1,14 @@
+linters-settings:
+  gocritic:
+    disabled-checks:
+      - ifElseChain
+      - elseif
+
 linters:
-  enable: 
+  enable:
+    - gofmt
     - gocritic
+    - unconvert
     - goconst
     - gocyclo
     - misspell
