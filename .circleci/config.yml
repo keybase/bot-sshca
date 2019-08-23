@@ -48,6 +48,6 @@ workflows:
           - integration
           - unit
           - lint
-          filters:
-        #      branches:
-        #        only: master
+#        filters:
+      #      branches:
+      #        only: master
