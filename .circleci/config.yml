@@ -24,6 +24,8 @@ jobs:
       - run: go get golang.org/x/tools/cmd/goimports
       - run: "! goimports ./... 2>&1 | read"
       - run: "! go mod tidy ./... 2>&1 | read"
+      - run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
+      - run: "! golangci-lint 2>&1 | read" 
   publish-github-release:
     docker:
       - image: circleci/golang:1.11
@@ -35,7 +37,6 @@ jobs:
             go get github.com/tcnksm/ghr
             export VERSION=`cat VERSION`-`git rev-parse --short HEAD`
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./bin/
-
 workflows:
   version: 2
   build:
