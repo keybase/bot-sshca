@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/keybase/bot-ssh-ca/src/keybaseca/constants"
+	"github.com/keybase/bot-sshca/src/keybaseca/constants"
 
-	"github.com/keybase/bot-ssh-ca/src/keybaseca/botwrapper"
+	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
 
-	"github.com/keybase/bot-ssh-ca/src/shared"
+	"github.com/keybase/bot-sshca/src/shared"
 )
 
 // Represents a loaded and validated config for keybaseca

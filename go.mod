@@ -1,4 +1,4 @@
-module github.com/keybase/bot-ssh-ca
+module github.com/keybase/bot-sshca
 
 go 1.12
 

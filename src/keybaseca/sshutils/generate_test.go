@@ -6,13 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/keybase/bot-ssh-ca/src/shared"
+	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/stretchr/testify/require"
 )
 
 // Test generating a new SSH key
 func TestGenerateNewSSHKey(t *testing.T) {
-	filename := "/tmp/bot-ssh-ca-integration-test-generate-key"
+	filename := "/tmp/bot-sshca-integration-test-generate-key"
 	os.Remove(filename)
 
 	err := GenerateNewSSHKey(filename, false, false)

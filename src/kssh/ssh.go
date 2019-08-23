@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/keybase/bot-ssh-ca/src/shared"
+	"github.com/keybase/bot-sshca/src/shared"
 )
 
 // Add the SSH key at the given location to the currently running SSH agent. Errors if there is no running ssh-agent.

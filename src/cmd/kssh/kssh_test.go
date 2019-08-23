@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/keybase/bot-ssh-ca/src/shared"
+	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +26,7 @@ func copyKeyFromTestFixture(t *testing.T, name, destination string) {
 }
 
 func TestIsValidCert(t *testing.T) {
-	certTestFilename := "/tmp/bot-ssh-ca-test-is-valid-cert"
+	certTestFilename := "/tmp/bot-sshca-test-is-valid-cert"
 
 	os.Remove(certTestFilename)
 	os.Remove(shared.KeyPathToPubKey(certTestFilename))
