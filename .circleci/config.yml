@@ -44,10 +44,10 @@ workflows:
       - unit
       - lint
       - publish-github-release
-        requires:
-          - integration
-          - unit
-          - lint
+#        requires:
+#          - integration
+#          - unit
+#          - lint
 #        filters:
       #      branches:
       #        only: master
