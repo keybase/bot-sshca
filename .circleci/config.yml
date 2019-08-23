@@ -33,7 +33,7 @@ jobs:
       - run:
           command: |
             go get github.com/tcnksm/ghr
-            VERSION=$(`cat VERSION`-`git rev-parse --short HEAD`)
+            export VERSION=$(`cat VERSION`-`git rev-parse --short HEAD`)
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./bin/
 
 workflows:
