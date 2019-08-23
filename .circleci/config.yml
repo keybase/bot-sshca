@@ -26,7 +26,7 @@ jobs:
       - run: "! go mod tidy ./... 2>&1 | read"
   publish-github-release:
     docker:
-      - image: circleci/golang:1.8
+      - image: circleci/golang:1.11
     steps:
       - checkout
       - run: ./buildAll.sh
