@@ -24,6 +24,18 @@ jobs:
       - run: go get golang.org/x/tools/cmd/goimports
       - run: "! goimports ./... 2>&1 | read"
       - run: "! go mod tidy ./... 2>&1 | read"
+  publish-github-release:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - checkout
+      - run: ./buildAll.sh
+      - run:
+          command: |
+            go get github.com/tcnksm/ghr
+            VERSION=$(`cat VERSION`-`git rev-parse --short HEAD`)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./bin/
+
 workflows:
   version: 2
   build:
@@ -31,4 +43,11 @@ workflows:
       - integration
       - unit
       - lint
-      
+      - publish-github-release
+        requires:
+          - integration
+          - unit
+          - lint
+          filters:
+        #      branches:
+        #        only: master
