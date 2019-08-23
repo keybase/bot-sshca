@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/constants"
+
 	"github.com/keybase/bot-ssh-ca/src/keybaseca/botwrapper"
 
 	"github.com/keybase/bot-ssh-ca/src/shared"
@@ -89,17 +91,18 @@ func validateChannel(conf Config, teamName string, channelName string) error {
 func validatePath(path string) error {
 	if strings.HasPrefix(path, "/keybase/") {
 		// If it exists it is valid
-		exists, _ := shared.KBFSFileExists(path)
+		exists, _ := constants.GetDefaultKBFSOperationsStruct().KBFSFileExists(path)
 		if exists {
 			return nil
 		}
 
 		// Otherwise try to write to it
-		err := shared.KBFSWrite(path, "", false)
+		err := constants.GetDefaultKBFSOperationsStruct().KBFSWrite(path, "", false)
 		if err != nil {
 			return fmt.Errorf("path is not writable: %v", err)
 		}
-		err = shared.KBFSDelete(path)
+
+		err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(path)
 		if err != nil {
 			return fmt.Errorf("failed to delete temp file: %v", err)
 		}

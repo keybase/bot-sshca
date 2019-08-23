@@ -103,6 +103,7 @@ var cliArguments = []kssh.CLIArgument{
 	{Name: "--clear-default-user", HasArgument: false},
 	{Name: "--help", HasArgument: false},
 	{Name: "-v", HasArgument: false, Preserve: true},
+	{Name: "--set-keybase-binary", HasArgument: true},
 }
 
 func generateHelpPage() string {
@@ -127,7 +128,8 @@ GLOBAL OPTIONS:
                          is using Keybase SSH CA
    --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
 					     a default SSH user 
-   --clear-default-user  Clear the default SSH user`)
+   --clear-default-user  Clear the default SSH user
+   --set-keybase-binary  Run kssh with a specific keybase binary rather than resolving via $PATH `)
 }
 
 type Action int
@@ -186,6 +188,15 @@ func handleArgs(args []string) (string, []string, Action, error) {
 				os.Exit(1)
 			}
 			fmt.Println("Cleared default bot, exiting...")
+			os.Exit(0)
+		}
+		if arg.Argument.Name == "--set-keybase-binary" {
+			err := kssh.SetKeybaseBinaryPath(arg.Value)
+			if err != nil {
+				fmt.Printf("Failed to set the keybase binary: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Set keybase binary, exiting...")
 			os.Exit(0)
 		}
 		if arg.Argument.Name == "--provision" {

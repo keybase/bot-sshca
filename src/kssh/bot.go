@@ -14,7 +14,7 @@ import (
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
 
-	runOptions := kbchat.RunOptions{KeybaseLocation: "keybase"}
+	runOptions := kbchat.RunOptions{KeybaseLocation: GetKeybaseBinaryPath()}
 	kbc, err := kbchat.Start(runOptions)
 	if err != nil {
 		return empty, fmt.Errorf("error starting Keybase chat: %v", err)

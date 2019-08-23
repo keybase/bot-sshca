@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/keybase/bot-ssh-ca/src/keybaseca/constants"
+
 	"github.com/keybase/bot-ssh-ca/src/keybaseca/config"
-	"github.com/keybase/bot-ssh-ca/src/shared"
 )
 
 // Log attempts to log the given string to a file. If conf.GetStrictLogging() it will panic if it fails
@@ -33,7 +34,7 @@ func Log(conf config.Config, str string) {
 // the local filesystem
 func appendToFile(filename string, str string) error {
 	if strings.HasPrefix(filename, "/keybase/") {
-		return shared.KBFSWrite(filename, str, true)
+		return constants.GetDefaultKBFSOperationsStruct().KBFSWrite(filename, str, true)
 	}
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
