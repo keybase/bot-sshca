@@ -26,11 +26,13 @@ import (
 	"github.com/urfave/cli"
 )
 
+var VersionNumber = "master"
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "keybaseca"
 	app.Usage = "An SSH CA built on top of Keybase"
-	app.Version = "0.0.1"
+	app.Version = VersionNumber
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",

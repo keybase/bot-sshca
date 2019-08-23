@@ -106,6 +106,8 @@ var cliArguments = []kssh.CLIArgument{
 	{Name: "--set-keybase-binary", HasArgument: true},
 }
 
+var VersionNumber = "master"
+
 func generateHelpPage() string {
 	return fmt.Sprintf(`NAME:
    kssh - A replacement ssh binary using Keybase SSH CA to provision SSH keys
@@ -114,7 +116,7 @@ USAGE:
    kssh [kssh options] [ssh arguments...]
 
 VERSION:
-   0.0.1
+   %s
 
 GLOBAL OPTIONS:
    --help                Show help
@@ -129,7 +131,7 @@ GLOBAL OPTIONS:
    --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
 					     a default SSH user 
    --clear-default-user  Clear the default SSH user
-   --set-keybase-binary  Run kssh with a specific keybase binary rather than resolving via $PATH `)
+   --set-keybase-binary  Run kssh with a specific keybase binary rather than resolving via $PATH `, VersionNumber)
 }
 
 type Action int

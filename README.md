@@ -70,11 +70,13 @@ Now on the server where you wish to run the chatbot, start the chatbot itself:
 make serve    # Runs inside of docker for ease of use
 ```
 
-Now build the kssh binary and start SSHing!
+Now download the kssh binary and start SSHing! See https://github.com/keybase/bot-sshca/releases to download the most 
+recent version of kssh for your platform. 
 
 ```bash
-go build -o bin/kssh src/cmd/kssh/kssh.go
-sudo cp bin/kssh /usr/local/bin/        # Optional but recommended
+sudo mv kssh-{platform} /usr/local/bin/kssh 
+sudo chmod +x /usr/local/bin/kssh
+
 kssh developer@staging-server-ip        # If in {TEAM}.ssh.staging
 kssh developer@production-server-ip     # If in {TEAM}.ssh.production
 kssh root@server                        # If in {TEAM}.ssh.root_everywhere
