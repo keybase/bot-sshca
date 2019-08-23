@@ -5,7 +5,7 @@ jobs:
       image: circleci/classic:latest
     steps:
       - checkout
-#      - run: "./integrationTest.sh"
+      - run: "./integrationTest.sh"
   unit:
     docker:
       - image: circleci/golang:1.11
@@ -48,6 +48,6 @@ workflows:
             - integration
             - unit
             - lint
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only: master
