@@ -7,6 +7,7 @@ Keybase SSH CA Bot Documentation!
    intro
    getting_started
    env
+   best_practices
    architecture
    troubleshooting
    bastions
