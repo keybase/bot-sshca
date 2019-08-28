@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Contributing and Additional Info &mdash; Keybase SSH CA Bot  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SSH Certificate Authorities (CAs)" href="sshca.html" />
+    <link rel="prev" title="OS Support" href="os_support.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Keybase SSH CA Bot
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="env.html">Advanced Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="os_support.html">OS Support</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing and Additional Info</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#keybaseca">keybaseca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#kssh">kssh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#config">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#communication">Communication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ssh-operations">SSH Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kbfs">KBFS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#integration-tests">Integration Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sshca.html">SSH Certificate Authorities (CAs)</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Keybase SSH CA Bot</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Contributing and Additional Info</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/contributing.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="contributing-and-additional-info">
+<h1>Contributing and Additional Info<a class="headerlink" href="#contributing-and-additional-info" title="Permalink to this headline">¶</a></h1>
+<p>There are two separate binaries built from the code in this repo:</p>
+<div class="section" id="keybaseca">
+<h2>keybaseca<a class="headerlink" href="#keybaseca" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">keybaseca</span></code> is the CA server that exposes an interface through Keybase chat. This binary is meant to be run in a secure
+location.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NAME</span><span class="p">:</span>
+   <span class="n">keybaseca</span> <span class="o">-</span> <span class="n">An</span> <span class="n">SSH</span> <span class="n">CA</span> <span class="n">built</span> <span class="n">on</span> <span class="n">top</span> <span class="n">of</span> <span class="n">Keybase</span>
+
+<span class="n">USAGE</span><span class="p">:</span>
+   <span class="n">keybaseca</span> <span class="p">[</span><span class="k">global</span> <span class="n">options</span><span class="p">]</span> <span class="n">command</span> <span class="p">[</span><span class="n">command</span> <span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">arguments</span><span class="o">...</span><span class="p">]</span>
+
+<span class="n">VERSION</span><span class="p">:</span>
+   <span class="mf">0.0</span><span class="o">.</span><span class="mi">1</span>
+
+<span class="n">COMMANDS</span><span class="p">:</span>
+     <span class="n">backup</span>    <span class="n">Print</span> <span class="n">the</span> <span class="n">current</span> <span class="n">CA</span> <span class="n">private</span> <span class="n">key</span> <span class="n">to</span> <span class="n">stdout</span> <span class="k">for</span> <span class="n">backup</span> <span class="n">purposes</span>
+     <span class="n">generate</span>  <span class="n">Generate</span> <span class="n">a</span> <span class="n">new</span> <span class="n">CA</span> <span class="n">key</span>
+     <span class="n">service</span>   <span class="n">Start</span> <span class="n">the</span> <span class="n">CA</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">foreground</span>
+     <span class="n">help</span><span class="p">,</span> <span class="n">h</span>   <span class="n">Shows</span> <span class="n">a</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">commands</span> <span class="ow">or</span> <span class="n">help</span> <span class="k">for</span> <span class="n">one</span> <span class="n">command</span>
+
+<span class="n">GLOBAL</span> <span class="n">OPTIONS</span><span class="p">:</span>
+   <span class="o">--</span><span class="n">help</span><span class="p">,</span> <span class="o">-</span><span class="n">h</span>     <span class="n">show</span> <span class="n">help</span>
+   <span class="o">--</span><span class="n">version</span><span class="p">,</span> <span class="o">-</span><span class="n">v</span>  <span class="nb">print</span> <span class="n">the</span> <span class="n">version</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="kssh">
+<h2>kssh<a class="headerlink" href="#kssh" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">kssh</span></code> is the replacement SSH binary. kssh handles provisioning (via the keybaseca-bot) new temporary SSH keys and is meant to be installed on each
+user’s laptop.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>NAME:
+   kssh - A replacement ssh binary using Keybase SSH CA to provision SSH keys
+
+USAGE:
+   kssh [kssh options] [ssh arguments...]
+
+VERSION:
+   0.0.1
+
+GLOBAL OPTIONS:
+   --help                Show help
+   -v                    Enable kssh and ssh debug logs
+   --provision           Provision a new SSH key and add it to the ssh-agent. Useful if you need to run another 
+                         program that uses SSH auth (eg scp, rsync, etc)
+   --set-default-bot     Set the default bot to be used for kssh. Not necessary if you are only in one team that
+                         is using Keybase SSH CA
+   --clear-default-bot   Clear the default bot
+   --bot                 Specify a specific bot to be used for kssh. Not necessary if you are only in one team that
+                         is using Keybase SSH CA
+   --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
+					     a default SSH user 
+   --clear-default-user  Clear the default SSH user
+   --set-keybase-binary  Run kssh with a specific keybase binary rather than resolving via $PATH 
+</pre></div>
+</div>
+</div>
+<div class="section" id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="config">
+<h3>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h3>
+<p>Keybaseca is configured using environment variables (see docs/env.md for information on all of the options). When keybaseca
+starts, it writes a client config file to <code class="docutils literal notranslate"><span class="pre">/keybase/team/{teamname</span> <span class="pre">for</span> <span class="pre">teamname</span> <span class="pre">in</span> <span class="pre">$TEAMS}/kssh-client.config</span></code>. This
+client config file is how kssh determines which teams are using kssh and the needed information about the bot (eg the
+channel name, the name of the bot, etc). When keybaseca stops, it deletes all of the client config files.</p>
+<p>kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
+configuration. It does have one local config file stored in <code class="docutils literal notranslate"><span class="pre">~/.ssh/kssh-config.json</span></code> that is used to store a few settings
+for kssh. By default, this config file is not used. It is only created and meant to be interacted with via the
+<code class="docutils literal notranslate"><span class="pre">--set-default-bot</span></code>, <code class="docutils literal notranslate"><span class="pre">--clear-default-bot</span></code>, <code class="docutils literal notranslate"><span class="pre">--set-default-user</span></code>, <code class="docutils literal notranslate"><span class="pre">--clear-default-user</span></code> flags.</p>
+</div>
+<div class="section" id="communication">
+<h3>Communication<a class="headerlink" href="#communication" title="Permalink to this headline">¶</a></h3>
+<p>kssh and keybaseca communicate with each other over Keybase chat. If the <code class="docutils literal notranslate"><span class="pre">CHAT_CHANNEL</span></code> environment variable is
+specified in keybaseca’s environment, keybaseca will only accept communication in the specified team and channel.
+This configuration is passed to kssh clients via the client config file(s) stored in KBFS. If the <code class="docutils literal notranslate"><span class="pre">CHAT_CHANNEL</span></code> environment variable
+is not specified then keybaseca will accept messages in any channel of any team listed in the <code class="docutils literal notranslate"><span class="pre">TEAMS</span></code> environment variable.
+All communication happens via the Go chatbot library.</p>
+<p>Prior to sending a <code class="docutils literal notranslate"><span class="pre">SignatureRequest</span></code>, kssh sends a series of <code class="docutils literal notranslate"><span class="pre">AckRequest</span></code> messages. An <code class="docutils literal notranslate"><span class="pre">AckRequest</span></code> message is sent until
+kssh receives an <code class="docutils literal notranslate"><span class="pre">Ack</span></code> from keybaseca. This is done in order to ensure that kssh has correctly connected to the chat channel
+and that the bot is responding to messages. Afterwards, a <code class="docutils literal notranslate"><span class="pre">SignatureRequest</span></code> packet is sent and keybaseca parses it and
+returns a signed key. Note that only public keys and signatures are sent over Keybase chat and private keys never
+leave the devices they were generated on.</p>
+</div>
+<div class="section" id="ssh-operations">
+<h3>SSH Operations<a class="headerlink" href="#ssh-operations" title="Permalink to this headline">¶</a></h3>
+<p>On nix style systems (linux and MacOS), kssh generates and uses ed25519 private keys using the ssh-keygen binary. In
+order to remove the dependency on ssh-keygen for windows systems (since it is not always installed on windows), kssh
+will generate a 2048 bit RSA key when running on Windows.</p>
+<p>keybaseca uses the ssh-keygen binary in order to complete all key signing operations.</p>
+</div>
+<div class="section" id="kbfs">
+<h3>KBFS<a class="headerlink" href="#kbfs" title="Permalink to this headline">¶</a></h3>
+<p>In order to ensure that keybaseca can run inside of docker (which does not support FUSE filesystems without adding
+the CAP_SYS_ADMIN permission), all KBFS interactions are done via <code class="docutils literal notranslate"><span class="pre">keybase</span> <span class="pre">fs</span> <span class="pre">...</span></code> commands. This makes it so that
+keybaseca can run in unprivileged docker containers.</p>
+</div>
+</div>
+<div class="section" id="integration-tests">
+<h2>Integration Tests<a class="headerlink" href="#integration-tests" title="Permalink to this headline">¶</a></h2>
+<p>This project contains integration tests that can be run via <code class="docutils literal notranslate"><span class="pre">./integrationTest.sh</span></code>. The integration tests depend on
+docker and docker-compose. The first time you run them, they will walk you through creating two new accounts to be
+used in the tests. The credentials for these accounts will be stored in <code class="docutils literal notranslate"><span class="pre">tests/env.sh</span></code>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sshca.html" class="btn btn-neutral float-right" title="SSH Certificate Authorities (CAs)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="os_support.html" class="btn btn-neutral float-left" title="OS Support" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, keybase.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

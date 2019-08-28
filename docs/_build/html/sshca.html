@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SSH Certificate Authorities (CAs) &mdash; Keybase SSH CA Bot  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Keybase SSH CA Bot
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">SSH Certificate Authorities (CAs)</a><ul>
+<li><a class="reference internal" href="#how-an-ssh-ca-works">How an SSH CA Works</a></li>
+<li><a class="reference internal" href="#future-improvements">Future Improvements</a><ul>
+<li><a class="reference internal" href="#key-encryption">Key Encryption</a></li>
+<li><a class="reference internal" href="#revocation">Revocation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#host-key-signing">Host Key Signing</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Keybase SSH CA Bot</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>SSH Certificate Authorities (CAs)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/sshca.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ssh-certificate-authorities-cas">
+<h1>SSH Certificate Authorities (CAs)<a class="headerlink" href="#ssh-certificate-authorities-cas" title="Permalink to this headline">¶</a></h1>
+<p>As described on our <a class="reference external" href="https://keybase.io/blog/keybase-ssh-ca">blog</a>, SSH CAs are a way of building SSH authentication on
+top of a signing SSH keys. This document expands on how SSH CAs work, the different modes of operation, possible
+improvements, and other interesting things that can be done with CAs.</p>
+<div class="section" id="how-an-ssh-ca-works">
+<h2>How an SSH CA Works<a class="headerlink" href="#how-an-ssh-ca-works" title="Permalink to this headline">¶</a></h2>
+<p>An SSH CA key is just a normal SSH key. This bot generates keys via:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span><span class="o">-</span><span class="n">keygen</span> <span class="o">-</span><span class="n">t</span> <span class="n">ed25519</span> <span class="o">-</span><span class="n">f</span> <span class="n">ca</span><span class="o">-</span><span class="n">key</span> <span class="o">-</span><span class="n">m</span> <span class="n">PEM</span>
+</pre></div>
+</div>
+<p>A signature on a SSH key is a certificate that contains some additional information. A certificate contains:</p>
+<ol class="simple">
+<li>The public key of the signed key</li>
+<li>A key ID that can be used to identify who the key was issued to</li>
+<li>A serial number that can be used manage revocation lists</li>
+<li>A validity period where the key is considered valid only within that period of time</li>
+<li>A list of principals</li>
+</ol>
+<p>A list of principals on a certificate is simply strings that are shared for access control. The field is often used
+to encode roles a user has or groups that they are in, anything that helps the server decide whether or not to
+allow access (and how much access to grant). We use this field to include a list of keybase teams that the user
+is in. And the servers are configured to expect the same values (more below). As an example, here is the information
+encoded in a certificate created by this bot:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ssh-keygen -L -f  ~/.ssh/keybase-signed-key---cert.pub 
+/home/david/.ssh/keybase-signed-key---cert.pub:
+        Type: ssh-ed25519-cert-v01@openssh.com user certificate
+        Public key: ED25519-CERT SHA256:wdzTWhCrVeJrxRIC1KU5nJr8FbxxCUJt1IVeG7HYjmc
+        Signing CA: ED25519 SHA256:OEhTm77qM7ZDwb5oltxt78FIpKraXCzxoaboi/KpNbM
+        Key ID: &quot;08a093ec-cb4e-4bc2-9800-825095418397:981b88e2-a214-4075-af77-72da9600f34f&quot;
+        Serial: 0
+        Valid: from 2019-07-31T11:21:00 to 2019-07-31T12:22:50
+        Principals: 
+                sshcademo.staging
+                sshcademo.prod
+                sshcademo.root_everywhere
+                sshcademo.bot_access
+        Critical Options: (none)
+        Extensions: 
+                permit-X11-forwarding
+                permit-agent-forwarding
+                permit-port-forwarding
+                permit-pty
+                permit-user-rc
+</pre></div>
+</div>
+<p>This certificate which was created by the CA bot is the bot’s cryptographic assertion that I am in the specified teams.
+If I then attempt to SSH into a server with this certificate, it is the responsibility of the server to decide whether
+or not to allow the connection. This is done via adding two lines to <code class="docutils literal notranslate"><span class="pre">/etc/ssh/sshd_config</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TrustedUserCAKeys</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">ssh</span><span class="o">/</span><span class="n">ca</span><span class="o">.</span><span class="n">pub</span>
+<span class="n">AuthorizedPrincipalsFile</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">ssh</span><span class="o">/</span><span class="n">auth_principals</span><span class="o">/%</span><span class="n">u</span>
+</pre></div>
+</div>
+<p>The first line specifies that <code class="docutils literal notranslate"><span class="pre">/etc/ssh/ca.pub</span></code> contains the CA public key (as generated by ssh-keygen above). The
+second line is how we define a mapping between the principals (for this bot: the Keybase teamnames) and the SSH users
+they are granted access to. For example, if we wanted this server to allow people with the principal <code class="docutils literal notranslate"><span class="pre">sshcademo.root_everywhere</span></code>
+to use the root user and people with the principal <code class="docutils literal notranslate"><span class="pre">sshcademo.staging</span></code> to use the “developer” user, we would create two files.
+First, <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/root</span></code> with contents <code class="docutils literal notranslate"><span class="pre">sshcademo.root_everywhere</span></code> and second <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/keybase</span></code>
+with contents <code class="docutils literal notranslate"><span class="pre">sshcademo.staging</span></code>.</p>
+<p>When the SSH server accepts the connection, it will log the key ID and the serial number which can be combined with
+the CA bot’s audit logs in order to track a connection to a specific keybase user.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Accepted</span> <span class="n">publickey</span> <span class="k">for</span> <span class="n">developer</span> <span class="kn">from</span> <span class="mf">65.202</span><span class="o">.</span><span class="mf">161.38</span> <span class="n">port</span> <span class="mi">56914</span> <span class="n">ssh2</span><span class="p">:</span> <span class="n">ED25519</span><span class="o">-</span><span class="n">CERT</span> <span class="n">ID</span> <span class="n">e662bf1e</span><span class="o">-</span><span class="mi">0855</span><span class="o">-</span><span class="mf">41e9</span><span class="o">-</span><span class="mi">8951</span><span class="o">-</span><span class="mi">87</span><span class="n">bf8c0b3614</span><span class="p">:</span><span class="n">f650a363</span><span class="o">-</span><span class="n">cd34</span><span class="o">-</span><span class="mi">4</span><span class="n">ab0</span><span class="o">-</span><span class="n">b6bf</span><span class="o">-</span><span class="mi">52</span><span class="n">faa120364d</span> <span class="p">(</span><span class="n">serial</span> <span class="mi">0</span><span class="p">)</span> <span class="n">CA</span> <span class="n">ED25519</span> <span class="n">SHA256</span><span class="p">:</span><span class="n">OEhTm77qM7ZDwb5oltxt78FIpKraXCzxoaboi</span><span class="o">/</span><span class="n">KpNbM</span>
+</pre></div>
+</div>
+<p>For more information on SSH CAs, here are a few more useful sources:</p>
+<ol class="simple">
+<li>https://code.fb.com/security/scalable-and-secure-access-with-ssh/</li>
+<li>https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/sec-using_openssh_certificate_authentication</li>
+<li>https://medium.com/uber-security-privacy/introducing-the-uber-ssh-certificate-authority-4f840839c5cc</li>
+</ol>
+</div>
+<div class="section" id="future-improvements">
+<h2>Future Improvements<a class="headerlink" href="#future-improvements" title="Permalink to this headline">¶</a></h2>
+<p>Below are a few ideas for future improvements to this project. PRs welcome!</p>
+<div class="section" id="key-encryption">
+<h3>Key Encryption<a class="headerlink" href="#key-encryption" title="Permalink to this headline">¶</a></h3>
+<p>Currently the CA key is stored on the filesystem unencrypted by the CA bot. As long as the CA bot is run on a well
+isolated machine, this is not seen as a significant security weakness. Nonetheless, this could be improved upon by adding
+options that allow for encrypting the CA key.</p>
+</div>
+<div class="section" id="revocation">
+<h3>Revocation<a class="headerlink" href="#revocation" title="Permalink to this headline">¶</a></h3>
+<p>With an SSH CA it is possible to revoke signed SSH keys via revocation lists. A revocation list is a file on the server
+that contains a list of revoked keys. It is likely impractical to manually manage a revocation list, so this could be
+done via a cron job that periodically updates the revocation list. One of the main difficulties of designing this feature
+as part of the SSH CA bot is that a design goal of this bot was to not require running Keybase on every server. Thus,
+this revocation list would need to be somehow updated independent of Keybase.</p>
+</div>
+</div>
+<div class="section" id="host-key-signing">
+<h2>Host Key Signing<a class="headerlink" href="#host-key-signing" title="Permalink to this headline">¶</a></h2>
+<p>SSH CAs can be used to sign SSH host keys. This would remove the below message and strengthen SSH by switching it away
+from a TOFU model.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ssh root@daviddworken.com
+The authenticity of host &#39;daviddworken.com (2604:a880:400:d0::38c4:2001)&#39; can&#39;t be established.
+ECDSA key fingerprint is SHA256:MmB6/g0vDrMkanuRc46n6JCDYPaPKHYsbDpLhQ3y1Yg.
+Are you sure you want to continue connecting (yes/no)? 
+</pre></div>
+</div>
+<p>This feature has not been included because signing host keys is significantly different
+from signing user keys. Despite this, it could still be a useful feature to build on top of Keybase.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, keybase.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

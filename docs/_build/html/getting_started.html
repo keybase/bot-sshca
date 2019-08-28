@@ -1,0 +1,260 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Getting Started &mdash; Keybase SSH CA Bot  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Keybase SSH CA Bot Configuration" href="env.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Keybase SSH CA Bot
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="env.html">Keybase SSH CA Bot Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sshca.html">SSH Certificate Authorities (CAs)</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Keybase SSH CA Bot</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/getting_started.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>kssh allows you to define realms of servers where access is granted based off of
+membership in different teams. Imagine that you have a staging environment that everyone should be granted access to and
+a production environment that you want to restrict access to a smaller group of people. For this exercise we’ll also set
+up a third realm that grants root access to all machines.</p>
+<p>Start by creating a new Keybase user to use for the CA chatbot:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>keybase signup      <span class="c1"># Creates a new Keybase user to use for the SSH CA bot</span>
+keybase paperkey    <span class="c1"># Generate a new paper key</span>
+</pre></div>
+</div>
+<p>Then create <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.staging</span></code>, <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.production</span></code>, <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.root_everywhere</span></code> as new Keybase subteams
+and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
+different users</p>
+<p>On a secured server that you wish to use to run the CA chatbot:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:keybase/bot-sshca.git
+<span class="nb">cd</span> bot-sshca/docker/
+cp env.sh.example env.sh
+nano env.sh         <span class="c1"># Fill in the values including the previously generated paper key</span>
+make generate       <span class="c1"># Generate a new CA key</span>
+</pre></div>
+</div>
+<p>Running <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">generate</span></code> will output a list of configuration steps to run on each server you wish to use with the CA chatbot.
+These commands create a new user to use with kssh (the <code class="docutils literal notranslate"><span class="pre">developer</span></code> user), add the CA’s public key to the server, and
+configure the server to trust the public key.</p>
+<p>Now you must define a mapping between Keybase teams the users and servers that they are
+allowed to access. If you wish to make the user foo available to anyone in team.ssh.bar,
+create the file <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/foo</span></code> with contents <code class="docutils literal notranslate"><span class="pre">team.ssh.bar</span></code>.</p>
+<p>More concretely following the current example setup:</p>
+<ul class="simple">
+<li>For each server in your staging environment:<ol>
+<li>Create the file <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/root</span></code> with contents <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.root_everywhere</span></code></li>
+<li>Create the file <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/developer</span></code> with contents <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.staging</span></code></li>
+</ol>
+</li>
+<li>For each server in your production environment:<ol>
+<li>Create the file <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/root</span></code> with contents <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.root_everywhere</span></code></li>
+<li>Create the file <code class="docutils literal notranslate"><span class="pre">/etc/ssh/auth_principals/developer</span></code> with contents <code class="docutils literal notranslate"><span class="pre">{TEAM}.ssh.production</span></code></li>
+</ol>
+</li>
+</ul>
+<p>Now on the server where you wish to run the chatbot, start the chatbot itself:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make serve    <span class="c1"># Runs inside of docker for ease of use</span>
+</pre></div>
+</div>
+<p>Now download the kssh binary and start SSHing! See https://github.com/keybase/bot-sshca/releases to download the most
+recent version of kssh for your platform.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo mv kssh-<span class="o">{</span>platform<span class="o">}</span> /usr/local/bin/kssh 
+sudo chmod +x /usr/local/bin/kssh
+
+kssh developer@staging-server-ip        <span class="c1"># If in {TEAM}.ssh.staging</span>
+kssh developer@production-server-ip     <span class="c1"># If in {TEAM}.ssh.production</span>
+kssh root@server                        <span class="c1"># If in {TEAM}.ssh.root_everywhere</span>
+</pre></div>
+</div>
+<p>We recommend building kssh yourself and distributing the binary among your team (perhaps in Keybase Files!).</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="env.html" class="btn btn-neutral float-right" title="Keybase SSH CA Bot Configuration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="intro.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, keybase.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
