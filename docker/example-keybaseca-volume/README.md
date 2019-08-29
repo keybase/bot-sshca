@@ -1,1 +1,0 @@
-This directory is used with the docker instructions as an example volume used to store the CA key. Do not override the gitignore in this file in order to commit any files in this directory.
