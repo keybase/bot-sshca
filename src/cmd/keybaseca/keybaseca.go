@@ -23,6 +23,7 @@ import (
 	"github.com/keybase/bot-sshca/src/kssh"
 	"github.com/keybase/bot-sshca/src/shared"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -34,6 +35,10 @@ func main() {
 	app.Usage = "An SSH CA built on top of Keybase"
 	app.Version = VersionNumber
 	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "Log debug information",
+		},
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",
 			Hidden: true,
@@ -192,6 +197,10 @@ func signAction(c *cli.Context) error {
 
 // The action for the `keybaseca` command. Only used for hidden and unlisted flags.
 func mainAction(c *cli.Context) error {
+	if c.Bool("debug") {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	switch {
 	case c.Bool("wipe-all-configs"):
 		teams, err := constants.GetDefaultKBFSOperationsStruct().KBFSList("/keybase/team/")
@@ -280,6 +289,8 @@ func writeClientConfig(conf config.Config) error {
 		}
 	}
 
+	logrus.Debugf("Wrote kssh client config files for the teams: %v", teams)
+
 	return nil
 }
 
@@ -299,6 +310,9 @@ func deleteClientConfig(conf config.Config) error {
 			return err
 		}
 	}
+
+	logrus.Debugf("Deleted kssh client config files for the teams: %v", teams)
+
 	return nil
 }
 
