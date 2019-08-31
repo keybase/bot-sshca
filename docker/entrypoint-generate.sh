@@ -9,6 +9,7 @@ chown -R keybase:keybase /mnt
 sudo -i -u keybase bash << EOF
 source docker/env.sh
 export "FORCE_WRITE=$FORCE_WRITE"
+env
 nohup bash -c "run_keybase -g &"
 sleep 3
 keybase oneshot --username \$KEYBASE_USERNAME --paperkey "\$KEYBASE_PAPERKEY"
