@@ -89,11 +89,8 @@ leave the devices they were generated on.
 
 #### SSH Operations
 
-On nix style systems (linux and MacOS), kssh generates and uses ed25519 private keys using the ssh-keygen binary. In 
-order to remove the dependency on ssh-keygen for windows systems (since it is not always installed on windows), kssh 
-will generate a 2048 bit RSA key when running on Windows. 
-
-keybaseca uses the ssh-keygen binary in order to complete all key signing operations. 
+SSH keys are generated in pure go code. All generated SSH keys are ed25519 private keys. keybaseca uses the ssh-keygen
+binary in order to complete all key signing operations. 
 
 #### KBFS
 

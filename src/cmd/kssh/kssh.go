@@ -291,7 +291,15 @@ func isValidCert(keyPath string) bool {
 // Provision a new signed SSH key with the given config
 func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 	log.Debug("Generating a new SSH key...")
-	err := sshutils.GenerateNewSSHKey(keyPath, true, false)
+
+	// Make ~/.ssh/ in case it doesn't exist
+	err := kssh.MakeDotSSH()
+	if err != nil {
+		return err
+	}
+
+	// Generate the key itself and read it
+	err = sshutils.GenerateNewSSHKey(keyPath, true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new SSH key: %v", err)
 	}
@@ -300,6 +308,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 		return fmt.Errorf("Failed to read the SSH key from the filesystem: %v", err)
 	}
 
+	// Provision the key
 	randomUUID, err := uuid.NewRandom()
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new UUID for the SignatureRequest: %v", err)
@@ -315,6 +324,7 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 	}
 	log.Debug("Received signature from the CA!")
 
+	// Write it to ~/.ssh
 	err = ioutil.WriteFile(shared.KeyPathToCert(keyPath), []byte(resp.SignedKey), 0600)
 	if err != nil {
 		return fmt.Errorf("Failed to write new SSH key to disk: %v", err)
