@@ -31,5 +31,5 @@ func TestGenerateNewSSHKey(t *testing.T) {
 	bytes, err = ioutil.ReadFile(shared.KeyPathToPubKey(filename))
 	require.NoError(t, err)
 	require.False(t, strings.Contains(string(bytes), "PRIVATE"))
-	require.True(t, strings.HasPrefix(string(bytes), "ssh-"))
+	require.True(t, strings.HasPrefix(string(bytes), "ssh-ed25519") || strings.HasPrefix(string(bytes), "ecdsa-sha2-nistp256"))
 }
