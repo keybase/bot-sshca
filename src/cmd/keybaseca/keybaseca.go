@@ -55,6 +55,7 @@ func main() {
 			Name:   "backup",
 			Usage:  "Print the current CA private key to stdout for backup purposes",
 			Action: backupAction,
+			Before: beforeAction,
 		},
 		{
 			Name:  "generate",
@@ -65,11 +66,13 @@ func main() {
 				},
 			},
 			Action: generateAction,
+			Before: beforeAction,
 		},
 		{
 			Name:   "service",
 			Usage:  "Start the CA service in the foreground",
 			Action: serviceAction,
+			Before: beforeAction,
 		},
 		{
 			Name:  "sign",
@@ -86,6 +89,7 @@ func main() {
 				},
 			},
 			Action: signAction,
+			Before: beforeAction,
 		},
 	}
 	app.Action = mainAction
@@ -195,12 +199,16 @@ func signAction(c *cli.Context) error {
 	return nil
 }
 
-// The action for the `keybaseca` command. Only used for hidden and unlisted flags.
-func mainAction(c *cli.Context) error {
-	if c.Bool("debug") {
+// A global before action that handles the --debug flag by setting the logrus logging level
+func beforeAction(c *cli.Context) error {
+	if c.GlobalBool("debug") {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+	return nil
+}
 
+// The action for the `keybaseca` command. Only used for hidden and unlisted flags.
+func mainAction(c *cli.Context) error {
 	switch {
 	case c.Bool("wipe-all-configs"):
 		teams, err := constants.GetDefaultKBFSOperationsStruct().KBFSList("/keybase/team/")
