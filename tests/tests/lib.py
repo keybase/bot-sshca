@@ -137,7 +137,7 @@ def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
     cnt = 0
     for line in new_lines:
         line = line.decode('utf-8')
-        if line and f"Processing SignatureRequest from user={tc.username}" in line and f"principals:{tc.subteam}.ssh.staging,{tc.subteam}.ssh.root_everywhere, expiration:+1h, pubkey:ssh-ed25519" in line:
+        if line and f"Processing SignatureRequest from user={tc.username}" in line and f"principals:{tc.subteam}.ssh.staging,{tc.subteam}.ssh.root_everywhere, expiration:+1h, pubkey:" in line:
             cnt += 1
 
     if cnt != expected_number:
