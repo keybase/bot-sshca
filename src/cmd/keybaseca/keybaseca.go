@@ -23,6 +23,7 @@ import (
 	"github.com/keybase/bot-sshca/src/kssh"
 	"github.com/keybase/bot-sshca/src/shared"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -34,6 +35,10 @@ func main() {
 	app.Usage = "An SSH CA built on top of Keybase"
 	app.Version = VersionNumber
 	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "Log debug information",
+		},
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",
 			Hidden: true,
@@ -50,6 +55,7 @@ func main() {
 			Name:   "backup",
 			Usage:  "Print the current CA private key to stdout for backup purposes",
 			Action: backupAction,
+			Before: beforeAction,
 		},
 		{
 			Name:  "generate",
@@ -60,11 +66,13 @@ func main() {
 				},
 			},
 			Action: generateAction,
+			Before: beforeAction,
 		},
 		{
 			Name:   "service",
 			Usage:  "Start the CA service in the foreground",
 			Action: serviceAction,
+			Before: beforeAction,
 		},
 		{
 			Name:  "sign",
@@ -81,6 +89,7 @@ func main() {
 				},
 			},
 			Action: signAction,
+			Before: beforeAction,
 		},
 	}
 	app.Action = mainAction
@@ -190,6 +199,14 @@ func signAction(c *cli.Context) error {
 	return nil
 }
 
+// A global before action that handles the --debug flag by setting the logrus logging level
+func beforeAction(c *cli.Context) error {
+	if c.GlobalBool("debug") {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+	return nil
+}
+
 // The action for the `keybaseca` command. Only used for hidden and unlisted flags.
 func mainAction(c *cli.Context) error {
 	switch {
@@ -280,6 +297,8 @@ func writeClientConfig(conf config.Config) error {
 		}
 	}
 
+	logrus.Debugf("Wrote kssh client config files for the teams: %v", teams)
+
 	return nil
 }
 
@@ -299,6 +318,9 @@ func deleteClientConfig(conf config.Config) error {
 			return err
 		}
 	}
+
+	logrus.Debugf("Deleted kssh client config files for the teams: %v", teams)
+
 	return nil
 }
 

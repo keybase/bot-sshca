@@ -7,13 +7,15 @@ import (
 
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
 
-	"github.com/keybase/bot-sshca/src/keybaseca/log"
+	auditlog "github.com/keybase/bot-sshca/src/keybaseca/log"
 
 	"github.com/keybase/bot-sshca/src/keybaseca/sshutils"
 
 	"github.com/keybase/bot-sshca/src/keybaseca/config"
 	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Get a running instance of the keybase chat API. Will use the configured credentials if necessary.
@@ -57,16 +59,20 @@ func StartBot(conf config.Config) error {
 			continue
 		}
 
+		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, msg.Message.Content.Text.Body)
+
 		// Note that this line is one of the main security barriers around the SSH bot. If this line were removed
 		// or had a bug, it would cause the SSH bot to respond to any SignatureRequest messages in any channels. This
 		// would allow an attacker to provision SSH keys even though they are not in the listed channels.
 		if !isConfiguredTeam(conf, msg.Message.Channel.Name, msg.Message.Channel.TopicName) {
+			log.Debug("Skipping message since it is not in a configured team")
 			continue
 		}
 
 		messageBody := msg.Message.Content.Text.Body
 
 		if shared.IsAckRequest(messageBody) {
+			log.Debug("Responding to AckMessage")
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
 			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
@@ -74,6 +80,7 @@ func StartBot(conf config.Config) error {
 				continue
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureRequestPreamble) {
+			log.Debug("Responding to SignatureRequest")
 			signatureRequest, err := shared.ParseSignatureRequest(messageBody)
 			if err != nil {
 				LogError(conf, kbc, msg, err)
@@ -97,6 +104,8 @@ func StartBot(conf config.Config) error {
 				LogError(conf, kbc, msg, err)
 				continue
 			}
+		} else {
+			log.Debug("Ignoring unparsed message")
 		}
 	}
 }
@@ -105,10 +114,10 @@ func StartBot(conf config.Config) error {
 // due to an error caused by a malformed message.
 func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
 	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.MsgID, err)
-	log.Log(conf, message)
+	auditlog.Log(conf, message)
 	_, e := kbc.SendMessageByConvID(msg.Message.ConversationID, message)
 	if e != nil {
-		log.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
+		auditlog.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
 	}
 }
 
