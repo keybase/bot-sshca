@@ -31,8 +31,7 @@ NC='\033[0m'
 indent() { sed 's/^/    /'; }
 # Reset docker and wipe all volumes
 reset_docker() {
-    docker-compose down -v
-    docker system prune -f
+    docker-compose down -v --remove-orphans --rmi local
 }
 
 cd tests/
