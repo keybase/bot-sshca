@@ -28,7 +28,7 @@ def load_env():
         "echo yes | bin/keybaseca backup > /shared/cakey.backup\n"
         # The output from this sign operation is tested in test_env_1.py
         "ssh-keygen -t ed25519 -f /shared/userkey -N '' && bin/keybaseca sign --public-key /shared/userkey.pub > /shared/keybaseca-sign.out\n"
-        "bin/keybaseca service &"
+        "bin/keybaseca --debug service &"
     ) % (shlex.quote(path)))
     # Sleep so keybaseca has time to start
     time.sleep(5)

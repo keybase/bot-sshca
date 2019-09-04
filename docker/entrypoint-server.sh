@@ -12,5 +12,5 @@ env
 nohup bash -c "run_keybase -g &"
 sleep 3
 keybase oneshot --username \$KEYBASE_USERNAME --paperkey "\$KEYBASE_PAPERKEY"
-bin/keybaseca service
+bin/keybaseca --debug service
 EOF
