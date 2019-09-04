@@ -34,7 +34,7 @@ These commands create a new user to use with kssh (the `developer` user), add th
 configure the server to trust the public key. 
 
 Now you must define a mapping between Keybase teams the users and servers that they are
-allowed to access. If you wish to make the user foo available to anyone in team.ssh.bar,
+allowed to access. If you wish to make the user `foo` on your server available to anyone in `team.ssh.bar`,
 create the file `/etc/ssh/auth_principals/foo` with contents `team.ssh.bar`. 
 
 More concretely following the current example setup:
