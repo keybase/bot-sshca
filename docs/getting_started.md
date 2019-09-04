@@ -33,7 +33,7 @@ Running `make generate` will output a list of configuration steps to run on each
 These commands create a new user to use with kssh (the `developer` user), add the CA's public key to the server, and 
 configure the server to trust the public key. 
 
-Now you must define a mapping between Keybase teams the users and servers that they are
+Now you must define a mapping between Keybase teams and the users on the servers that members of those teams are
 allowed to access. If you wish to make the user `foo` on your server available to anyone in `team.ssh.bar`,
 create the file `/etc/ssh/auth_principals/foo` with contents `team.ssh.bar`. 
 
