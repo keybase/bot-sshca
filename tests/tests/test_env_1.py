@@ -121,11 +121,10 @@ class TestMultiTeamStrictLogging:
                 if "----" in line and "PRIVATE" in line and "BEGIN" in line:
                     add = True
                 if add:
-                    keyLines.append(line)
+                    keyLines.append(line.strip())
                 if "----" in line and "PRIVATE" in line and "END" in line:
                     add = False
-        key = '\n'.join(keyLines)
-        print(key)
+        key = '\n'.join(keyLines) + '\n'
         with open('/tmp/ssh/cakey', 'w+') as f:
             f.write(key)
         run_command("chmod 0600 /tmp/ssh/cakey")
