@@ -59,9 +59,11 @@ func ParseSignatureResponse(body string) (SignatureResponse, error) {
 	return sr, err
 }
 
+const AckRequestPrefix = "AckRequest--"
+
 // Generate an AckRequest for the given username
 func GenerateAckRequest(username string) string {
-	return "AckRequest--" + username
+	return AckRequestPrefix + username
 }
 
 // Generate an AckResponse in response to the given ack request
@@ -71,7 +73,7 @@ func GenerateAckResponse(ackRequest string) string {
 
 // Returns whether the given message is an ack request
 func IsAckRequest(msg string) bool {
-	return strings.HasPrefix(msg, "AckRequest--")
+	return strings.HasPrefix(msg, AckRequestPrefix)
 }
 
 // Returns whether the given message is an ack response
