@@ -18,7 +18,7 @@ SSH CA messages.
 ## Network Isolation
 
 Due to the highly sensitive nature of the SSH CA bot, it is recommended to configure firewalls in order to block all
-access to the server running the CA bot. It is not recommended to use the CA system to access the CA bot itself
+access to the server running the CA bot. It is not recommended to use kssh to access the server of the CA bot itself
 in order to make it easier to respond to any outages. 
 
 ## Realms
