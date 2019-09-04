@@ -89,8 +89,11 @@ leave the devices they were generated on.
 
 #### SSH Operations
 
-SSH keys are generated in pure go code. All generated SSH keys are ed25519 private keys. keybaseca uses the ssh-keygen
-binary in order to complete all key signing operations. 
+When the ssh-keygen command is available, ssh keys are generated via the ssh-keygen command. In this case, generated
+SSH keys are ed25519 keys. If the ssh-keygen command is not available, SSH keys are generated in pure go code and are 
+ecdsa keys. 
+
+keybaseca uses the ssh-keygen binary in order to complete all key signing operations. 
 
 #### KBFS
 
