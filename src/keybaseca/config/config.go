@@ -11,6 +11,8 @@ import (
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
 
 	"github.com/keybase/bot-sshca/src/shared"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Represents a loaded and validated config for keybaseca
@@ -25,6 +27,7 @@ type Config interface {
 	GetChannelName() string
 	GetLogLocation() string
 	GetStrictLogging() bool
+	DebugString() string
 }
 
 // Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
@@ -72,6 +75,7 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			}
 		}
 	}
+  log.Debugf("Validated config: %s", conf.DebugString())
 	return nil
 }
 
@@ -244,6 +248,14 @@ func (ef *EnvConfig) GetChannelName() string {
 		panic("Failed to retrieve channel name! This should never happen due to config validation...")
 	}
 	return channel
+}
+
+// Dump this EnvConfig to a string for debugging purposes
+func (ef *EnvConfig) DebugString() string {
+	return fmt.Sprintf("CAKeyLocation='%s'; KeybaseHomeDir='%s'; KeybasePaperKey='%s'; KeybaseUsername='%s'; "+
+		"KeyExpiration='%s'; Teams='%s'; ChatTeam='%s'; ChannelName='%s'; LogLocation='%s'; StrictLogging='%s'",
+		ef.GetCAKeyLocation(), ef.GetKeybaseHomeDir(), ef.GetKeybasePaperKey(), ef.GetKeybaseUsername(),
+		ef.GetKeyExpiration(), ef.GetTeams(), ef.GetChatTeam(), ef.GetChannelName(), ef.GetLogLocation(), ef.getStrictLogging())
 }
 
 // Split a teamChannel of the form team.foo.bar#chan into "team.foo.bar", "chan"
