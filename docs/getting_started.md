@@ -19,7 +19,7 @@ Then create `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_ever
 and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
 different users
 
-On a secured server that you wish to use to run the CA chatbot:
+On a secured server (note that this server only needs docker installed) that you wish to use to run the CA chatbot:
 
 ```bash
 git clone git@github.com:keybase/bot-sshca.git
