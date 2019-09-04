@@ -85,8 +85,14 @@ func StartBot(conf config.Config) error {
 			continue
 		}
 
-		if shared.IsAckRequest(messageBody) {
-			log.Debug("Responding to AckMessage")
+		if isPingRequest(messageBody, kbc.GetUsername()) {
+			// Respond to messages of the form `ping botName` with `pong senderName`
+			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, fmt.Sprintf("pong %s", msg.Message.Sender.Username))
+			if err != nil {
+				LogError(conf, kbc, msg, err)
+				continue
+			}
+		} else if shared.IsAckRequest(messageBody) {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
 			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
@@ -189,4 +195,8 @@ func sendAnnouncementMessage(conf config.Config, kbc *kbchat.API) error {
 		}
 	}
 	return nil
+}
+
+func isPingRequest(msg, botUsername string) bool {
+	return msg == fmt.Sprintf("ping %s", botUsername)
 }
