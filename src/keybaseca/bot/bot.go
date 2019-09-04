@@ -55,11 +55,22 @@ func StartBot(conf config.Config) error {
 			return fmt.Errorf("failed to read message: %v", err)
 		}
 
-		if msg.Message.Content.Type != "text" || msg.Message.Sender.Username == kbc.GetUsername() {
+		if msg.Message.Content.Type != "text" {
 			continue
 		}
 
-		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, msg.Message.Content.Text.Body)
+		messageBody := msg.Message.Content.Text.Body
+
+		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, messageBody)
+
+		if msg.Message.Sender.Username == kbc.GetUsername() {
+			log.Debug("Skipping message since it comes from the bot user")
+			if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
+				log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
+					"and kssh as the same user?")
+			}
+			continue
+		}
 
 		// Note that this line is one of the main security barriers around the SSH bot. If this line were removed
 		// or had a bug, it would cause the SSH bot to respond to any SignatureRequest messages in any channels. This
@@ -68,8 +79,6 @@ func StartBot(conf config.Config) error {
 			log.Debug("Skipping message since it is not in a configured team")
 			continue
 		}
-
-		messageBody := msg.Message.Content.Text.Body
 
 		if shared.IsAckRequest(messageBody) {
 			log.Debug("Responding to AckMessage")
