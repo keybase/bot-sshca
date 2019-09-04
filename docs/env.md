@@ -88,7 +88,7 @@ export CHAT_CHANNEL="team.ssh_bot#general"
 
 ## Developer Options
 
-These environment variables are mainly useful for dev work. For security reasons, it is recommended to always run a 
+These environment variables are mainly useful for dev work. For security reasons, it is recommended always to run a 
 production CA chat bot on an isolated machine. These options make it possible to run a CA chat bot on a machine where 
 you currently are logged into another account. 
 
