@@ -23,7 +23,7 @@ generate: env-file-exists build
 	@echo "echo \"AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u\" >> /etc/ssh/sshd_config"
 	@echo "chmod g-w /etc   # On some distributions /etc is group writable which will cause SSH to refuse to run"
 	@echo "service ssh restart"
-	@echo -e "\nSee the README for information on how to define which teams are allowed to access which servers"
+	@echo -e "\nSee the getting started docs for information on how to define which teams are allowed to access which servers"
 
 # Start the CA chatbot in the background
 serve: env-file-exists ca-key-exists build

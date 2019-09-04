@@ -25,7 +25,9 @@ It means that for whatever reason, kssh is not receiving a response from the CA 
 Keybase chat. First, ensure that the CA chatbot is currently running. Next, attempt to determine what is happening
 by inspecting the chat messages inside of the teams configured with the chatbot. You should see a series of `Ack` and 
 `AckRequest` messages going back and forth prior to a `Signature_Request:` and a `Signature_Response:` exchange. Ensure 
-that you and the chatbot are in the correct teams such that they can read and respond to the messages. 
+that you and the chatbot are in the correct teams such that they can read and respond to the messages. In addition,
+review the log output from the keybaseca chatbot. Note that it is required to run the keybaseca chatbot as a different
+user than you are using for kssh. 
 
 ## SSH rejects the connection
 

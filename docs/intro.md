@@ -1,11 +1,4 @@
-# SSH CA Bot
-
-[![License](https://img.shields.io/badge/license-BSD-success.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![CircleCI](https://circleci.com/gh/keybase/bot-sshca.svg?style=shield)](https://circleci.com/gh/keybase/bot-sshca)
-[![Go ReportCard](https://goreportcard.com/badge/github.com/keybase/bot-sshca)](https://goreportcard.com/report/github.com/keybase/bot-sshca)
-
-See [keybase.io/blog/keybase-ssh-ca](https://keybase.io/blog/keybase-ssh-ca) for a full announcement and description
-of the code in this repository. 
+# Introduction
 
 This repository provides the tooling to control SSH access to servers (without needing to install anything 
 on them) based simply on cryptographically provable membership in Keybase teams. 
@@ -21,8 +14,3 @@ This repo provides the pieces for anyone to build this workflow on top of Keybas
 3. a chatbot (`keybaseca`) which listens in a Keybase team for `kssh` requests. If the requester is in the team, the bot will sign the request with an expiring signature (e.g. 1 hour), and then the provisioned server should authenticate as usual.
 
 Removing a user's ability to access a server is as simple as removing them from the Keybase team.
-
-# Documentation
-
-See the [documentation website](https://keybase-ssh-ca-bot.readthedocs.io/en/latest/) for information on getting started,
-best practices, the architecture, and contributing. 
