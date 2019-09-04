@@ -12,6 +12,9 @@ keybase signup      # Creates a new Keybase user to use for the SSH CA bot
 keybase paperkey    # Generate a new paper key
 ```
 
+Note that this system will not work if you attempt to use the same user for the CA chatbot as for kssh. It is required
+to use a unique user. 
+
 Then create `{TEAM}.ssh.staging`, `{TEAM}.ssh.production`, `{TEAM}.ssh.root_everywhere` as new Keybase subteams
 and add the bot to those subteams. Add users to those subteams based off of the permissions you wish to grant
 different users
