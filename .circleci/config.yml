@@ -51,6 +51,7 @@ workflows:
       - integration
       - unit
       - lint
+      - sphinx-build
       - publish-github-release:
           requires:
             - integration
