@@ -25,7 +25,14 @@ jobs:
       - run: "! goimports ./... 2>&1 | read"
       - run: "! go mod tidy ./... 2>&1 | read"
       - run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.1
-      - run: "! golangci-lint 2>&1 | read" 
+      - run: "! golangci-lint 2>&1 | read"
+  sphinx-build:
+    docker:
+      - image: circleci/python:2.7.16
+    steps:
+      - checkout
+      - run: sudo pip install sphinx recommonmark sphinx_rtd_theme
+      - run: cd docs && make html
   publish-github-release:
     docker:
       - image: circleci/golang:1.11
@@ -44,6 +51,7 @@ workflows:
       - integration
       - unit
       - lint
+      - sphinx-build
       - publish-github-release:
           requires:
             - integration
