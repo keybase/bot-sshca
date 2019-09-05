@@ -15,7 +15,7 @@ build: reset-permissions
 
 # Generate a new CA key
 generate: env-file-exists build
-	source env.sh && docker run -e FORCE_WRITE=$(FORCE_WRITE) -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -e TEAMS -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+	docker run -e FORCE_WRITE=$(FORCE_WRITE) -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
 	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
 	@echo "useradd developer && mkdir -p /home/developer && chown developer:developer /home/developer  # The user that will be used for non-root logins"
 	@echo "echo \"`cat $(CURDIR)/example-keybaseca-volume/keybase-ca-key.pub`\" > /etc/ssh/ca.pub"
@@ -23,11 +23,11 @@ generate: env-file-exists build
 	@echo "echo \"AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u\" >> /etc/ssh/sshd_config"
 	@echo "chmod g-w /etc   # On some distributions /etc is group writable which will cause SSH to refuse to run"
 	@echo "service ssh restart"
-	@echo -e "\nSee the README for information on how to define which teams are allowed to access which servers"
+	@echo -e "\nSee the getting started docs for information on how to define which teams are allowed to access which servers"
 
 # Start the CA chatbot in the background
 serve: env-file-exists ca-key-exists build
-	source env.sh && docker run -d --restart unless-stopped -e KEYBASE_USERNAME -e KEYBASE_PAPERKEY -e TEAMS -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
+	docker run -d --restart unless-stopped -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
 	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
 
 # Wipe all data

@@ -11,6 +11,8 @@ import (
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
 
 	"github.com/keybase/bot-sshca/src/shared"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Represents a loaded and validated config for keybaseca
@@ -25,6 +27,7 @@ type Config interface {
 	GetChannelName() string
 	GetLogLocation() string
 	GetStrictLogging() bool
+	DebugString() string
 }
 
 // Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
@@ -57,6 +60,36 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 		if conf.getStrictLogging() != "true" && conf.getStrictLogging() != "false" {
 			return fmt.Errorf("STRICT_LOGGING must be either 'true' or 'false', '%s' is not valid", conf.getStrictLogging())
 		}
+	}
+	if conf.GetKeybaseUsername() != "" || conf.GetKeybasePaperKey() != "" {
+		if conf.GetKeybaseUsername() == "" && conf.GetKeybasePaperKey() != "" {
+			return fmt.Errorf("you must set set a username if you set a paper key (username='%s', key='%s')", conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+		}
+		if conf.GetKeybasePaperKey() == "" && conf.GetKeybaseUsername() != "" {
+			return fmt.Errorf("you must set set a paper key if you set a username (username='%s', key='%s')", conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+		}
+		if !offline {
+			err := validateUsernamePaperkey(conf.GetKeybaseHomeDir(), conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+			if err != nil {
+				return fmt.Errorf("failed to validate KEYBASE_USERNAME and KEYBASE_PAPERKEY: %v", err)
+			}
+		}
+	}
+  log.Debugf("Validated config: %s", conf.DebugString())
+	return nil
+}
+
+func validateUsernamePaperkey(homedir, username, paperkey string) error {
+	api, err := botwrapper.GetKBChat(homedir, username, paperkey)
+	if err != nil {
+		return err
+	}
+	validatedUsername := api.GetUsername()
+	if validatedUsername == "" {
+		return fmt.Errorf("failed to get a username from kbChat, got an empty string")
+	}
+	if validatedUsername != username {
+		return fmt.Errorf("validated_username=%s and expected_username=%s do not match", validatedUsername, username)
 	}
 	return nil
 }
@@ -215,6 +248,14 @@ func (ef *EnvConfig) GetChannelName() string {
 		panic("Failed to retrieve channel name! This should never happen due to config validation...")
 	}
 	return channel
+}
+
+// Dump this EnvConfig to a string for debugging purposes
+func (ef *EnvConfig) DebugString() string {
+	return fmt.Sprintf("CAKeyLocation='%s'; KeybaseHomeDir='%s'; KeybasePaperKey='%s'; KeybaseUsername='%s'; "+
+		"KeyExpiration='%s'; Teams='%s'; ChatTeam='%s'; ChannelName='%s'; LogLocation='%s'; StrictLogging='%s'",
+		ef.GetCAKeyLocation(), ef.GetKeybaseHomeDir(), ef.GetKeybasePaperKey(), ef.GetKeybaseUsername(),
+		ef.GetKeyExpiration(), ef.GetTeams(), ef.GetChatTeam(), ef.GetChannelName(), ef.GetLogLocation(), ef.getStrictLogging())
 }
 
 // Split a teamChannel of the form team.foo.bar#chan into "team.foo.bar", "chan"
