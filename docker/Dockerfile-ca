@@ -2,15 +2,22 @@
 # between this file and Dockerfile-kssh.
 FROM ubuntu:18.04
 
+# Dependencies
 RUN apt-get -qq update
-RUN apt-get -qq  install curl software-properties-common -y
+RUN apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
 RUN useradd -ms /bin/bash keybase
 USER keybase
 WORKDIR /home/keybase
+
+# Download and verify the deb
+# Key fingerprint from https://keybase.io/docs/server_security/our_code_signing_key
 RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
-USER root
+RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb.sig
+RUN gpg --keyserver pgp.mit.edu --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7"
+RUN gpg --verify keybase_amd64.deb.sig keybase_amd64.deb
 
 # Silence the error from dpkg about failing to configure keybase since `apt-get install -f` fixes it
+USER root
 RUN dpkg -i keybase_amd64.deb || true
 RUN apt-get install -fy
 USER keybase
