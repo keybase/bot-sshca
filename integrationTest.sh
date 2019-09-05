@@ -8,6 +8,16 @@ if [ -z "$CIRCLECI" ]; then
   go test ./... 2>&1 | grep -v 'no test files'
 fi
 
+# Attempt to build the docs
+set +u
+if [ -z "$CIRCLECI" ]; then
+  cd docs/
+  make html 2>&1 > /dev/null
+  echo "Successfully built documentation"
+  cd ../
+fi
+
+
 # Ensure we have the correct environment variables
 if [[ -f "tests/env.sh" ]]; then
   echo "env.sh already exists, skipping configuring new accounts..."
