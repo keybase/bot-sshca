@@ -31,8 +31,8 @@ jobs:
       - image: circleci/python:2.7.16
     steps:
       - checkout
-      - cd docs
-      - make html
+      - run: cd docs
+      - run: make html
   publish-github-release:
     docker:
       - image: circleci/golang:1.11
