@@ -61,7 +61,36 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			return fmt.Errorf("STRICT_LOGGING must be either 'true' or 'false', '%s' is not valid", conf.getStrictLogging())
 		}
 	}
-	log.Debugf("Validated config: %s", conf.DebugString())
+	if conf.GetKeybaseUsername() != "" || conf.GetKeybasePaperKey() != "" {
+		if conf.GetKeybaseUsername() == "" && conf.GetKeybasePaperKey() != "" {
+			return fmt.Errorf("you must set set a username if you set a paper key (username='%s', key='%s')", conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+		}
+		if conf.GetKeybasePaperKey() == "" && conf.GetKeybaseUsername() != "" {
+			return fmt.Errorf("you must set set a paper key if you set a username (username='%s', key='%s')", conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+		}
+		if !offline {
+			err := validateUsernamePaperkey(conf.GetKeybaseHomeDir(), conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+			if err != nil {
+				return fmt.Errorf("failed to validate KEYBASE_USERNAME and KEYBASE_PAPERKEY: %v", err)
+			}
+		}
+	}
+  log.Debugf("Validated config: %s", conf.DebugString())
+	return nil
+}
+
+func validateUsernamePaperkey(homedir, username, paperkey string) error {
+	api, err := botwrapper.GetKBChat(homedir, username, paperkey)
+	if err != nil {
+		return err
+	}
+	validatedUsername := api.GetUsername()
+	if validatedUsername == "" {
+		return fmt.Errorf("failed to get a username from kbChat, got an empty string")
+	}
+	if validatedUsername != username {
+		return fmt.Errorf("validated_username=%s and expected_username=%s do not match", validatedUsername, username)
+	}
 	return nil
 }
 
