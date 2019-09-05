@@ -28,7 +28,7 @@ jobs:
       - run: "! golangci-lint 2>&1 | read"
   sphinx-build:
     docker:
-      - image:
+      - image: circleci/python:2.7.16
     steps:
       - checkout
       - cd docs
