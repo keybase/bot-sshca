@@ -13,7 +13,9 @@ WORKDIR /home/keybase
 # Key fingerprint from https://keybase.io/docs/server_security/our_code_signing_key
 RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
 RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb.sig
-RUN gpg --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7"
+RUN gpg --keyserver pgp.mit.edu --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7" || \
+    gpg --keyserver keyserver.pgp.com --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7" || \
+    gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7"
 RUN gpg --verify keybase_amd64.deb.sig keybase_amd64.deb
 
 # Silence the error from dpkg about failing to configure keybase since `apt-get install -f` fixes it
