@@ -31,7 +31,7 @@ jobs:
       - image: circleci/python:2.7.16
     steps:
       - checkout
-      - run: pip install sphinx
+      - run: sudo pip install sphinx
       - run: cd docs && make html
   publish-github-release:
     docker:
