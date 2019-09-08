@@ -17,7 +17,6 @@ if [ -z "$CIRCLECI" ]; then
   cd ../
 fi
 
-
 # Ensure we have the correct environment variables
 if [[ -f "tests/env.sh" ]]; then
   echo "env.sh already exists, skipping configuring new accounts..."

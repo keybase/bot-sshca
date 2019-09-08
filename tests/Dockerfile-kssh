@@ -10,12 +10,21 @@ USER keybase
 WORKDIR /home/keybase
 
 # Download and verify the deb
-# Key fingerprint from https://keybase.io/docs/server_security/our_code_signing_key
 RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
 RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb.sig
-RUN gpg --keyserver pgp.mit.edu --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7" || \
-    gpg --keyserver keyserver.pgp.com --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7" || \
-    gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "222B85B0F90BE2D24CFEB93F47484E50656D16C7"
+# GPG has no easy way of getting the ID associated with a key, so we do this :(
+# This line will error if the fingerprint of the key in the file does not match
+# Key fingerprint from https://keybase.io/docs/server_security/our_code_signing_key
+# Note that we do it this way rather than via the key servers since pulling from the
+# key servers caused a flakey build
+RUN gpg --with-colons --fingerprint $( \
+        curl -sSL https://keybase.io/docs/server_security/code_signing_key.asc | \
+        gpg --import 2>&1 | \
+        grep -v created | \
+        head -n 1 | \
+        cut -d ' ' -f 3 | \
+        cut -d ':' -f 1 \
+    ) | grep fpr | cut -d ':' -f 10 | grep 222B85B0F90BE2D24CFEB93F47484E50656D16C7
 RUN gpg --verify keybase_amd64.deb.sig keybase_amd64.deb
 
 # Silence the error from dpkg about failing to configure keybase since `apt-get install -f` fixes it
