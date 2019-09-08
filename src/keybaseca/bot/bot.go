@@ -55,7 +55,7 @@ func StartBot(conf config.Config) error {
 			return fmt.Errorf("failed to read message: %v", err)
 		}
 
-		if msg.Message.Content.Type != "text" {
+		if msg.Message.Content.TypeName != "text" {
 			continue
 		}
 
@@ -83,7 +83,7 @@ func StartBot(conf config.Config) error {
 		if shared.IsAckRequest(messageBody) {
 			log.Debug("Responding to AckMessage")
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
-			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.GenerateAckResponse(messageBody))
+			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
@@ -108,7 +108,7 @@ func StartBot(conf config.Config) error {
 				LogError(conf, kbc, msg, err)
 				continue
 			}
-			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, shared.SignatureResponsePreamble+string(response))
+			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
@@ -122,9 +122,9 @@ func StartBot(conf config.Config) error {
 // Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
 // due to an error caused by a malformed message.
 func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
-	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.MsgID, err)
+	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.Id, err)
 	auditlog.Log(conf, message)
-	_, e := kbc.SendMessageByConvID(msg.Message.ConversationID, message)
+	_, e := kbc.SendMessageByConvID(msg.Message.ConvID, message)
 	if e != nil {
 		auditlog.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
 	}
