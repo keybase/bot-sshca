@@ -14,10 +14,16 @@ import (
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
 
+	// Start communicating with the Keybase chat API
 	runOptions := kbchat.RunOptions{KeybaseLocation: GetKeybaseBinaryPath()}
 	kbc, err := kbchat.Start(runOptions)
 	if err != nil {
 		return empty, fmt.Errorf("error starting Keybase chat: %v", err)
+	}
+
+	// Validate that the bot user is different than the current user
+	if config.BotName == kbc.GetUsername() {
+		return empty, fmt.Errorf("cannot run kssh and keybaseca as the same user: %s", config.BotName)
 	}
 
 	sub, err := kbc.ListenForNewTextMessages()
