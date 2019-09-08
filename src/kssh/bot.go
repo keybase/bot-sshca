@@ -62,7 +62,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			return empty, fmt.Errorf("failed to read message: %v", err)
 		}
 
-		if msg.Message.Content.Type != "text" {
+		if msg.Message.Content.TypeName != "text" {
 			continue
 		}
 

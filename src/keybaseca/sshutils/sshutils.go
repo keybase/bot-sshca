@@ -170,7 +170,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	for _, result := range results {
 		if result.Role != 0 {
 			// result.Role == 0 means they are an impicit admin in the team and are not actually a member
-			teamToMembership[result.TeamName] = true
+			teamToMembership[result.FqName] = true
 		}
 	}
 

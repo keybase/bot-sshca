@@ -75,7 +75,7 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			}
 		}
 	}
-  log.Debugf("Validated config: %s", conf.DebugString())
+	log.Debugf("Validated config: %s", conf.DebugString())
 	return nil
 }
 
