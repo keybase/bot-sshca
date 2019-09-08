@@ -14,7 +14,3 @@ repos:
     rev: f16f18866390cba642e8af6073ed59504aeada5c
     hooks:
     -   id: go-mod-tidy
--   repo: https://github.com/golangci/golangci-lint
-    rev: v1.17.1
-    hooks:
-    -   id: golangci-lint
