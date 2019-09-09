@@ -36,11 +36,16 @@ func GetUsername(conf config.Config) (string, error) {
 	return username, nil
 }
 
-// Start the keybaseca bot in an infinite loop. Does not return unless it encounters an error.
+// Start the keybaseca bot in an infinite loop. Does not return unless it encounters an unrecoverable error.
 func StartBot(conf config.Config) error {
 	kbc, err := GetKBChat(conf)
 	if err != nil {
 		return fmt.Errorf("error starting Keybase chat: %v", err)
+	}
+
+	err = sendAnnouncementMessage(conf, kbc)
+	if err != nil {
+		return fmt.Errorf("failed to start bot due to error while sending announcement: %v", err)
 	}
 
 	sub, err := kbc.ListenForNewTextMessages()
@@ -143,4 +148,36 @@ func isConfiguredTeam(conf config.Config, teamName string, channelName string) b
 		}
 	}
 	return false
+}
+
+func buildAnnouncement(template, username, currentTeam string, teams []string) string {
+	replacements := map[string]string{
+		"$USERNAME":     username,
+		"$CURRENT_TEAM": currentTeam,
+		"$TEAMS":        strings.Join(teams, ", "),
+	}
+
+	templatedMessage := template
+	for template, val := range replacements {
+		templatedMessage = strings.Replace(templatedMessage, template, val, -1)
+	}
+
+	return templatedMessage
+}
+
+func sendAnnouncementMessage(conf config.Config, kbc *kbchat.API) error {
+	if conf.GetAnnouncement() == "" {
+		// No announcement to send
+		return nil
+	}
+	for _, team := range conf.GetTeams() {
+		announcement := buildAnnouncement(conf.GetAnnouncement(), kbc.GetUsername(), team, conf.GetTeams())
+
+		var channel *string
+		_, err := kbc.SendMessageByTeamName(team, announcement, channel)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

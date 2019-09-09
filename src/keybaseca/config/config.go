@@ -27,6 +27,7 @@ type Config interface {
 	GetChannelName() string
 	GetLogLocation() string
 	GetStrictLogging() bool
+	GetAnnouncement() string
 	DebugString() string
 }
 
@@ -248,6 +249,11 @@ func (ef *EnvConfig) GetChannelName() string {
 		panic("Failed to retrieve channel name! This should never happen due to config validation...")
 	}
 	return channel
+}
+
+// Get the announcement string used when the bot is started up. May be empty.
+func (ef *EnvConfig) GetAnnouncement() string {
+	return os.Getenv("ANNOUNCEMENT")
 }
 
 // Dump this EnvConfig to a string for debugging purposes
