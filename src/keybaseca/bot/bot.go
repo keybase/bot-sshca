@@ -85,9 +85,10 @@ func StartBot(conf config.Config) error {
 			continue
 		}
 
-		if isPingRequest(messageBody, kbc.GetUsername()) {
+		if shared.IsPingRequest(messageBody, kbc.GetUsername()) {
 			// Respond to messages of the form `ping botName` with `pong senderName`
-			_, err = kbc.SendMessageByConvID(msg.Message.ConversationID, fmt.Sprintf("pong %s", msg.Message.Sender.Username))
+			log.Debug("Responding to ping with pong")
+			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, fmt.Sprintf(shared.GeneratePingResponse(msg.Message.Sender.Username)))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
@@ -195,8 +196,4 @@ func sendAnnouncementMessage(conf config.Config, kbc *kbchat.API) error {
 		}
 	}
 	return nil
-}
-
-func isPingRequest(msg, botUsername string) bool {
-	return msg == fmt.Sprintf("ping %s", botUsername)
 }
