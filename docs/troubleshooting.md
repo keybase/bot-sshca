@@ -3,6 +3,15 @@
 This file contains some general directions and thoughts on troubleshooting the code in this repo. This is not meant
 to be a comprehensive troubleshooting guide and is only a jumping off point. 
 
+## `make generate` refuses to overwrite an existing key
+
+In order to force `make generate` to overwrite the existing CA key (note that this will delete the existing CA
+key which means kssh will not work with any servers it currently works with), simply run:
+
+```
+FORCE_WRITE=true make generate
+```
+
 ## kssh is slow, but it works
 
 When kssh starts, it has to search every team you are in for a `kssh-client.config` file which specifies the information
