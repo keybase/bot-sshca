@@ -152,14 +152,14 @@ func isConfiguredTeam(conf config.Config, teamName string, channelName string) b
 
 func buildAnnouncement(template, username, currentTeam string, teams []string) string {
 	replacements := map[string]string{
-		"$USERNAME":     username,
-		"$CURRENT_TEAM": currentTeam,
-		"$TEAMS":        strings.Join(teams, ", "),
+		"{USERNAME}":     username,
+		"{CURRENT_TEAM}": currentTeam,
+		"{TEAMS}":        strings.Join(teams, ", "),
 	}
 
 	templatedMessage := template
-	for template, val := range replacements {
-		templatedMessage = strings.Replace(templatedMessage, template, val, -1)
+	for templateStr, templateVal := range replacements {
+		templatedMessage = strings.Replace(templatedMessage, templateStr, templateVal, -1)
 	}
 
 	return templatedMessage

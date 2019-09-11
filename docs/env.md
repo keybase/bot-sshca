@@ -93,17 +93,17 @@ the bot is started. This is useful if you would like the bot to announce the fac
 a given team. The `ANNOUNCEMENT` environment variable supports a number of templating variables that will be instantiated
 based off of the current config. These are:
 
-* `$USERNAME` will be replaced with the username of the bot
-* `$CURRENT_TEAM` will be replaced with the team that the message is being sent in
-* `$TEAMS` will be replaced with the comma separated list of teams that the bot is running in
+* `{USERNAME}` will be replaced with the username of the bot
+* `{CURRENT_TEAM}` will be replaced with the team that the message is being sent in
+* `{TEAMS}` will be replaced with the comma separated list of teams that the bot is running in
 
 Examples:
 
 ```bash
 export ANNOUNCEMENT="SSH CA bot starting up..."
-export ANNOUNCEMENT="Hello! I'm $USERNAME and I'm an SSH bot! See github.com/keybase/bot-sshca for information on using Keybase for SSH."
-export ANNOUNCEMENT="Hello! I'm $USERNAME and I'm an SSH bot! I'm currently listening in $TEAMS."
-export ANNOUNCEMENT="Hello! I'm $USERNAME and I'm an SSH bot! Being in $CURRENT_TEAM will grant you SSH access to certain servers. Reach out to @dworken for more information."
+export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! See github.com/keybase/bot-sshca for information on using Keybase for SSH."
+export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! I'm currently listening in {TEAMS}."
+export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! Being in {CURRENT_TEAM} will grant you SSH access to certain servers. Reach out to @dworken for more information."
 ```
 
 ## Developer Options

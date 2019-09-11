@@ -7,4 +7,4 @@ export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
 export KEYBASE_USERNAME="$BOT_USERNAME"
 export CHAT_CHANNEL="$SUBTEAM.ssh#ssh-provision"
 export CA_KEY_LOCATION="/shared/keybase-ca-key"
-export ANNOUNCEMENTS="Hello my name is $USERNAME. This is $CURRENT_TEAM and the configured teams are $TEAMS"
+export ANNOUNCEMENT='Hello my name is {USERNAME}. This is {CURRENT_TEAM} and the configured teams are {TEAMS}'
