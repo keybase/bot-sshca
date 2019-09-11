@@ -30,6 +30,13 @@ serve: env-file-exists ca-key-exists build
 	docker run -d --restart unless-stopped -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
 	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
 
+# Stop the service
+stop:
+	docker kill `docker ps -q --filter ancestor=ca`
+
+# Restart the service (useful if you updated env.sh)
+restart: stop serve
+
 # Wipe all data
 clean: confirm-clean reset-permissions
 	@# Sudo since it is likely owned by another use since it was written from a docker container

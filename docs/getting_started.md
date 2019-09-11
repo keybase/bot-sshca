@@ -65,3 +65,10 @@ kssh root@server                        # If in {TEAM}.ssh.root_everywhere
 ```
 
 We recommend building kssh yourself and distributing the binary among your team (perhaps in Keybase Files!). 
+
+## Updating environment variables
+
+If you update any environment variables, it is necessary to restart the keybaseca service. This can be done 
+by running `make restart`. Note that it is not required to re-run `make generate`. 
+
+Note that this means `kssh` will not work for a brief period of time while the container restarts. 
