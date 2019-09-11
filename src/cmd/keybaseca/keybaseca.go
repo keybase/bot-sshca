@@ -58,13 +58,8 @@ func main() {
 			Before: beforeAction,
 		},
 		{
-			Name:  "generate",
-			Usage: "Generate a new CA key",
-			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name: "overwrite-existing-key",
-				},
-			},
+			Name:   "generate",
+			Usage:  "Generate a new CA key",
 			Action: generateAction,
 			Before: beforeAction,
 		},
@@ -134,7 +129,7 @@ func generateAction(c *cli.Context) error {
 		return err
 	}
 	captureControlCToDeleteClientConfig(conf)
-	err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true")
+	err = sshutils.Generate(conf, strings.ToLower(os.Getenv("FORCE_WRITE")) == "true")
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new key: %v", err)
 	}

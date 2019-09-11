@@ -3,6 +3,15 @@
 This file contains some general directions and thoughts on troubleshooting the code in this repo. This is not meant
 to be a comprehensive troubleshooting guide and is only a jumping off point. 
 
+## `make generate` refuses to overwrite an existing key
+
+In order to force `make generate` to overwrite the existing CA key (note that this will delete the existing CA
+key which means kssh will not work with any servers it currently works with), simply run:
+
+```
+FORCE_WRITE=true make generate
+```
+
 ## kssh is slow, but it works
 
 When kssh starts, it has to search every team you are in for a `kssh-client.config` file which specifies the information
@@ -31,8 +40,19 @@ user than you are using for kssh.
 
 ## SSH rejects the connection
 
-This likely means that you have not configured the SSH server correctly. Review the directions in README.md and ensure
-that you have followed the steps correctly ([sshca.md](./sshca.md) also has some additional information on how SSH CAs work that may
+This likely means that you have not configured the SSH server correctly. Confirm that on the SSH server you are trying to access:
+
+* `/etc/ssh/ca.pub` has an SSH public key in it
+* `/etc/ssh/auth_principals/username-of-ssh-user` has the name of your Keybase team in it (or multiple comma separated keybase teams)
+* `/etc/ssh/sshd_config` has the below two lines somewhere in it:
+
+```
+TrustedUserCAKeys /etc/ssh/ca.pub
+AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u
+```
+
+If that all looks good, review the getting started directions and ensure that you have followed the steps correctly 
+([sshca.md](./sshca.md) also has some additional information on how SSH CAs work that may
 be helpful). If you would like to follow an example, see the code in the `tests/` directory which contains integration 
 tests (focus on Dockerfile-sshd for an example SSH server setup). If none of that works, the best strategy is to run
 SSH on the server on an alternate port and review the debug information. On the server run `/usr/sbin/sshd -dd -D -p 2222`
@@ -101,3 +121,8 @@ It may be useful to define aliases in your bashrc to simplify this:
 alias kscp='kssh --provision && scp -F ~/.ssh/kssh-config'
 alias krsync='kssh --provision && rsync -e "ssh -F $HOME/.ssh/kssh-config"'
 ```
+
+## Other
+
+For any other issues, please open a Github issue or ping @dworken on Keybase! We want to make this project as reliable
+as possible so please let us know if there are any ways we can improve the project. 
