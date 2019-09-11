@@ -2,15 +2,27 @@
 # between this file and Dockerfile-ca.
 FROM ubuntu:18.04
 
+# Dependencies
 RUN apt-get -qq update
-RUN apt-get -qq  install curl software-properties-common -y
+RUN apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
 RUN useradd -ms /bin/bash keybase
 USER keybase
 WORKDIR /home/keybase
+
+# Download and verify the deb
 RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
-USER root
+RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb.sig
+# Import our gpg key from our website. Pulling from key servers caused a flakey build so
+# we get the key from the Keybase website instead.
+RUN curl -sSL https://keybase.io/docs/server_security/code_signing_key.asc | gpg --import
+# This line will error if the fingerprint of the key in the file does not match the
+# known fingerprint of the our PGP key
+RUN gpg --fingerprint 222B85B0F90BE2D24CFEB93F47484E50656D16C7
+# And then verify the signature now that we have the key
+RUN gpg --verify keybase_amd64.deb.sig keybase_amd64.deb
 
 # Silence the error from dpkg about failing to configure keybase since `apt-get install -f` fixes it
+USER root
 RUN dpkg -i keybase_amd64.deb || true
 RUN apt-get install -fy
 USER keybase
