@@ -19,7 +19,7 @@ func TestGenerateNewSSHKey(t *testing.T) {
 	require.NoError(t, err)
 
 	err = GenerateNewSSHKey(filename, false, false)
-	require.Errorf(t, err, "Refusing to overwrite existing key (try with --overwrite-existing-key or FORCE_WRITE=true if you're sure): "+filename)
+	require.Errorf(t, err, "Refusing to overwrite existing key (try with FORCE_WRITE=true if you're sure): "+filename)
 
 	err = GenerateNewSSHKey(filename, true, false)
 	require.NoError(t, err)

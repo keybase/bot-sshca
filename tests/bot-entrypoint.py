@@ -23,7 +23,7 @@ def load_env():
         ". %s\n"
         "bin/keybaseca --wipe-all-configs\n"
         "bin/keybaseca --wipe-logs || true\n"
-        "bin/keybaseca generate --overwrite-existing-key\n"
+        "FORCE_WRITE=true bin/keybaseca generate\n"
         # The output from this backup is tested in test_env_1.py
         "echo yes | bin/keybaseca backup > /shared/cakey.backup\n"
         # The output from this sign operation is tested in test_env_1.py
