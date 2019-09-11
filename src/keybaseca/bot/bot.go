@@ -150,11 +150,17 @@ func isConfiguredTeam(conf config.Config, teamName string, channelName string) b
 	return false
 }
 
-func buildAnnouncement(template, username, currentTeam string, teams []string) string {
+type AnnouncementTemplateValues struct {
+	Username    string
+	CurrentTeam string
+	Teams       []string
+}
+
+func buildAnnouncement(template string, values AnnouncementTemplateValues) string {
 	replacements := map[string]string{
-		"{USERNAME}":     username,
-		"{CURRENT_TEAM}": currentTeam,
-		"{TEAMS}":        strings.Join(teams, ", "),
+		"{USERNAME}":     values.Username,
+		"{CURRENT_TEAM}": values.CurrentTeam,
+		"{TEAMS}":        strings.Join(values.Teams, ", "),
 	}
 
 	templatedMessage := template
@@ -171,7 +177,10 @@ func sendAnnouncementMessage(conf config.Config, kbc *kbchat.API) error {
 		return nil
 	}
 	for _, team := range conf.GetTeams() {
-		announcement := buildAnnouncement(conf.GetAnnouncement(), kbc.GetUsername(), team, conf.GetTeams())
+		announcement := buildAnnouncement(conf.GetAnnouncement(),
+			AnnouncementTemplateValues{Username: kbc.GetUsername(),
+				CurrentTeam: team,
+				Teams:       conf.GetTeams()})
 
 		var channel *string
 		_, err := kbc.SendMessageByTeamName(team, announcement, channel)
