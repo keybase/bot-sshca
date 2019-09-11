@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/keybase/go-keybase-chat-bot/kbchat/types/chat1"
+
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
 
 	auditlog "github.com/keybase/bot-sshca/src/keybaseca/log"
@@ -36,8 +38,18 @@ func GetUsername(conf config.Config) (string, error) {
 	return username, nil
 }
 
+type OutstandingTwoManSignatureRequest struct {
+	SignatureRequest shared.SignatureRequest
+	RequestMessageID chat1.MessageID
+	ApprovalCount    int
+	ConvID           string
+}
+
 // Start the keybaseca bot in an infinite loop. Does not return unless it encounters an unrecoverable error.
 func StartBot(conf config.Config) error {
+	// Initialize a list for the outstanding two-man signature requests
+	outstandingTwoManRequests := []OutstandingTwoManSignatureRequest{}
+
 	kbc, err := GetKBChat(conf)
 	if err != nil {
 		return fmt.Errorf("error starting Keybase chat: %v", err)
@@ -60,22 +72,48 @@ func StartBot(conf config.Config) error {
 			return fmt.Errorf("failed to read message: %v", err)
 		}
 
-		if msg.Message.Content.TypeName != "text" {
+		if msg.Message.Content.TypeName != "text" && msg.Message.Content.TypeName != "reaction" {
+			continue
+		}
+
+		if msg.Message.Content.TypeName == "reaction" {
+			// TODO: Do I care about the fact that the bot user could react to messages?
+			// TODO: SECURITY VULN: Someone can approve a message multiple times by reacting and then unreacting
+			emoji := msg.Message.Content.Reaction.Body
+			responseTo := msg.Message.Content.Reaction.MessageID
+
+			log.Debug("Examining reaction...")
+			for _, outstanding := range outstandingTwoManRequests {
+				if outstanding.RequestMessageID == responseTo {
+					log.Debug("Message is a reply to an outstanding two-man request")
+					if emoji == ":+1:" && isValidApprover(conf, msg.Message.Sender.Username, outstanding.SignatureRequest) {
+						outstanding.ApprovalCount++
+						log.WithField("requester", outstanding.SignatureRequest.Username).WithField("approver", msg.Message.Sender.Username).WithField("approval_count", outstanding.ApprovalCount).Debugf("Message approved request")
+						threshold := conf.GetNumberRequiredApprovers()
+						if outstanding.ApprovalCount >= threshold {
+							respondToSignatureRequest(conf, kbc, outstanding.SignatureRequest, outstanding.SignatureRequest.Username, outstanding.RequestMessageID, outstanding.ConvID)
+						}
+					} else {
+						log.Debug("Message did not approve request")
+					}
+					continue
+				}
+			}
+			log.Debug("Ignoring reaction since it is not a reaction on an outstanding two-man request")
 			continue
 		}
 
 		messageBody := msg.Message.Content.Text.Body
-
 		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, messageBody)
 
-		if msg.Message.Sender.Username == kbc.GetUsername() {
-			log.Debug("Skipping message since it comes from the bot user")
-			if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
-				log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
-					"and kssh as the same user?")
-			}
-			continue
-		}
+		//if msg.Message.Sender.Username == kbc.GetUsername() {
+		//	log.Debug("Skipping message since it comes from the bot user")
+		//	if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
+		//		log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
+		//			"and kssh as the same user?")
+		//	}
+		//	continue
+		//}
 
 		// Note that this line is one of the main security barriers around the SSH bot. If this line were removed
 		// or had a bug, it would cause the SSH bot to respond to any SignatureRequest messages in any channels. This
@@ -90,33 +128,38 @@ func StartBot(conf config.Config) error {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
 			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
 				continue
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureRequestPreamble) {
 			log.Debug("Responding to SignatureRequest")
 			signatureRequest, err := shared.ParseSignatureRequest(messageBody)
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
 				continue
 			}
 			signatureRequest.Username = msg.Message.Sender.Username
 			signatureRequest.DeviceName = msg.Message.Sender.DeviceName
-			signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
-			if err != nil {
-				LogError(conf, kbc, msg, err)
-				continue
-			}
 
-			response, err := json.Marshal(signatureResponse)
-			if err != nil {
-				LogError(conf, kbc, msg, err)
-				continue
-			}
-			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
-			if err != nil {
-				LogError(conf, kbc, msg, err)
-				continue
+			// Process the signature request depending on whether they requested two-man only principals or not
+			if signatureRequest.RequestedPrincipal == "" {
+				// If they didn't request a principal just respond immediately
+				respondToSignatureRequest(conf, kbc, signatureRequest, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID)
+			} else {
+				if isTwoManPrincipal(conf, signatureRequest.RequestedPrincipal) {
+					// If they requested a principal that doesn't require two-man authorization, respond immediately
+					respondToSignatureRequest(conf, kbc, signatureRequest, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID)
+				} else {
+					// If the principal requires two-man authorization, treat it as such
+					resp, err := kbc.SendMessageByConvID(msg.Message.ConvID, buildTwoManApprovalRequestMessage(conf, msg.Message.Sender.Username, signatureRequest.RequestedPrincipal))
+					if err != nil {
+						LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
+						continue
+					}
+
+					outstandingTwoManRequests = append(outstandingTwoManRequests,
+						OutstandingTwoManSignatureRequest{SignatureRequest: signatureRequest, ApprovalCount: 0, RequestMessageID: *resp.Result.MessageID, ConvID: msg.Message.ConvID})
+				}
 			}
 		} else {
 			log.Debug("Ignoring unparsed message")
@@ -124,12 +167,71 @@ func StartBot(conf config.Config) error {
 	}
 }
 
+func buildTwoManApprovalRequestMessage(conf config.Config, sender string, requestedPrincipal string) string {
+	approvers := []string{}
+	for _, approver := range conf.GetTwoManApprovers() {
+		approvers = append(approvers, "@"+approver)
+	}
+
+	return fmt.Sprintf("@%s has requested access to the two-man realm %s! In order to approve this access, "+
+		"reply with a thumbs-up to this message. (Configured approvers: %s)", sender, requestedPrincipal, strings.Join(approvers, ", "))
+}
+
+func isTwoManPrincipal(conf config.Config, requestedPrincipal string) bool {
+	for _, team := range conf.GetTwoManApprovers() {
+		if team == requestedPrincipal {
+			return true
+		}
+	}
+	return false
+}
+
+// Note that this function is a key security barrier for the two-man feature. This function checks that only people
+// in the define list of approvers can approve a request and that people cannot approve their own request.
+func isValidApprover(conf config.Config, senderUsername string, signatureRequest shared.SignatureRequest) bool {
+	validApprover := false
+	for _, knownApprover := range conf.GetTwoManApprovers() {
+		if knownApprover == senderUsername {
+			validApprover = true
+		}
+	}
+	if !validApprover {
+		log.Debug("Reply came from someone who isn't a valid two man approver, rejecting!")
+		return false
+	}
+	//if senderUsername == signatureRequest.Username {
+	//	log.Debug("Reply came from the sender of the signature request, rejecting!")
+	//	return false
+	//}
+	return true
+}
+
+// Respond to the given SignatureRequest and log any errors that are produced. This function does not return any error.
+func respondToSignatureRequest(conf config.Config, kbc *kbchat.API, signatureRequest shared.SignatureRequest, Username string, MessageID chat1.MessageID, conversationID string) {
+	signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
+	if err != nil {
+		LogError(conf, kbc, Username, MessageID, conversationID, err)
+		return
+	}
+
+	response, err := json.Marshal(signatureResponse)
+	if err != nil {
+		LogError(conf, kbc, Username, MessageID, conversationID, err)
+		return
+	}
+	_, err = kbc.SendMessageByConvID(conversationID, shared.SignatureResponsePreamble+string(response))
+	if err != nil {
+		LogError(conf, kbc, Username, MessageID, conversationID, err)
+		return
+	}
+}
+
 // Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
 // due to an error caused by a malformed message.
-func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
-	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.Id, err)
+func LogError(conf config.Config, kbc *kbchat.API, Username string, MessageID chat1.MessageID, conversationID string, err error) {
+	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", Username, MessageID, err)
 	auditlog.Log(conf, message)
-	_, e := kbc.SendMessageByConvID(msg.Message.ConvID, message)
+	_, e := kbc.SendMessageByConvID(conversationID, message)
 	if e != nil {
 		auditlog.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
 	}

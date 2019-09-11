@@ -20,27 +20,27 @@ import (
 
 func main() {
 	kssh.InitLogging()
-	team, remainingArgs, action, err := handleArgs(os.Args[1:])
+	botname, requestedPrincipal, remainingArgs, action, err := handleArgs(os.Args[1:])
 	if err != nil {
 		fmt.Printf("Failed to parse arguments: %v\n", err)
 		os.Exit(1)
 	}
-	keyPath, err := getSignedKeyLocation(team)
+	keyPath, err := getSignedKeyLocation(botname)
 	if err != nil {
 		fmt.Printf("Failed to retrieve location to store SSH keys: %v\n", err)
 		os.Exit(1)
 	}
-	if isValidCert(keyPath) {
+	if isValidCert(keyPath) && requestedPrincipal == "" {
 		log.WithField("keyPath", keyPath).Debug("Reusing unexpired certificate")
 		doAction(action, keyPath, remainingArgs)
 		os.Exit(0)
 	}
-	config, err := getConfig(team)
+	config, err := getConfig(botname)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
 	}
-	err = provisionNewKey(config, keyPath)
+	err = provisionNewKey(config, keyPath, requestedPrincipal)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
@@ -104,6 +104,7 @@ var cliArguments = []kssh.CLIArgument{
 	{Name: "--help", HasArgument: false},
 	{Name: "-v", HasArgument: false, Preserve: true},
 	{Name: "--set-keybase-binary", HasArgument: true},
+	{Name: "--request-realm", HasArgument: true},
 }
 
 var VersionNumber = "master"
@@ -131,7 +132,8 @@ GLOBAL OPTIONS:
    --set-default-user    Set the default SSH user to be used for kssh. Useful if you use ssh configs that do not set 
 					     a default SSH user 
    --clear-default-user  Clear the default SSH user
-   --set-keybase-binary  Run kssh with a specific keybase binary rather than resolving via $PATH `, VersionNumber)
+   --set-keybase-binary  Advanced feature: Run kssh with a specific keybase binary rather than resolving via $PATH 
+   --request-realm       Advanced feature: Request a specific two-man realm in your provisioned certificate `, VersionNumber)
 }
 
 type Action int
@@ -141,37 +143,20 @@ const (
 	SSH
 )
 
-// Returns botname, remaining arguments, action, error
+// Returns botname, requestedPrincipal, remaining arguments, action, error
 // If the argument requires exiting after processing, it will call os.Exit
-func handleArgs(args []string) (string, []string, Action, error) {
+func handleArgs(args []string) (string, string, []string, Action, error) {
 	remaining, found, err := kssh.ParseArgs(args, cliArguments)
 	if err != nil {
-		return "", nil, 0, fmt.Errorf("Failed to parse provided arguments: %v", err)
+		return "", "", nil, 0, fmt.Errorf("Failed to parse provided arguments: %v", err)
 	}
 
-	team := ""
+	requestedPrincipal := ""
+	botname := ""
 	action := SSH
 	for _, arg := range found {
 		if arg.Argument.Name == "--bot" {
-			team = arg.Value
-		}
-		if arg.Argument.Name == "--set-default-user" {
-			err := kssh.SetDefaultSSHUser(arg.Value)
-			if err != nil {
-				fmt.Printf("Failed to set the default ssh user: %v\n", err)
-				os.Exit(1)
-			}
-			fmt.Println("Set default ssh user, exiting...")
-			os.Exit(0)
-		}
-		if arg.Argument.Name == "--clear-default-user" {
-			err := kssh.SetDefaultSSHUser("")
-			if err != nil {
-				fmt.Printf("Failed to clear the default ssh user: %v\n", err)
-				os.Exit(1)
-			}
-			fmt.Println("Cleared default ssh user, exiting...")
-			os.Exit(0)
+			botname = arg.Value
 		}
 		if arg.Argument.Name == "--set-default-bot" {
 			// We exit immediately after setting the default bot
@@ -190,6 +175,24 @@ func handleArgs(args []string) (string, []string, Action, error) {
 				os.Exit(1)
 			}
 			fmt.Println("Cleared default bot, exiting...")
+			os.Exit(0)
+		}
+		if arg.Argument.Name == "--set-default-user" {
+			err := kssh.SetDefaultSSHUser(arg.Value)
+			if err != nil {
+				fmt.Printf("Failed to set the default ssh user: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Set default ssh user, exiting...")
+			os.Exit(0)
+		}
+		if arg.Argument.Name == "--clear-default-user" {
+			err := kssh.SetDefaultSSHUser("")
+			if err != nil {
+				fmt.Printf("Failed to clear the default ssh user: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Cleared default ssh user, exiting...")
 			os.Exit(0)
 		}
 		if arg.Argument.Name == "--set-keybase-binary" {
@@ -211,8 +214,11 @@ func handleArgs(args []string) (string, []string, Action, error) {
 		if arg.Argument.Name == "-v" {
 			log.SetLevel(log.DebugLevel)
 		}
+		if arg.Argument.Name == "--request-realm" {
+			requestedPrincipal = arg.Value
+		}
 	}
-	return team, remaining, action, nil
+	return botname, requestedPrincipal, remaining, action, nil
 }
 
 // Get the kssh.ConfigFile. botname is the team specified via --bot if one was specified, otherwise the empty string
@@ -289,7 +295,7 @@ func isValidCert(keyPath string) bool {
 }
 
 // Provision a new signed SSH key with the given config
-func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
+func provisionNewKey(config kssh.ConfigFile, keyPath string, requestedPrincipal string) error {
 	log.Debug("Generating a new SSH key...")
 
 	// Make ~/.ssh/ in case it doesn't exist
@@ -316,8 +322,9 @@ func provisionNewKey(config kssh.ConfigFile, keyPath string) error {
 
 	log.Debug("Requesting signature from the CA....")
 	resp, err := kssh.GetSignedKey(config, shared.SignatureRequest{
-		UUID:         randomUUID.String(),
-		SSHPublicKey: string(pubKey),
+		UUID:               randomUUID.String(),
+		SSHPublicKey:       string(pubKey),
+		RequestedPrincipal: requestedPrincipal,
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to get a signed key from the CA: %v", err)

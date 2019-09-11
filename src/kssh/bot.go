@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
@@ -13,6 +15,12 @@ import (
 // Get a signed SSH key from interacting with the CA chatbot
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
+
+	timeout := 5 * time.Second
+	if request.RequestedPrincipal != "" {
+		timeout = time.Hour
+		logrus.Debug("Requesting a two-man enabled certificate. Setting time out to one hour...")
+	}
 
 	// Start communicating with the Keybase chat API
 	runOptions := kbchat.RunOptions{KeybaseLocation: GetKeybaseBinaryPath()}
@@ -60,7 +68,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 	hasBeenAcked := false
 	startTime := time.Now()
 	for {
-		if time.Since(startTime) > 5*time.Second {
+		if time.Since(startTime) > timeout {
 			return empty, fmt.Errorf("timed out while waiting for a response from the CA")
 		}
 		msg, err := sub.Read()

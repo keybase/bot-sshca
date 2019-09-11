@@ -17,10 +17,11 @@ import (
 
 // The body of signature request messages sent over KB chat
 type SignatureRequest struct {
-	SSHPublicKey string `json:"ssh_public_key"`
-	UUID         string `json:"uuid"`
-	Username     string `json:"-"`
-	DeviceName   string `json:"-"`
+	SSHPublicKey       string `json:"ssh_public_key"`
+	UUID               string `json:"uuid"`
+	RequestedPrincipal string `json:"requested_principal,omitempty"`
+	Username           string `json:"-"`
+	DeviceName         string `json:"-"`
 }
 
 // The preamble used at the start of signature request messages

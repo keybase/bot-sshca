@@ -80,6 +80,7 @@ func ProcessSignatureRequest(conf config.Config, sr shared.SignatureRequest) (re
 	if err != nil {
 		return
 	}
+
 	principals, err := getPrincipals(conf, sr)
 	if err != nil {
 		return
@@ -174,14 +175,36 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 		}
 	}
 
+	// Map from a team to whether or not it is a two-man only team
+	// Note that this is a key security barrier in the two-man feature. This ensures that signature requests that do
+	// not specify a principal are not given any two-man required principals.
+	teamToTwoManRequired := make(map[string]bool)
+	for _, team := range conf.GetTeams() {
+		teamToTwoManRequired[team] = false
+	}
+	for _, team := range conf.GetTwoManTeams() {
+		teamToTwoManRequired[team] = true
+	}
+
 	// Iterate through the teams in the config file and use the subteam as the principal
-	// if the user is in that subteam
+	// if the user is in that subteam and the subteam doesn't require the two-man rule
 	var principals []string
 	for _, team := range conf.GetTeams() {
-		result, ok := teamToMembership[team]
-		if ok && result {
+		isMember, ok1 := teamToMembership[team]
+		requiresTwoMan, ok2 := teamToTwoManRequired[team]
+		if ok1 && isMember && ok2 && !requiresTwoMan {
 			principals = append(principals, team)
 		}
 	}
+
+	// Add the specific principals that they requested. Note that getPrincipals() is only called if the signature
+	// request has been validated and the two-man request been approved.
+	requestedTeam := sr.RequestedPrincipal
+	isMember, ok := teamToMembership[requestedTeam]
+	_, isConfiguredTeam := teamToTwoManRequired[requestedTeam]
+	if ok && isMember && isConfiguredTeam {
+		principals = append(principals, requestedTeam)
+	}
+
 	return strings.Join(principals, ","), nil
 }

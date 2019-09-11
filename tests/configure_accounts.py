@@ -123,6 +123,8 @@ def make_user(purpose):
         paperkey = input("TEST SETUP - What is the paper key: ")
         return User(username, paperkey)
 
+# TODO: Make testing user
+
 if __name__ == '__main__':
     print("TEST SETUP - We need to do some one-time test setup.")
     ca_user = make_user("the CA bot")

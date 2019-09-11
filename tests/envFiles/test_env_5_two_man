@@ -1,0 +1,9 @@
+# Used to test the two man functionality whereby an approval is required for certain realms of servers
+export KEY_EXPIRATION="+1h"
+export LOG_LOCATION="/shared/ca.log"
+export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywhere"
+export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
+export KEYBASE_USERNAME="$BOT_USERNAME"
+export CA_KEY_LOCATION="/shared/keybase-ca-key"
+export TWO_MAN_TEAMS="$SUBTEAM.ssh.root_everywhere"
+export TWO_MAN_APPROVERS="$TESTER_USERNAME"  # TODO: Need to make this user

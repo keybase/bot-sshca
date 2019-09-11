@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/keybase/bot-sshca/src/keybaseca/constants"
@@ -29,6 +30,9 @@ type Config interface {
 	GetStrictLogging() bool
 	GetAnnouncement() string
 	DebugString() string
+	GetTwoManTeams() []string
+	GetTwoManApprovers() []string
+	GetNumberRequiredApprovers() int
 }
 
 // Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
@@ -74,6 +78,18 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			if err != nil {
 				return fmt.Errorf("failed to validate KEYBASE_USERNAME and KEYBASE_PAPERKEY: %v", err)
 			}
+		}
+	}
+	if len(conf.GetTwoManTeams()) != 0 || len(conf.GetTwoManApprovers()) != 0 {
+		if len(conf.GetTwoManTeams()) != 0 && len(conf.GetTwoManApprovers()) == 0 {
+			return fmt.Errorf("cannot specify TWO_MAN_TEAMS without setting TWO_MAN_APPROVERS")
+		}
+		if len(conf.GetTwoManTeams()) == 0 && len(conf.GetTwoManApprovers()) != 0 {
+			return fmt.Errorf("cannot specify TWO_MAN_APPROVERS without setting TWO_MAN_TEAMS")
+		}
+		_, err := conf.getNumberRequiredApprovers()
+		if err != nil {
+			return fmt.Errorf("failed to parse NUMBER_REQUIRED_APPROVERS value as a intenger: %v", err)
 		}
 	}
 	log.Debugf("Validated config: %s", conf.DebugString())
@@ -196,15 +212,7 @@ func (ef *EnvConfig) GetKeyExpiration() string {
 
 // Get the list of keybase teams configured to be used with the bot.
 func (ef *EnvConfig) GetTeams() []string {
-	split := strings.Split(os.Getenv("TEAMS"), ",")
-	var teams []string
-	for _, item := range split {
-		trimmed := strings.TrimSpace(item)
-		if trimmed != "" {
-			teams = append(teams, trimmed)
-		}
-	}
-	return teams
+	return commaSeparatedStringToList(os.Getenv("TEAMS"))
 }
 
 // Get the location for the bot's audit logs. May be empty.
@@ -271,4 +279,45 @@ func splitTeamChannel(teamChannel string) (string, string, error) {
 		return "", "", fmt.Errorf("'%s' is not a valid specifier for a team and a channel", teamChannel)
 	}
 	return split[0], split[1], nil
+}
+
+func (ef *EnvConfig) GetTwoManTeams() []string {
+	twoManTeams := os.Getenv("TWO_MAN_TEAMS")
+	if twoManTeams == "" {
+		return []string{}
+	}
+	return commaSeparatedStringToList(twoManTeams)
+}
+
+func (ef *EnvConfig) GetTwoManApprovers() []string {
+	twoManApprovers := os.Getenv("TWO_MAN_APPROVERS")
+	if twoManApprovers == "" {
+		return []string{}
+	}
+	return commaSeparatedStringToList(twoManApprovers)
+}
+
+func (ef *EnvConfig) getNumberRequiredApprovers() (int, error) {
+	val := os.Getenv("NUMBER_REQUIRED_APPROVERS")
+	if val == "" {
+		return 1, nil
+	}
+	return strconv.Atoi(val)
+}
+
+func (ef *EnvConfig) GetNumberRequiredApprovers() int {
+	num, _ := ef.getNumberRequiredApprovers()
+	return num
+}
+
+func commaSeparatedStringToList(val string) []string {
+	split := strings.Split(val, ",")
+	var teams []string
+	for _, item := range split {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			teams = append(teams, trimmed)
+		}
+	}
+	return teams
 }

@@ -1,5 +1,6 @@
 version: '3'
 services:
+  # TODO
   ca-bot:
     image: ca-bot
     container_name: ca-bot
@@ -10,6 +11,7 @@ services:
       - BOT_PAPERKEY
       - BOT_USERNAME
       - SUBTEAM
+      - TESTER_USERNAME
     volumes:
       - app-volume:/shared/
     user: root
@@ -19,6 +21,7 @@ services:
     depends_on:
       - sshd-prod
       - sshd-staging
+  # TODO
   kssh:
     image: kssh
     container_name: kssh
@@ -39,6 +42,7 @@ services:
       - sshd-staging
       - sshd-prod
       - ca-bot
+      - autoapprover
   # An ssh server that will accept signed requests with the principal "staging"
   sshd-staging:
     image: sshd-staging
@@ -63,5 +67,18 @@ services:
         root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
       - app-volume:/shared/
+  # TODO
+  autoapprover:
+    image: autoapprover
+    container_name: autoapprover
+    build:
+      context: ./
+      dockerfile: "Dockerfile-autoapprover"
+    environment:
+      - TESTER_USERNAME
+      - TESTER_PAPERKEY
+    ports:
+      - 8080
+    command: "python3.7 autoapprover.py"
 volumes:
   app-volume:
