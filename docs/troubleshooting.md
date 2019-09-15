@@ -51,7 +51,9 @@ TrustedUserCAKeys /etc/ssh/ca.pub
 AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u
 ```
 
-If that all looks good, review the getting started directions and ensure that you have followed the steps correctly 
+If that all looks good, review the getting started directions and ensure that you have followed the steps correctly. 
+Additionally, it is recommended to compare your sshd_config file with the stock one for your OS to look for any 
+non-standard config options. For example, setting `UsePAM no` will prevent the SSH CA from working. 
 ([sshca.md](./sshca.md) also has some additional information on how SSH CAs work that may
 be helpful). If you would like to follow an example, see the code in the `tests/` directory which contains integration 
 tests (focus on Dockerfile-sshd for an example SSH server setup). If none of that works, the best strategy is to run
