@@ -41,7 +41,7 @@ func GetUsername(conf config.Config) (string, error) {
 type OutstandingTwoManSignatureRequest struct {
 	SignatureRequest shared.SignatureRequest
 	RequestMessageID chat1.MessageID
-	ApprovalCount    int
+	Approvers        []string
 	ConvID           string
 }
 
@@ -77,8 +77,6 @@ func StartBot(conf config.Config) error {
 		}
 
 		if msg.Message.Content.TypeName == "reaction" {
-			// TODO: Do I care about the fact that the bot user could react to messages?
-			// TODO: SECURITY VULN: Someone can approve a message multiple times by reacting and then unreacting
 			emoji := msg.Message.Content.Reaction.Body
 			responseTo := msg.Message.Content.Reaction.MessageID
 
@@ -86,12 +84,22 @@ func StartBot(conf config.Config) error {
 			for _, outstanding := range outstandingTwoManRequests {
 				if outstanding.RequestMessageID == responseTo {
 					log.Debug("Message is a reply to an outstanding two-man request")
-					if emoji == ":+1:" && isValidApprover(conf, msg.Message.Sender.Username, outstanding.SignatureRequest) {
-						outstanding.ApprovalCount++
-						log.WithField("requester", outstanding.SignatureRequest.Username).WithField("approver", msg.Message.Sender.Username).WithField("approval_count", outstanding.ApprovalCount).Debugf("Message approved request")
+					approver := msg.Message.Sender.Username
+					if emoji == ":+1:" && isValidApprover(conf, approver, outstanding.SignatureRequest) {
+						isDuplicateApprover := addApprover(&outstanding, approver)
+						if isDuplicateApprover {
+							// TODO: Test this code
+							log.Debugf("Rejecting duplicate approver %s since they already approved the two-man request with ID=%s", approver, outstanding.SignatureRequest.UUID)
+							continue
+						}
+						log.WithField("requester", outstanding.SignatureRequest.Username).
+							WithField("current_approver", approver).
+							WithField("all_approvers", outstanding.Approvers).
+							Debugf("Message approved request")
 						threshold := conf.GetNumberRequiredApprovers()
-						if outstanding.ApprovalCount >= threshold {
+						if len(outstanding.Approvers) >= threshold {
 							respondToSignatureRequest(conf, kbc, outstanding.SignatureRequest, outstanding.SignatureRequest.Username, outstanding.RequestMessageID, outstanding.ConvID)
+							auditlog.Log(conf, fmt.Sprintf("Two-man SignatureRequest id=%s approved by %v", outstanding.SignatureRequest.UUID, outstanding.Approvers))
 						}
 					} else {
 						log.Debug("Message did not approve request")
@@ -106,14 +114,14 @@ func StartBot(conf config.Config) error {
 		messageBody := msg.Message.Content.Text.Body
 		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, messageBody)
 
-		//if msg.Message.Sender.Username == kbc.GetUsername() {
-		//	log.Debug("Skipping message since it comes from the bot user")
-		//	if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
-		//		log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
-		//			"and kssh as the same user?")
-		//	}
-		//	continue
-		//}
+		if msg.Message.Sender.Username == kbc.GetUsername() {
+			log.Debug("Skipping message since it comes from the bot user")
+			if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
+				log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
+					"and kssh as the same user?")
+			}
+			continue
+		}
 
 		// Note that this line is one of the main security barriers around the SSH bot. If this line were removed
 		// or had a bug, it would cause the SSH bot to respond to any SignatureRequest messages in any channels. This
@@ -158,13 +166,26 @@ func StartBot(conf config.Config) error {
 					}
 
 					outstandingTwoManRequests = append(outstandingTwoManRequests,
-						OutstandingTwoManSignatureRequest{SignatureRequest: signatureRequest, ApprovalCount: 0, RequestMessageID: *resp.Result.MessageID, ConvID: msg.Message.ConvID})
+						OutstandingTwoManSignatureRequest{SignatureRequest: signatureRequest, Approvers: []string{}, RequestMessageID: *resp.Result.MessageID, ConvID: msg.Message.ConvID})
 				}
 			}
 		} else {
 			log.Debug("Ignoring unparsed message")
 		}
 	}
+}
+
+// Add the given approver to the list of approvers in the given outstanding two man request if the
+// given user has not already approved the request. Returns whether the given approver has already
+// approved the request.
+func addApprover(request *OutstandingTwoManSignatureRequest, approver string) bool {
+	for _, curApprover := range request.Approvers {
+		if curApprover == approver {
+			return true
+		}
+	}
+	request.Approvers = append(request.Approvers, approver)
+	return false
 }
 
 func buildTwoManApprovalRequestMessage(conf config.Config, sender string, requestedPrincipal string) string {

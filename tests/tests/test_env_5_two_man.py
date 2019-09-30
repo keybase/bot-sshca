@@ -22,3 +22,5 @@ class TestEnv5TwoMan:
             assert_contains_hash(test_config.expected_hash, run_command_with_agent(f"bin/kssh --request-realm {test_config.subteam}.ssh.root_everywhere -q -o StrictHostKeyChecking=no root@sshd-prod 'sha1sum /etc/unique'"))
         finally:
             assert requests.get('http://autoapprover:8080/stop').content == b"OK"
+
+# TODO: Have the above check for old audit log and new audit log that contains approver info
