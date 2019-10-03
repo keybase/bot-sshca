@@ -91,6 +91,15 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to parse NUMBER_REQUIRED_APPROVERS value as a intenger: %v", err)
 		}
+		for _, twoManTeam := range conf.GetTwoManTeams() {
+			found := false
+			for _, team := range conf.GetTeams() {
+				found = found || team == twoManTeam
+			}
+			if !found {
+				return fmt.Errorf("two man team %s is not in the list of configured teams %v (all two man teams must be listed in the TEAMS environment variable)", twoManTeam, conf.GetTeams())
+			}
+		}
 	}
 	log.Debugf("Validated config: %s", conf.DebugString())
 	return nil
