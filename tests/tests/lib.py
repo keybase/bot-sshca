@@ -117,11 +117,17 @@ def simulate_two_teams(tc: TestConfig):
         run_command(f"keybase fs rm /keybase/team/{tc.subteam_secondary}/kssh-client.config")
 
 @contextmanager
-def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int, additional_regexes: Mapping[str, int] = None):
+def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int, additional_regexes: Mapping[str, int] = None, expected_principals: str = None):
     # A context manager that asserts that the given function triggers expected_number of audit logs to be added to the
     # log at the given filename
     if additional_regexes is None:
         additional_regexes = {}
+    if expected_principals is None:
+        expected_principals = f"principals:{tc.subteam}.ssh.staging,{tc.subteam}.ssh.root_everywhere"
+    elif expected_principals == ".*":
+        expected_principals = ""
+    else:
+        expected_principals = f"principals:{expected_principals}"
 
     # Make a set of the lines in the audit log before we ran
     before_lines = set(read_file(filename))
@@ -140,7 +146,7 @@ def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int, addit
     cnt = 0
     for line in new_lines:
         line = line.decode('utf-8')
-        if line and f"Processing SignatureRequest from user={tc.username}" in line and f"principals:{tc.subteam}.ssh.staging,{tc.subteam}.ssh.root_everywhere, expiration:+1h, pubkey:" in line:
+        if line and f"Processing SignatureRequest from user={tc.username}" in line and f"{expected_principals}, expiration:+1h, pubkey:" in line:
             cnt += 1
 
     if cnt != expected_number:
