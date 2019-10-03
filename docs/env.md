@@ -106,6 +106,45 @@ export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! I'm currently lis
 export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! Being in {CURRENT_TEAM} will grant you SSH access to certain servers. Reach out to @dworken for more information."
 ```
 
+## Two Man Realms
+
+It is possible to configure the SSH CA bot to require approval prior to granting access. For example, one could require
+that in order to use kssh with servers in the `team.ssh.root_everywhere` realm two other people must approve the request. 
+Approvals are done by reacting with a :+1: emoji to the message inside of Keybase chat. 
+
+In order to configure this, there are 3 environment variables that can be used:
+
+```
+export TWO_MAN_TEAMS="team.ssh.root_everywhere, team.ssh.ci"
+export TWO_MAN_APPROVERS="username0, username1, username2" 
+export TWO_MAN_APPROVER_COUNT="2"
+```
+
+The above will require that anyone who wants to use kssh with `team.ssh.root_everywhere` or `team.ssh.ci` gets approval
+from two other people. Only three people are configured to approve requests: `username0, username1, username2`. 
+
+A few other example configurations are:
+
+``` 
+export TWO_MAN_TEAMS="team.ssh.root_everywhere"
+export TWO_MAN_APPROVERS="username" 
+```
+
+This would require that in order to use kssh with `team.ssh.root_everywhere` it must be approved by `username`. 
+
+As a user, this would be done by running:
+
+```
+kssh --request-realm team.ssh.root_everywhere root@production
+```
+
+For a user, the standard commands would work for all other configured teams:
+
+``` 
+kssh dev@staging
+kssh dev@prod
+```
+
 ## Developer Options
 
 These environment variables are mainly useful for dev work. For security reasons, it is recommended always to run a 
