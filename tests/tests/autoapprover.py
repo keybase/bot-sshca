@@ -37,8 +37,8 @@ class Handler:
 shared_running_val = Value('i', 0)
 
 def start_bot_event_loop():
-    username = os.environ["TESTER_USERNAME"]
-    paperkey = os.environ["TESTER_PAPERKEY"]
+    username = os.environ["TWO_MAN_APPROVER_USERNAME"]
+    paperkey = os.environ["TWO_MAN_APPROVER_PAPERKEY"]
     bot = Bot(
         username=username, paperkey=paperkey,
         handler=Handler(shared_running_val)

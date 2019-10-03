@@ -11,7 +11,7 @@ services:
       - BOT_PAPERKEY
       - BOT_USERNAME
       - SUBTEAM
-      - TESTER_USERNAME
+      - TWO_MAN_APPROVER_USERNAME
     volumes:
       - app-volume:/shared/
     user: root
@@ -76,8 +76,8 @@ services:
       context: ./
       dockerfile: "Dockerfile-autoapprover"
     environment:
-      - TESTER_USERNAME
-      - TESTER_PAPERKEY
+      - TWO_MAN_APPROVER_USERNAME
+      - TWO_MAN_APPROVER_PAPERKEY
     ports:
       - 8080
     command: "python3.7 autoapprover.py"
