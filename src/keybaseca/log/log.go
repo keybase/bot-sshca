@@ -14,10 +14,10 @@ import (
 // Log attempts to log the given string to a file. If conf.GetStrictLogging() it will panic if it fails
 // to log to the file. If conf.GetStrictLogging() is false, it may silently fail
 func Log(conf config.Config, str string) {
-	strWithTs := fmt.Sprintf("[%s] %s", time.Now().String(), str)
+	strWithTs := strings.TrimSpace(fmt.Sprintf("[%s] %s", time.Now().String(), str)) + "\n"
 
 	if conf.GetLogLocation() == "" {
-		fmt.Print(strWithTs + "\n")
+		fmt.Print(strWithTs)
 	} else {
 		err := appendToFile(conf.GetLogLocation(), strWithTs)
 		if err != nil {

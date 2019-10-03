@@ -1,10 +1,11 @@
 from contextlib import contextmanager
 import hashlib
 import os
+import re
 import signal
 import subprocess
 import time
-from typing import List, Set
+from typing import List, Set, Mapping
 
 import requests
 
@@ -116,9 +117,11 @@ def simulate_two_teams(tc: TestConfig):
         run_command(f"keybase fs rm /keybase/team/{tc.subteam_secondary}/kssh-client.config")
 
 @contextmanager
-def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
+def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int, additional_regexes: Mapping[str, int] = None):
     # A context manager that asserts that the given function triggers expected_number of audit logs to be added to the
     # log at the given filename
+    if additional_regexes is None:
+        additional_regexes = {}
 
     # Make a set of the lines in the audit log before we ran
     before_lines = set(read_file(filename))
@@ -142,6 +145,16 @@ def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
 
     if cnt != expected_number:
         assert False, f"Found {cnt} audit log entries, expected {expected_number}! New audit logs: {new_lines}"
+
+    additional_regexes_cnt = {k: 0 for k, v in additional_regexes.items()}
+    for line in new_lines:
+        line = line.decode('utf-8')
+        for regex in additional_regexes:
+            if re.search(regex, line):
+                additional_regexes_cnt[regex] += 1
+    for regex, actual_cnt in additional_regexes_cnt.items():
+        if additional_regexes[regex] != actual_cnt:
+            assert False, f"Found {cnt} audit log entries matching the regex {repr(regex)}. Expected={additional_regexes[regex]}. New audit logs: {new_lines}"
 
 def get_principals(certificateFilename: str) -> Set[str]:
     inPrincipalsSection = False

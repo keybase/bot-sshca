@@ -1,6 +1,6 @@
 version: '3'
 services:
-  # TODO
+  # The container running the CA bot
   ca-bot:
     image: ca-bot
     container_name: ca-bot
@@ -21,7 +21,7 @@ services:
     depends_on:
       - sshd-prod
       - sshd-staging
-  # TODO
+  # The test container where kssh is tested via pytest
   kssh:
     image: kssh
     container_name: kssh
@@ -67,7 +67,8 @@ services:
         root_principal: ${SUBTEAM}.ssh.root_everywhere
     volumes:
       - app-volume:/shared/
-  # TODO
+  # A container containing a simple python program that can be configured to autonmatically react to all messages
+  # with a thumbs-up message
   autoapprover:
     image: autoapprover
     container_name: autoapprover
