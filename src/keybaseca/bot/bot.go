@@ -188,6 +188,7 @@ func addApprover(request *OutstandingTwoManSignatureRequest, approver string) bo
 	return false
 }
 
+// Build an announcement message to be sent in Keybase chat about the sender requesting access to the requested principal
 func buildTwoManApprovalRequestMessage(conf config.Config, sender string, requestedPrincipal string) string {
 	approvers := []string{}
 	for _, approver := range conf.GetTwoManApprovers() {
@@ -198,6 +199,7 @@ func buildTwoManApprovalRequestMessage(conf config.Config, sender string, reques
 		"reply with a thumbs-up to this message. (Configured approvers: %s)", sender, requestedPrincipal, strings.Join(approvers, ", "))
 }
 
+// Returns whether the given principal is a principal that requires two man approval
 func isTwoManPrincipal(conf config.Config, requestedPrincipal string) bool {
 	for _, team := range conf.GetTwoManApprovers() {
 		if team == requestedPrincipal {
@@ -220,10 +222,10 @@ func isValidApprover(conf config.Config, senderUsername string, signatureRequest
 		log.Debug("Reply came from someone who isn't a valid two man approver, rejecting!")
 		return false
 	}
-	//if senderUsername == signatureRequest.Username {
-	//	log.Debug("Reply came from the sender of the signature request, rejecting!")
-	//	return false
-	//}
+	if senderUsername == signatureRequest.Username {
+		log.Debug("Reply came from the sender of the signature request, rejecting!")
+		return false
+	}
 	return true
 }
 
