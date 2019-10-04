@@ -89,7 +89,7 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 		}
 		_, err := conf.getNumberRequiredApprovers()
 		if err != nil {
-			return fmt.Errorf("failed to parse NUMBER_REQUIRED_APPROVERS value as a intenger: %v", err)
+			return fmt.Errorf("failed to parse TWO_MAN_APPROVER_COUNT value as a intenger: %v", err)
 		}
 		for _, twoManTeam := range conf.GetTwoManTeams() {
 			found := false
@@ -307,7 +307,7 @@ func (ef *EnvConfig) GetTwoManApprovers() []string {
 }
 
 func (ef *EnvConfig) getNumberRequiredApprovers() (int, error) {
-	val := os.Getenv("NUMBER_REQUIRED_APPROVERS")
+	val := os.Getenv("TWO_MAN_APPROVER_COUNT")
 	if val == "" {
 		return 1, nil
 	}

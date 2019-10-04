@@ -71,6 +71,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		if time.Since(startTime) > timeout {
 			return empty, fmt.Errorf("timed out while waiting for a response from the CA")
 		}
+		// TODO: Add feedback here to people that they need to wait for approval
 		msg, err := sub.Read()
 		if err != nil {
 			return empty, fmt.Errorf("failed to read message: %v", err)

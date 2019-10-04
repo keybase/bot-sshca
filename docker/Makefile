@@ -11,6 +11,7 @@ SHELL := /bin/bash
 
 # Build a new docker image for the CA bot
 build: reset-permissions
+	docker build -t keybase -f Dockerfile-keybase .
 	docker build -t ca -f Dockerfile-ca ..
 
 # Generate a new CA key

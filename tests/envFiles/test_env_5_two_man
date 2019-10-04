@@ -6,4 +6,4 @@ export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
 export KEYBASE_USERNAME="$BOT_USERNAME"
 export CA_KEY_LOCATION="/shared/keybase-ca-key"
 export TWO_MAN_TEAMS="$SUBTEAM.ssh.root_everywhere"
-export TWO_MAN_APPROVERS="$TWO_MAN_APPROVER_USERNAME"  # TODO: Need to make this user
+export TWO_MAN_APPROVERS="$TWO_MAN_APPROVER_USERNAME"
