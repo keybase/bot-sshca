@@ -80,6 +80,15 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			}
 		}
 	}
+	err := validateTwoManConfig(conf)
+	if err != nil {
+		return err
+	}
+	log.Debugf("Validated config: %s", conf.DebugString())
+	return nil
+}
+
+func validateTwoManConfig(conf EnvConfig) error {
 	if len(conf.GetTwoManTeams()) != 0 || len(conf.GetTwoManApprovers()) != 0 {
 		if len(conf.GetTwoManTeams()) != 0 && len(conf.GetTwoManApprovers()) == 0 {
 			return fmt.Errorf("cannot specify TWO_MAN_TEAMS without setting TWO_MAN_APPROVERS")
@@ -101,7 +110,6 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			}
 		}
 	}
-	log.Debugf("Validated config: %s", conf.DebugString())
 	return nil
 }
 

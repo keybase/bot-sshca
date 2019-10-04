@@ -230,29 +230,29 @@ func isValidApprover(conf config.Config, senderUsername string, signatureRequest
 }
 
 // Respond to the given SignatureRequest and log any errors that are produced. This function does not return any error.
-func respondToSignatureRequest(conf config.Config, kbc *kbchat.API, signatureRequest shared.SignatureRequest, Username string, MessageID chat1.MessageID, conversationID string) {
+func respondToSignatureRequest(conf config.Config, kbc *kbchat.API, signatureRequest shared.SignatureRequest, username string, messageID chat1.MessageID, conversationID string) {
 	signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
 	if err != nil {
-		LogError(conf, kbc, Username, MessageID, conversationID, err)
+		LogError(conf, kbc, username, messageID, conversationID, err)
 		return
 	}
 
 	response, err := json.Marshal(signatureResponse)
 	if err != nil {
-		LogError(conf, kbc, Username, MessageID, conversationID, err)
+		LogError(conf, kbc, username, messageID, conversationID, err)
 		return
 	}
 	_, err = kbc.SendMessageByConvID(conversationID, shared.SignatureResponsePreamble+string(response))
 	if err != nil {
-		LogError(conf, kbc, Username, MessageID, conversationID, err)
+		LogError(conf, kbc, username, messageID, conversationID, err)
 		return
 	}
 }
 
 // Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
 // due to an error caused by a malformed message.
-func LogError(conf config.Config, kbc *kbchat.API, Username string, MessageID chat1.MessageID, conversationID string, err error) {
-	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", Username, MessageID, err)
+func LogError(conf config.Config, kbc *kbchat.API, username string, messageID chat1.MessageID, conversationID string, err error) {
+	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", username, messageID, err)
 	auditlog.Log(conf, message)
 	_, e := kbc.SendMessageByConvID(conversationID, message)
 	if e != nil {
