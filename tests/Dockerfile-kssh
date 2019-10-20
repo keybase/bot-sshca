@@ -3,8 +3,7 @@
 FROM ubuntu:18.04
 
 # Dependencies
-RUN apt-get -qq update
-RUN apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
+RUN apt-get -qq update && apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
 RUN useradd -ms /bin/bash keybase
 USER keybase
 WORKDIR /home/keybase
@@ -30,8 +29,7 @@ USER keybase
 # Install go
 USER root
 RUN add-apt-repository ppa:gophers/archive -y
-RUN apt-get update -y
-RUN apt-get install golang-1.11-go git sudo python3 python3-pip sudo -y
+RUN apt-get update -y && apt-get install golang-1.11-go git sudo python3 python3-pip sudo -y
 RUN pip3 install pytest requests
 
 # Make it so the keybase user has passwordless sudo so it can move the keybase binary around

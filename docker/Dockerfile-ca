@@ -3,8 +3,7 @@
 FROM ubuntu:18.04
 
 # Dependencies
-RUN apt-get -qq update
-RUN apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
+RUN apt-get -qq update && apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
 RUN useradd -ms /bin/bash keybase
 USER keybase
 WORKDIR /home/keybase
@@ -30,9 +29,7 @@ USER keybase
 
 # Install go
 USER root
-RUN add-apt-repository ppa:gophers/archive -y
-RUN apt-get update
-RUN apt-get install golang-1.11-go git sudo -y
+RUN add-apt-repository ppa:gophers/archive -y && apt-get update && apt-get install golang-1.11-go git sudo -y
 USER keybase
 
 # Install go dependencies (speeds up future builds)
