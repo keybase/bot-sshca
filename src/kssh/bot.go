@@ -20,6 +20,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 	if request.RequestedPrincipal != "" {
 		timeout = time.Hour
 		logrus.Debug("Requesting a two-man enabled certificate. Setting time out to one hour...")
+		fmt.Println("Requesting a two-man enabled SSH certificate. See Keybase Chat to find an approver. ")
 	}
 
 	// Start communicating with the Keybase chat API
@@ -39,19 +40,23 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		return empty, fmt.Errorf("error subscribing to messages: %v", err)
 	}
 
+	terminateAllCh := make(chan struct{})
+	defer close(terminateAllCh)
+
 	// If we just send our signature request to chat, we hit a race condition where if the CA responds fast enough
 	// we will miss the response from the CA. We fix this with a simple ACKing algorithm:
 	// 1. Send an AckRequest every 100ms until an Ack is received.
 	// 2. Once an Ack is received, we know we are correctly receiving messages
 	// 3. Send the signature request payload and get back a signed cert
 	// We implement this with a terminatable goroutine that just sends acks and a while(true) loop that looks for responses
-	terminateRoutineCh := make(chan interface{})
+	terminateAckRequestCh := make(chan interface{})
 	go func() {
 		// Make the AckRequests send less often over time by tracking how many we've sent
 		numberSent := 0
 		for {
 			select {
-			case <-terminateRoutineCh:
+			case <-terminateAckRequestCh:
+			case <-terminateAllCh:
 				return
 			default:
 
@@ -65,13 +70,28 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		}
 	}()
 
+	// A goroutine that simply prints a dot every 500ms until terminated. Used to show progress to users while they
+	// wait for a response from the bot.
+	go func() {
+		for {
+			select {
+			case <-terminateAllCh:
+				return
+			default:
+
+			}
+
+			fmt.Print(".")
+			time.Sleep(500 * time.Millisecond)
+		}
+	}()
+
 	hasBeenAcked := false
 	startTime := time.Now()
 	for {
 		if time.Since(startTime) > timeout {
 			return empty, fmt.Errorf("timed out while waiting for a response from the CA")
 		}
-		// TODO: Add feedback here to people that they need to wait for approval
 		msg, err := sub.Read()
 		if err != nil {
 			return empty, fmt.Errorf("failed to read message: %v", err)
@@ -90,7 +110,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		if shared.IsAckResponse(messageBody) && !hasBeenAcked {
 			// We got an Ack so we terminate our AckRequests and send the real payload
 			hasBeenAcked = true
-			terminateRoutineCh <- true
+			terminateAckRequestCh <- true
 			marshaledRequest, err := json.Marshal(request)
 			if err != nil {
 				return empty, err
