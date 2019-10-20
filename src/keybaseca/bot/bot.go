@@ -78,17 +78,16 @@ func StartBot(conf config.Config) error {
 
 		if msg.Message.Content.TypeName == "reaction" {
 			emoji := msg.Message.Content.Reaction.Body
-			responseTo := msg.Message.Content.Reaction.MessageID
+			reactionTo := msg.Message.Content.Reaction.MessageID
 
 			log.Debug("Examining reaction...")
 			for _, outstanding := range outstandingTwoManRequests {
-				if outstanding.RequestMessageID == responseTo {
-					log.Debug("Message is a reply to an outstanding two-man request")
+				if outstanding.RequestMessageID == reactionTo {
+					log.Debug("Message is a reaction to an outstanding two-man request")
 					approver := msg.Message.Sender.Username
 					if emoji == ":+1:" && isValidApprover(conf, approver, outstanding.SignatureRequest) {
 						isDuplicateApprover := addApprover(&outstanding, approver)
 						if isDuplicateApprover {
-							// TODO: Test this code
 							log.Debugf("Rejecting duplicate approver %s since they already approved the two-man request with ID=%s", approver, outstanding.SignatureRequest.UUID)
 							continue
 						}
