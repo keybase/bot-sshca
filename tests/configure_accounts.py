@@ -129,12 +129,9 @@ def make_user(purpose):
 
 if __name__ == '__main__':
     print("TEST SETUP - We need to do some one-time test setup.")
-    # ca_user = make_user("the CA bot")
-    # kssh_user = make_user("the kssh tester")
-    # two_man_approver = make_user("the two-man request approver")
-    ca_user = User('ssh_ca_circle', 'journey sphere cart tiny salt talk athlete gun observe march stock exhaust stand')
-    kssh_user = User('ssh_kssh_circle', 'man nest merge embody marble exclude first sheriff expire average notice embody joke')
-    two_man_approver = User('ssh_app_circle', 'heavy knife green tennis useful ranch whale evidence vessel spare open wait series')
+    ca_user = make_user("the CA bot")
+    kssh_user = make_user("the kssh tester")
+    two_man_approver = make_user("the two-man request approver")
 
     parent_team = secure_random_str(16)
     ca_user.create_team_and_invite(parent_team, kssh_user.username, two_man_approver.username)

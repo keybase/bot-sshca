@@ -38,6 +38,7 @@ func GetUsername(conf config.Config) (string, error) {
 	return username, nil
 }
 
+// A struct used for the bot to keep track of any outstanding two man requests and the data associated with the requests
 type OutstandingTwoManSignatureRequest struct {
 	SignatureRequest shared.SignatureRequest
 	RequestMessageID chat1.MessageID

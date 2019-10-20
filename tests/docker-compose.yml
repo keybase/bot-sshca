@@ -68,7 +68,7 @@ services:
     volumes:
       - app-volume:/shared/
   # A container containing a simple python program that can be configured to autonmatically react to all messages
-  # with a thumbs-up message
+  # with a thumbs-up message. Used to test two-man mode.
   autoapprover:
     image: autoapprover
     container_name: autoapprover

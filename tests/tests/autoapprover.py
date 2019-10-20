@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-import sys
 import time
 from multiprocessing import Process, Value
 
@@ -17,13 +16,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Handler:
+    """
+    A Keybase chatbot handler that reacts to two-man requests with a thumbs up
+    """
     def __init__(self, shared_running_val: Value):
         self.shared_running_val = shared_running_val
 
     async def __call__(self, bot, event):
-        print("HANDLER CALLED")
         if self.shared_running_val.value:
-            print("RUNNING")
             if event.msg.content.type_name != chat1.MessageTypeStrings.TEXT.value:
                 return
             channel = event.msg.channel
@@ -31,12 +31,13 @@ class Handler:
             body = event.msg.content.text.body
             if "has requested access to the two-man realm" in body:
                 await bot.chat.react(channel, msg_id, ":+1:")
-        else:
-            print("NOT RUNNING")
 
+# A shared boolean flag that tracks whether the auto-reacter is currently running
 shared_running_val = Value('i', 0)
 
 def start_bot_event_loop():
+    # Start the bot running in a separate process so that it doesn't block the main process that hosts the flask
+    # webserver
     username = os.environ["TWO_MAN_APPROVER_USERNAME"]
     paperkey = os.environ["TWO_MAN_APPROVER_PAPERKEY"]
     bot = Bot(
