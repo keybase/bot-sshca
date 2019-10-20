@@ -2,8 +2,7 @@
 FROM ubuntu:18.04
 
 # Dependencies
-RUN apt-get -qq update
-RUN apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
+RUN apt-get -qq update && apt-get -qq  install curl software-properties-common ca-certificates gnupg -y
 RUN useradd -ms /bin/bash keybase
 USER keybase
 WORKDIR /home/keybase
