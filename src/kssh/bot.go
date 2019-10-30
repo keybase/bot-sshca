@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
@@ -13,6 +15,13 @@ import (
 // Get a signed SSH key from interacting with the CA chatbot
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
+
+	timeout := 5 * time.Second
+	if request.RequestedPrincipal != "" {
+		timeout = time.Hour
+		logrus.Debug("Requesting an M of N enabled certificate. Setting time out to one hour...")
+		fmt.Println("Requesting an M of N enabled SSH certificate. See Keybase Chat to find an approver. ")
+	}
 
 	// Start communicating with the Keybase chat API
 	runOptions := kbchat.RunOptions{KeybaseLocation: GetKeybaseBinaryPath()}
@@ -31,19 +40,23 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		return empty, fmt.Errorf("error subscribing to messages: %v", err)
 	}
 
+	terminateAllCh := make(chan struct{})
+	defer close(terminateAllCh)
+
 	// If we just send our signature request to chat, we hit a race condition where if the CA responds fast enough
 	// we will miss the response from the CA. We fix this with a simple ACKing algorithm:
 	// 1. Send an AckRequest every 100ms until an Ack is received.
 	// 2. Once an Ack is received, we know we are correctly receiving messages
 	// 3. Send the signature request payload and get back a signed cert
 	// We implement this with a terminatable goroutine that just sends acks and a while(true) loop that looks for responses
-	terminateRoutineCh := make(chan interface{})
+	terminateAckRequestCh := make(chan interface{})
 	go func() {
 		// Make the AckRequests send less often over time by tracking how many we've sent
 		numberSent := 0
 		for {
 			select {
-			case <-terminateRoutineCh:
+			case <-terminateAckRequestCh:
+			case <-terminateAllCh:
 				return
 			default:
 
@@ -57,10 +70,26 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		}
 	}()
 
+	// A goroutine that simply prints a dot every 500ms until terminated. Used to show progress to users while they
+	// wait for a response from the bot.
+	go func() {
+		for {
+			select {
+			case <-terminateAllCh:
+				return
+			default:
+
+			}
+
+			fmt.Print(".")
+			time.Sleep(500 * time.Millisecond)
+		}
+	}()
+
 	hasBeenAcked := false
 	startTime := time.Now()
 	for {
-		if time.Since(startTime) > 5*time.Second {
+		if time.Since(startTime) > timeout {
 			return empty, fmt.Errorf("timed out while waiting for a response from the CA")
 		}
 		msg, err := sub.Read()
@@ -81,7 +110,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 		if shared.IsAckResponse(messageBody) && !hasBeenAcked {
 			// We got an Ack so we terminate our AckRequests and send the real payload
 			hasBeenAcked = true
-			terminateRoutineCh <- true
+			terminateAckRequestCh <- true
 			marshaledRequest, err := json.Marshal(request)
 			if err != nil {
 				return empty, err

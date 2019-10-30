@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/keybase/go-keybase-chat-bot/kbchat/types/chat1"
+
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
 
 	auditlog "github.com/keybase/bot-sshca/src/keybaseca/log"
@@ -36,8 +38,19 @@ func GetUsername(conf config.Config) (string, error) {
 	return username, nil
 }
 
+// A struct used for the bot to keep track of any outstanding M of N requests and the data associated with the requests
+type OutstandingMOfNSignatureRequest struct {
+	SignatureRequest shared.SignatureRequest
+	RequestMessageID chat1.MessageID
+	Approvers        []string
+	ConvID           string
+}
+
 // Start the keybaseca bot in an infinite loop. Does not return unless it encounters an unrecoverable error.
 func StartBot(conf config.Config) error {
+	// Initialize a list for the outstanding M of N signature requests
+	outstandingMOfNRequests := []OutstandingMOfNSignatureRequest{}
+
 	kbc, err := GetKBChat(conf)
 	if err != nil {
 		return fmt.Errorf("error starting Keybase chat: %v", err)
@@ -60,12 +73,45 @@ func StartBot(conf config.Config) error {
 			return fmt.Errorf("failed to read message: %v", err)
 		}
 
-		if msg.Message.Content.TypeName != "text" {
+		if msg.Message.Content.TypeName != "text" && msg.Message.Content.TypeName != "reaction" {
+			continue
+		}
+
+		if msg.Message.Content.TypeName == "reaction" {
+			emoji := msg.Message.Content.Reaction.Body
+			reactionTo := msg.Message.Content.Reaction.MessageID
+
+			log.Debug("Examining reaction...")
+			for _, outstanding := range outstandingMOfNRequests {
+				if outstanding.RequestMessageID == reactionTo {
+					log.Debug("Message is a reaction to an outstanding M of N request")
+					approver := msg.Message.Sender.Username
+					if emoji == ":+1:" && isValidApprover(conf, approver, outstanding.SignatureRequest) {
+						isDuplicateApprover := addApprover(&outstanding, approver)
+						if isDuplicateApprover {
+							log.Debugf("Rejecting duplicate approver %s since they already approved the M of N request with ID=%s", approver, outstanding.SignatureRequest.UUID)
+							continue
+						}
+						log.WithField("requester", outstanding.SignatureRequest.Username).
+							WithField("current_approver", approver).
+							WithField("all_approvers", outstanding.Approvers).
+							Debugf("Message approved request")
+						threshold := conf.GetMOfNRequiredApproversCount()
+						if len(outstanding.Approvers) >= threshold {
+							respondToSignatureRequest(conf, kbc, outstanding.SignatureRequest, outstanding.SignatureRequest.Username, outstanding.RequestMessageID, outstanding.ConvID)
+							auditlog.Log(conf, fmt.Sprintf("M of N SignatureRequest id=%s approved by %v", outstanding.SignatureRequest.UUID, outstanding.Approvers))
+						}
+					} else {
+						log.Debug("Message did not approve request")
+					}
+					continue
+				}
+			}
+			log.Debug("Ignoring reaction since it is not a reaction on an outstanding M of N request")
 			continue
 		}
 
 		messageBody := msg.Message.Content.Text.Body
-
 		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, messageBody)
 
 		if msg.Message.Sender.Username == kbc.GetUsername() {
@@ -90,33 +136,38 @@ func StartBot(conf config.Config) error {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
 			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
 				continue
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureRequestPreamble) {
 			log.Debug("Responding to SignatureRequest")
 			signatureRequest, err := shared.ParseSignatureRequest(messageBody)
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
 				continue
 			}
 			signatureRequest.Username = msg.Message.Sender.Username
 			signatureRequest.DeviceName = msg.Message.Sender.DeviceName
-			signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
-			if err != nil {
-				LogError(conf, kbc, msg, err)
-				continue
-			}
 
-			response, err := json.Marshal(signatureResponse)
-			if err != nil {
-				LogError(conf, kbc, msg, err)
-				continue
-			}
-			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
-			if err != nil {
-				LogError(conf, kbc, msg, err)
-				continue
+			// Process the signature request depending on whether they requested M of N enabled principals or not
+			if signatureRequest.RequestedPrincipal == "" {
+				// If they didn't request a principal just respond immediately
+				respondToSignatureRequest(conf, kbc, signatureRequest, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID)
+			} else {
+				if isMOfNPrincipal(conf, signatureRequest.RequestedPrincipal) {
+					// If they requested a principal that doesn't require M of N authorization, respond immediately
+					respondToSignatureRequest(conf, kbc, signatureRequest, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID)
+				} else {
+					// If the principal requires M of N authorization, treat it as such
+					resp, err := kbc.SendMessageByConvID(msg.Message.ConvID, buildMOfNApprovalRequestMessage(conf, msg.Message.Sender.Username, signatureRequest.RequestedPrincipal))
+					if err != nil {
+						LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
+						continue
+					}
+
+					outstandingMOfNRequests = append(outstandingMOfNRequests,
+						OutstandingMOfNSignatureRequest{SignatureRequest: signatureRequest, Approvers: []string{}, RequestMessageID: *resp.Result.MessageID, ConvID: msg.Message.ConvID})
+				}
 			}
 		} else {
 			log.Debug("Ignoring unparsed message")
@@ -124,12 +175,86 @@ func StartBot(conf config.Config) error {
 	}
 }
 
+// Add the given approver to the list of approvers in the given outstanding m of n signature request if the
+// given user has not already approved the request. Returns whether the given approver has already
+// approved the request.
+func addApprover(request *OutstandingMOfNSignatureRequest, approver string) bool {
+	for _, curApprover := range request.Approvers {
+		if curApprover == approver {
+			return true
+		}
+	}
+	request.Approvers = append(request.Approvers, approver)
+	return false
+}
+
+// Build an announcement message to be sent in Keybase chat about the sender requesting access to the requested principal
+func buildMOfNApprovalRequestMessage(conf config.Config, sender string, requestedPrincipal string) string {
+	approvers := []string{}
+	for _, approver := range conf.GetMOfNApprovers() {
+		approvers = append(approvers, "@"+approver)
+	}
+
+	return fmt.Sprintf("@%s has requested access to the M of N realm %s! In order to approve this access, "+
+		"reply with a thumbs-up to this message. (Configured approvers: %s)", sender, requestedPrincipal, strings.Join(approvers, ", "))
+}
+
+// Returns whether the given principal is a principal that requires M of N approval
+func isMOfNPrincipal(conf config.Config, requestedPrincipal string) bool {
+	for _, team := range conf.GetMOfNApprovers() {
+		if team == requestedPrincipal {
+			return true
+		}
+	}
+	return false
+}
+
+// Note that this function is a key security barrier for the M of N feature. This function checks that only people
+// in the define list of approvers can approve a request and that people cannot approve their own request.
+func isValidApprover(conf config.Config, senderUsername string, signatureRequest shared.SignatureRequest) bool {
+	validApprover := false
+	for _, knownApprover := range conf.GetMOfNApprovers() {
+		if knownApprover == senderUsername {
+			validApprover = true
+		}
+	}
+	if !validApprover {
+		log.Debug("Reply came from someone who isn't a valid M of N approver, rejecting!")
+		return false
+	}
+	if senderUsername == signatureRequest.Username {
+		log.Debug("Reply came from the sender of the signature request, rejecting!")
+		return false
+	}
+	return true
+}
+
+// Respond to the given SignatureRequest and log any errors that are produced. This function does not return any error.
+func respondToSignatureRequest(conf config.Config, kbc *kbchat.API, signatureRequest shared.SignatureRequest, username string, messageID chat1.MessageID, conversationID string) {
+	signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
+	if err != nil {
+		LogError(conf, kbc, username, messageID, conversationID, err)
+		return
+	}
+
+	response, err := json.Marshal(signatureResponse)
+	if err != nil {
+		LogError(conf, kbc, username, messageID, conversationID, err)
+		return
+	}
+	_, err = kbc.SendMessageByConvID(conversationID, shared.SignatureResponsePreamble+string(response))
+	if err != nil {
+		LogError(conf, kbc, username, messageID, conversationID, err)
+		return
+	}
+}
+
 // Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
 // due to an error caused by a malformed message.
-func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
-	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.Id, err)
+func LogError(conf config.Config, kbc *kbchat.API, username string, messageID chat1.MessageID, conversationID string, err error) {
+	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", username, messageID, err)
 	auditlog.Log(conf, message)
-	_, e := kbc.SendMessageByConvID(msg.Message.ConvID, message)
+	_, e := kbc.SendMessageByConvID(conversationID, message)
 	if e != nil {
 		auditlog.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
 	}

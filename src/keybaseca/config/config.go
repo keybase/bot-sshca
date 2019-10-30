@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/keybase/bot-sshca/src/keybaseca/constants"
@@ -29,6 +30,9 @@ type Config interface {
 	GetStrictLogging() bool
 	GetAnnouncement() string
 	DebugString() string
+	GetMOfNTeams() []string
+	GetMOfNApprovers() []string
+	GetMOfNRequiredApproversCount() int
 }
 
 // Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
@@ -76,7 +80,36 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			}
 		}
 	}
+	err := validateMOfNConfig(conf)
+	if err != nil {
+		return err
+	}
 	log.Debugf("Validated config: %s", conf.DebugString())
+	return nil
+}
+
+func validateMOfNConfig(conf EnvConfig) error {
+	if len(conf.GetMOfNTeams()) != 0 || len(conf.GetMOfNApprovers()) != 0 {
+		if len(conf.GetMOfNTeams()) != 0 && len(conf.GetMOfNApprovers()) == 0 {
+			return fmt.Errorf("cannot specify CTRL_POLICY_MOFN_TEAMS without setting CTRL_POLICY_MOFN_APPROVERS")
+		}
+		if len(conf.GetMOfNTeams()) == 0 && len(conf.GetMOfNApprovers()) != 0 {
+			return fmt.Errorf("cannot specify CTRL_POLICY_MOFN_APPROVERS without setting CTRL_POLICY_MOFN_TEAMS")
+		}
+		_, err := conf.getMOfNRequiredApproversCount()
+		if err != nil {
+			return fmt.Errorf("failed to parse CTRL_POLICY_MOFN_REQUIRED_COUNT value as a intenger: %v", err)
+		}
+		for _, mofnTeam := range conf.GetMOfNTeams() {
+			found := false
+			for _, team := range conf.GetTeams() {
+				found = found || team == mofnTeam
+			}
+			if !found {
+				return fmt.Errorf("M of N configured team %s is not in the list of configured teams %v (all M of N teams must be listed in the TEAMS environment variable)", mofnTeam, conf.GetTeams())
+			}
+		}
+	}
 	return nil
 }
 
@@ -196,15 +229,7 @@ func (ef *EnvConfig) GetKeyExpiration() string {
 
 // Get the list of keybase teams configured to be used with the bot.
 func (ef *EnvConfig) GetTeams() []string {
-	split := strings.Split(os.Getenv("TEAMS"), ",")
-	var teams []string
-	for _, item := range split {
-		trimmed := strings.TrimSpace(item)
-		if trimmed != "" {
-			teams = append(teams, trimmed)
-		}
-	}
-	return teams
+	return commaSeparatedStringToList(os.Getenv("TEAMS"))
 }
 
 // Get the location for the bot's audit logs. May be empty.
@@ -271,4 +296,45 @@ func splitTeamChannel(teamChannel string) (string, string, error) {
 		return "", "", fmt.Errorf("'%s' is not a valid specifier for a team and a channel", teamChannel)
 	}
 	return split[0], split[1], nil
+}
+
+func (ef *EnvConfig) GetMOfNTeams() []string {
+	mofnTeams := os.Getenv("CTRL_POLICY_MOFN_TEAMS")
+	if mofnTeams == "" {
+		return []string{}
+	}
+	return commaSeparatedStringToList(mofnTeams)
+}
+
+func (ef *EnvConfig) GetMOfNApprovers() []string {
+	mofnApprovers := os.Getenv("CTRL_POLICY_MOFN_APPROVERS")
+	if mofnApprovers == "" {
+		return []string{}
+	}
+	return commaSeparatedStringToList(mofnApprovers)
+}
+
+func (ef *EnvConfig) getMOfNRequiredApproversCount() (int, error) {
+	val := os.Getenv("CTRL_POLICY_MOFN_REQUIRED_COUNT")
+	if val == "" {
+		return 1, nil
+	}
+	return strconv.Atoi(val)
+}
+
+func (ef *EnvConfig) GetMOfNRequiredApproversCount() int {
+	num, _ := ef.getMOfNRequiredApproversCount()
+	return num
+}
+
+func commaSeparatedStringToList(val string) []string {
+	split := strings.Split(val, ",")
+	var teams []string
+	for _, item := range split {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			teams = append(teams, trimmed)
+		}
+	}
+	return teams
 }

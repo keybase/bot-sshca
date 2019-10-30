@@ -167,3 +167,4 @@ class TestMultiTeamStrictLogging:
             run_command("bin/kssh --set-keybase-binary ''")
         finally:
             run_command("sudo rm /usr/local/bin/keybase")
+

@@ -10,7 +10,7 @@ do
     sleep 1
 done
 echo ""
-sleep 2
+sleep 5
 
 keybase oneshot --username $KSSH_USERNAME --paperkey "$KSSH_PAPERKEY"
 

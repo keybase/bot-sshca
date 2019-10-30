@@ -1,0 +1,10 @@
+# See docker/Dockerfile-keybase
+FROM keybase:latest
+
+# Install python
+USER root
+RUN apt-get update && apt-get install python3.7 python3-pip gettext -y
+RUN python3.7 -m pip install pykeybasebot flask
+USER keybase
+
+COPY tests/autoapprover.py .

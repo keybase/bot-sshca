@@ -47,7 +47,8 @@ cd tests/
 reset_docker
 
 echo "Building containers..."
-cd ../docker/ && make && cd ../tests/
+cd ../docker/ && make build && cd ../tests/
+pwd
 docker-compose build
 echo "Running integration tests..."
 docker-compose up -d
