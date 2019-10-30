@@ -1,9 +1,9 @@
-# Used to test the two man functionality whereby an approval is required for certain realms of servers
+# Used to test the M of N functionality whereby an approval is required for certain realms of servers
 export KEY_EXPIRATION="+1h"
 export LOG_LOCATION="/shared/ca.log"
 export TEAMS="$SUBTEAM.ssh.staging,$SUBTEAM.ssh.prod,$SUBTEAM.ssh.root_everywhere"
 export KEYBASE_PAPERKEY="$BOT_PAPERKEY"
 export KEYBASE_USERNAME="$BOT_USERNAME"
 export CA_KEY_LOCATION="/shared/keybase-ca-key"
-export TWO_MAN_TEAMS="$SUBTEAM.ssh.root_everywhere"
-export TWO_MAN_APPROVERS="$TWO_MAN_APPROVER_USERNAME"
+export CTRL_POLICY_MOFN_TEAMS="$SUBTEAM.ssh.root_everywhere"
+export CTRL_POLICY_MOFN_APPROVERS="$MOFN_APPROVER_USERNAME"

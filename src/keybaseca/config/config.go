@@ -30,9 +30,9 @@ type Config interface {
 	GetStrictLogging() bool
 	GetAnnouncement() string
 	DebugString() string
-	GetTwoManTeams() []string
-	GetTwoManApprovers() []string
-	GetNumberRequiredApprovers() int
+	GetMOfNTeams() []string
+	GetMOfNApprovers() []string
+	GetMOfNRequiredApproversCount() int
 }
 
 // Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
@@ -80,7 +80,7 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			}
 		}
 	}
-	err := validateTwoManConfig(conf)
+	err := validateMOfNConfig(conf)
 	if err != nil {
 		return err
 	}
@@ -88,25 +88,25 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 	return nil
 }
 
-func validateTwoManConfig(conf EnvConfig) error {
-	if len(conf.GetTwoManTeams()) != 0 || len(conf.GetTwoManApprovers()) != 0 {
-		if len(conf.GetTwoManTeams()) != 0 && len(conf.GetTwoManApprovers()) == 0 {
-			return fmt.Errorf("cannot specify TWO_MAN_TEAMS without setting TWO_MAN_APPROVERS")
+func validateMOfNConfig(conf EnvConfig) error {
+	if len(conf.GetMOfNTeams()) != 0 || len(conf.GetMOfNApprovers()) != 0 {
+		if len(conf.GetMOfNTeams()) != 0 && len(conf.GetMOfNApprovers()) == 0 {
+			return fmt.Errorf("cannot specify CTRL_POLICY_MOFN_TEAMS without setting CTRL_POLICY_MOFN_APPROVERS")
 		}
-		if len(conf.GetTwoManTeams()) == 0 && len(conf.GetTwoManApprovers()) != 0 {
-			return fmt.Errorf("cannot specify TWO_MAN_APPROVERS without setting TWO_MAN_TEAMS")
+		if len(conf.GetMOfNTeams()) == 0 && len(conf.GetMOfNApprovers()) != 0 {
+			return fmt.Errorf("cannot specify CTRL_POLICY_MOFN_APPROVERS without setting CTRL_POLICY_MOFN_TEAMS")
 		}
-		_, err := conf.getNumberRequiredApprovers()
+		_, err := conf.getMOfNRequiredApproversCount()
 		if err != nil {
-			return fmt.Errorf("failed to parse TWO_MAN_APPROVER_COUNT value as a intenger: %v", err)
+			return fmt.Errorf("failed to parse CTRL_POLICY_MOFN_REQUIRED_COUNT value as a intenger: %v", err)
 		}
-		for _, twoManTeam := range conf.GetTwoManTeams() {
+		for _, mofnTeam := range conf.GetMOfNTeams() {
 			found := false
 			for _, team := range conf.GetTeams() {
-				found = found || team == twoManTeam
+				found = found || team == mofnTeam
 			}
 			if !found {
-				return fmt.Errorf("two man team %s is not in the list of configured teams %v (all two man teams must be listed in the TEAMS environment variable)", twoManTeam, conf.GetTeams())
+				return fmt.Errorf("M of N configured team %s is not in the list of configured teams %v (all M of N teams must be listed in the TEAMS environment variable)", mofnTeam, conf.GetTeams())
 			}
 		}
 	}
@@ -298,32 +298,32 @@ func splitTeamChannel(teamChannel string) (string, string, error) {
 	return split[0], split[1], nil
 }
 
-func (ef *EnvConfig) GetTwoManTeams() []string {
-	twoManTeams := os.Getenv("TWO_MAN_TEAMS")
-	if twoManTeams == "" {
+func (ef *EnvConfig) GetMOfNTeams() []string {
+	mofnTeams := os.Getenv("CTRL_POLICY_MOFN_TEAMS")
+	if mofnTeams == "" {
 		return []string{}
 	}
-	return commaSeparatedStringToList(twoManTeams)
+	return commaSeparatedStringToList(mofnTeams)
 }
 
-func (ef *EnvConfig) GetTwoManApprovers() []string {
-	twoManApprovers := os.Getenv("TWO_MAN_APPROVERS")
-	if twoManApprovers == "" {
+func (ef *EnvConfig) GetMOfNApprovers() []string {
+	mofnApprovers := os.Getenv("CTRL_POLICY_MOFN_APPROVERS")
+	if mofnApprovers == "" {
 		return []string{}
 	}
-	return commaSeparatedStringToList(twoManApprovers)
+	return commaSeparatedStringToList(mofnApprovers)
 }
 
-func (ef *EnvConfig) getNumberRequiredApprovers() (int, error) {
-	val := os.Getenv("TWO_MAN_APPROVER_COUNT")
+func (ef *EnvConfig) getMOfNRequiredApproversCount() (int, error) {
+	val := os.Getenv("CTRL_POLICY_MOFN_REQUIRED_COUNT")
 	if val == "" {
 		return 1, nil
 	}
 	return strconv.Atoi(val)
 }
 
-func (ef *EnvConfig) GetNumberRequiredApprovers() int {
-	num, _ := ef.getNumberRequiredApprovers()
+func (ef *EnvConfig) GetMOfNRequiredApproversCount() int {
+	num, _ := ef.getMOfNRequiredApproversCount()
 	return num
 }
 

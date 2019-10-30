@@ -38,8 +38,8 @@ func GetUsername(conf config.Config) (string, error) {
 	return username, nil
 }
 
-// A struct used for the bot to keep track of any outstanding two man requests and the data associated with the requests
-type OutstandingTwoManSignatureRequest struct {
+// A struct used for the bot to keep track of any outstanding M of N requests and the data associated with the requests
+type OutstandingMOfNSignatureRequest struct {
 	SignatureRequest shared.SignatureRequest
 	RequestMessageID chat1.MessageID
 	Approvers        []string
@@ -48,8 +48,8 @@ type OutstandingTwoManSignatureRequest struct {
 
 // Start the keybaseca bot in an infinite loop. Does not return unless it encounters an unrecoverable error.
 func StartBot(conf config.Config) error {
-	// Initialize a list for the outstanding two-man signature requests
-	outstandingTwoManRequests := []OutstandingTwoManSignatureRequest{}
+	// Initialize a list for the outstanding M of N signature requests
+	outstandingMOfNRequests := []OutstandingMOfNSignatureRequest{}
 
 	kbc, err := GetKBChat(conf)
 	if err != nil {
@@ -82,24 +82,24 @@ func StartBot(conf config.Config) error {
 			reactionTo := msg.Message.Content.Reaction.MessageID
 
 			log.Debug("Examining reaction...")
-			for _, outstanding := range outstandingTwoManRequests {
+			for _, outstanding := range outstandingMOfNRequests {
 				if outstanding.RequestMessageID == reactionTo {
-					log.Debug("Message is a reaction to an outstanding two-man request")
+					log.Debug("Message is a reaction to an outstanding M of N request")
 					approver := msg.Message.Sender.Username
 					if emoji == ":+1:" && isValidApprover(conf, approver, outstanding.SignatureRequest) {
 						isDuplicateApprover := addApprover(&outstanding, approver)
 						if isDuplicateApprover {
-							log.Debugf("Rejecting duplicate approver %s since they already approved the two-man request with ID=%s", approver, outstanding.SignatureRequest.UUID)
+							log.Debugf("Rejecting duplicate approver %s since they already approved the M of N request with ID=%s", approver, outstanding.SignatureRequest.UUID)
 							continue
 						}
 						log.WithField("requester", outstanding.SignatureRequest.Username).
 							WithField("current_approver", approver).
 							WithField("all_approvers", outstanding.Approvers).
 							Debugf("Message approved request")
-						threshold := conf.GetNumberRequiredApprovers()
+						threshold := conf.GetMOfNRequiredApproversCount()
 						if len(outstanding.Approvers) >= threshold {
 							respondToSignatureRequest(conf, kbc, outstanding.SignatureRequest, outstanding.SignatureRequest.Username, outstanding.RequestMessageID, outstanding.ConvID)
-							auditlog.Log(conf, fmt.Sprintf("Two-man SignatureRequest id=%s approved by %v", outstanding.SignatureRequest.UUID, outstanding.Approvers))
+							auditlog.Log(conf, fmt.Sprintf("M of N SignatureRequest id=%s approved by %v", outstanding.SignatureRequest.UUID, outstanding.Approvers))
 						}
 					} else {
 						log.Debug("Message did not approve request")
@@ -107,7 +107,7 @@ func StartBot(conf config.Config) error {
 					continue
 				}
 			}
-			log.Debug("Ignoring reaction since it is not a reaction on an outstanding two-man request")
+			log.Debug("Ignoring reaction since it is not a reaction on an outstanding M of N request")
 			continue
 		}
 
@@ -149,24 +149,24 @@ func StartBot(conf config.Config) error {
 			signatureRequest.Username = msg.Message.Sender.Username
 			signatureRequest.DeviceName = msg.Message.Sender.DeviceName
 
-			// Process the signature request depending on whether they requested two-man only principals or not
+			// Process the signature request depending on whether they requested M of N enabled principals or not
 			if signatureRequest.RequestedPrincipal == "" {
 				// If they didn't request a principal just respond immediately
 				respondToSignatureRequest(conf, kbc, signatureRequest, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID)
 			} else {
-				if isTwoManPrincipal(conf, signatureRequest.RequestedPrincipal) {
-					// If they requested a principal that doesn't require two-man authorization, respond immediately
+				if isMOfNPrincipal(conf, signatureRequest.RequestedPrincipal) {
+					// If they requested a principal that doesn't require M of N authorization, respond immediately
 					respondToSignatureRequest(conf, kbc, signatureRequest, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID)
 				} else {
-					// If the principal requires two-man authorization, treat it as such
-					resp, err := kbc.SendMessageByConvID(msg.Message.ConvID, buildTwoManApprovalRequestMessage(conf, msg.Message.Sender.Username, signatureRequest.RequestedPrincipal))
+					// If the principal requires M of N authorization, treat it as such
+					resp, err := kbc.SendMessageByConvID(msg.Message.ConvID, buildMOfNApprovalRequestMessage(conf, msg.Message.Sender.Username, signatureRequest.RequestedPrincipal))
 					if err != nil {
 						LogError(conf, kbc, msg.Message.Sender.Username, msg.Message.Id, msg.Message.ConvID, err)
 						continue
 					}
 
-					outstandingTwoManRequests = append(outstandingTwoManRequests,
-						OutstandingTwoManSignatureRequest{SignatureRequest: signatureRequest, Approvers: []string{}, RequestMessageID: *resp.Result.MessageID, ConvID: msg.Message.ConvID})
+					outstandingMOfNRequests = append(outstandingMOfNRequests,
+						OutstandingMOfNSignatureRequest{SignatureRequest: signatureRequest, Approvers: []string{}, RequestMessageID: *resp.Result.MessageID, ConvID: msg.Message.ConvID})
 				}
 			}
 		} else {
@@ -175,10 +175,10 @@ func StartBot(conf config.Config) error {
 	}
 }
 
-// Add the given approver to the list of approvers in the given outstanding two man request if the
+// Add the given approver to the list of approvers in the given outstanding m of n signature request if the
 // given user has not already approved the request. Returns whether the given approver has already
 // approved the request.
-func addApprover(request *OutstandingTwoManSignatureRequest, approver string) bool {
+func addApprover(request *OutstandingMOfNSignatureRequest, approver string) bool {
 	for _, curApprover := range request.Approvers {
 		if curApprover == approver {
 			return true
@@ -189,19 +189,19 @@ func addApprover(request *OutstandingTwoManSignatureRequest, approver string) bo
 }
 
 // Build an announcement message to be sent in Keybase chat about the sender requesting access to the requested principal
-func buildTwoManApprovalRequestMessage(conf config.Config, sender string, requestedPrincipal string) string {
+func buildMOfNApprovalRequestMessage(conf config.Config, sender string, requestedPrincipal string) string {
 	approvers := []string{}
-	for _, approver := range conf.GetTwoManApprovers() {
+	for _, approver := range conf.GetMOfNApprovers() {
 		approvers = append(approvers, "@"+approver)
 	}
 
-	return fmt.Sprintf("@%s has requested access to the two-man realm %s! In order to approve this access, "+
+	return fmt.Sprintf("@%s has requested access to the M of N realm %s! In order to approve this access, "+
 		"reply with a thumbs-up to this message. (Configured approvers: %s)", sender, requestedPrincipal, strings.Join(approvers, ", "))
 }
 
-// Returns whether the given principal is a principal that requires two man approval
-func isTwoManPrincipal(conf config.Config, requestedPrincipal string) bool {
-	for _, team := range conf.GetTwoManApprovers() {
+// Returns whether the given principal is a principal that requires M of N approval
+func isMOfNPrincipal(conf config.Config, requestedPrincipal string) bool {
+	for _, team := range conf.GetMOfNApprovers() {
 		if team == requestedPrincipal {
 			return true
 		}
@@ -209,17 +209,17 @@ func isTwoManPrincipal(conf config.Config, requestedPrincipal string) bool {
 	return false
 }
 
-// Note that this function is a key security barrier for the two-man feature. This function checks that only people
+// Note that this function is a key security barrier for the M of N feature. This function checks that only people
 // in the define list of approvers can approve a request and that people cannot approve their own request.
 func isValidApprover(conf config.Config, senderUsername string, signatureRequest shared.SignatureRequest) bool {
 	validApprover := false
-	for _, knownApprover := range conf.GetTwoManApprovers() {
+	for _, knownApprover := range conf.GetMOfNApprovers() {
 		if knownApprover == senderUsername {
 			validApprover = true
 		}
 	}
 	if !validApprover {
-		log.Debug("Reply came from someone who isn't a valid two man approver, rejecting!")
+		log.Debug("Reply came from someone who isn't a valid M of N approver, rejecting!")
 		return false
 	}
 	if senderUsername == signatureRequest.Username {

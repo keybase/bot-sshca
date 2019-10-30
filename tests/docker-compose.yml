@@ -11,7 +11,7 @@ services:
       - BOT_PAPERKEY
       - BOT_USERNAME
       - SUBTEAM
-      - TWO_MAN_APPROVER_USERNAME
+      - MOFN_APPROVER_USERNAME
     volumes:
       - app-volume:/shared/
     user: root
@@ -68,7 +68,7 @@ services:
     volumes:
       - app-volume:/shared/
   # A container containing a simple python program that can be configured to autonmatically react to all messages
-  # with a thumbs-up message. Used to test two-man mode.
+  # with a thumbs-up message. Used to test the M of N approval feature.
   autoapprover:
     image: autoapprover
     container_name: autoapprover
@@ -76,8 +76,8 @@ services:
       context: ./
       dockerfile: "Dockerfile-autoapprover"
     environment:
-      - TWO_MAN_APPROVER_USERNAME
-      - TWO_MAN_APPROVER_PAPERKEY
+      - MOFN_APPROVER_USERNAME
+      - MOFN_APPROVER_PAPERKEY
     ports:
       - 8080
     command: "python3.7 autoapprover.py"

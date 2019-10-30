@@ -133,7 +133,7 @@ GLOBAL OPTIONS:
 					     a default SSH user 
    --clear-default-user  Clear the default SSH user
    --set-keybase-binary  Advanced feature: Run kssh with a specific keybase binary rather than resolving via $PATH 
-   --request-realm       Advanced feature: Request a specific two-man realm in your provisioned certificate `, VersionNumber)
+   --request-realm       Advanced feature: Request a specific M of N enabled realm in your provisioned certificate `, VersionNumber)
 }
 
 type Action int

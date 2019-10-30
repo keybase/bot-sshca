@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 class Handler:
     """
-    A Keybase chatbot handler that reacts to two-man requests with a thumbs up
+    A Keybase chatbot handler that reacts to M of N requests with a thumbs up
     """
     def __init__(self, shared_running_val: Value):
         self.shared_running_val = shared_running_val
@@ -29,7 +29,7 @@ class Handler:
             channel = event.msg.channel
             msg_id = event.msg.id
             body = event.msg.content.text.body
-            if "has requested access to the two-man realm" in body:
+            if "has requested access to the M of N realm" in body:
                 await bot.chat.react(channel, msg_id, ":+1:")
 
 # A shared boolean flag that tracks whether the auto-reacter is currently running
@@ -38,8 +38,8 @@ shared_running_val = Value('i', 0)
 def start_bot_event_loop():
     # Start the bot running in a separate process so that it doesn't block the main process that hosts the flask
     # webserver
-    username = os.environ["TWO_MAN_APPROVER_USERNAME"]
-    paperkey = os.environ["TWO_MAN_APPROVER_PAPERKEY"]
+    username = os.environ["MOFN_APPROVER_USERNAME"]
+    paperkey = os.environ["MOFN_APPROVER_PAPERKEY"]
     bot = Bot(
         username=username, paperkey=paperkey,
         handler=Handler(shared_running_val)

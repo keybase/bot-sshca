@@ -19,8 +19,8 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 	timeout := 5 * time.Second
 	if request.RequestedPrincipal != "" {
 		timeout = time.Hour
-		logrus.Debug("Requesting a two-man enabled certificate. Setting time out to one hour...")
-		fmt.Println("Requesting a two-man enabled SSH certificate. See Keybase Chat to find an approver. ")
+		logrus.Debug("Requesting an M of N enabled certificate. Setting time out to one hour...")
+		fmt.Println("Requesting an M of N enabled SSH certificate. See Keybase Chat to find an approver. ")
 	}
 
 	// Start communicating with the Keybase chat API
