@@ -38,6 +38,7 @@ COPY --from=builder /temp/bin/keybaseca /home/keybase/bin/keybaseca
 # copy in entrypoint scripts and fix permissions
 COPY ./docker/entrypoint-generate.sh .
 COPY ./docker/entrypoint-server.sh .
+COPY ./docker/env.sh .
 RUN chown -R keybase:keybase /home/keybase
 
 # this folder is needed for kbfsfuse
