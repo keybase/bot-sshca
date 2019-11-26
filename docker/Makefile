@@ -26,7 +26,7 @@ generate: env-file-exists build
 	@echo -e "\nSee the getting started docs for information on how to define which teams are allowed to access which servers"
 
 # Start the CA chatbot in the background
-serve: env-file-exists ca-key-exists build
+serve: env-file-exists ca-key-exists
 	docker run -d --restart unless-stopped -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
 	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
 
