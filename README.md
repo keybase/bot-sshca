@@ -1,3 +1,21 @@
+Modifications to keybase/bot-sshca to support running the ssh ca in a Kubernetes cluster running on ARM.
+
+Summary of changes:
+- `./docker/Dockerfile-ca` moved to `./Dockerfile`. Modify Dockerfile to be multi-arch. This includes building `keybase/client` for ourselves.
+- Added `docker-compose-ca.yml` for easy testing/deployment.
+- Added `sshca.yaml.example` for kubernetes.
+- Didn't modify `./docker/Makefile`. Fend for yourselves.
+
+No modifications to kssh were made.
+
+To build Dockerfile, in project root dir:
+`docker build . -t ca`
+
+To run docker-compose, in project root dir:
+` docker-compose -f docker-compose-ca.yml up`
+
+========================
+
 # SSH CA Bot
 
 [![License](https://img.shields.io/badge/license-BSD-success.svg)](https://opensource.org/licenses/BSD-3-Clause)

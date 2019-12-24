@@ -1,0 +1,55 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ namespace: sshca
+ name: kbsshca
+spec:
+ accessModes:
+  - ReadWriteOnce
+ resources:
+   requests:
+     storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: sshca
+  name: kbsshca
+  labels:
+    app: kbsshca
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kbsshca
+  template:
+    metadata:
+      labels:
+        app: kbsshca
+    spec:
+      containers:
+      - name: kbsshca
+        image: yourregistry/ca:latest
+        command: ["./docker/entrypoint-server.sh"]
+        env:
+        - name: TEAMS
+          value: "list,of,teams"
+        - name: KEYBASE_USERNAME
+          value: "yourusername"
+        - name: KEYBASE_PAPERKEY
+          value: "your paper key"
+        - name: FORCE_WRITE
+          value: "false"
+        volumeMounts:
+        - mountPath: /mnt
+          name: ssh-data
+        resources:
+          limits:
+            memory: 700Mi
+          requests:
+            memory: 700Mi
+      volumes:
+      - name: ssh-data
+        persistentVolumeClaim:
+          claimName: kbsshca

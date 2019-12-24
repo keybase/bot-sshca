@@ -1,3 +1,7 @@
+**/paperkey.txt
+docker-compose-ca.yml
+sshca.yaml
+
 bin/
 keybaseca.config
 nohup.out
