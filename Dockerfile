@@ -37,5 +37,6 @@ COPY ./docker/entrypoint-server.sh .
 RUN chown -R keybase:keybase /home/keybase
 
 # Run container as root but only to be able to chown the Docker bind-mount, 
-# then immediatetly step down to the keybase user via sudo in the entrypoint scripts
+# then immediately step down to the keybase user via sudo in the entrypoint scripts
+
 # USER root
