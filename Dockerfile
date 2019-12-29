@@ -28,7 +28,7 @@ WORKDIR /home/keybase
 
 # copy the keybase binaries from previous build step 
 COPY --from=builder /go/bin/keybase /usr/local/bin/
-COPY --from=builder /go/bin/kbfsfuse /usr/local/bin/
+COPY --from=builder /usr/bin/kbfsfuse /usr/local/bin/
 COPY --from=builder /bot-sshca/bin/keybaseca bin/
 
 # copy in entrypoint scripts and fix permissions
