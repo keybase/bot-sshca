@@ -13,7 +13,7 @@ FROM ubuntu:18.04
 
 RUN useradd -ms /bin/bash keybase
 RUN chown keybase:keybase /usr/bin
-# RUN chown keybase:keybase /home/keybase
+RUN chown keybase:keybase /home/keybase
 
 USER keybase
 WORKDIR /home/keybase

@@ -9,14 +9,9 @@ services:
     environment:
       TEAMS: 'list,of,teams'
       KEYBASE_USERNAME: 'yourusername'
-      KEYBASE_PAPERKEY_PATH: /run/secrets/paperkey
+      KEYBASE_PAPERKEY: 'your paper key'
       FORCE_WRITE: 'false'
     volumes:
       - "./docker/entrypoint-server.sh:/home/keybase/docker/entrypoint-server.sh"
       - "./docker/entrypoint-generate.sh:/home/keybase/docker/entrypoint-generate.sh"
       - "./docker/example-keybaseca-volume:/mnt"
-    secrets:
-      - paperkey
-secrets:
-  paperkey:
-    file: ./docker/paperkey.txt 
