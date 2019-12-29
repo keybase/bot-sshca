@@ -4,7 +4,7 @@ IFS=$'\n\t'
 
 if [ -e "/mnt/keybase-ca-key" ]
 then
-  nohup bash -c "run_keybase -g 2>&1 | grep -v 'KBFS failed to FUSE mount' &"
+  nohup bash -c "KEYBASE_RUN_MODE=prod kbfsfuse /keybase | grep -v 'ERROR Mounting the filesystem failed' &"
   sleep 3
   keybase oneshot
   /home/keybase/bin/keybaseca service
