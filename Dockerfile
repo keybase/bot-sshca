@@ -1,7 +1,7 @@
 FROM alpine:latest AS builder
 
 # add dependencies
-RUN apk update && apk add --no-cache go curl git musl-dev
+RUN apk update && apk add --no-cache go curl git musl-dev gcc
 
 # build keybase binary
 WORKDIR /go
