@@ -8,4 +8,6 @@ then
   sleep 3
   keybase oneshot
   /home/keybase/bin/keybaseca service
+else
+  echo "keybase-ca-key file not found. Exiting."
 fi

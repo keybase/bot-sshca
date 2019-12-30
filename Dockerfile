@@ -1,9 +1,19 @@
-FROM golang:1.12 as builder
+FROM alpine:latest AS builder
 
-RUN go get github.com/keybase/client/go/keybase
+# add dependencies
+RUN apk update && apk add --no-cache go curl git musl-dev
+
+# build keybase binary
+WORKDIR /go
+ENV GOPATH=/go
+ENV KEYBASE_VERSION=5.0.0
+RUN go get -d github.com/keybase/client/go/keybase
+RUN cd src/github.com/keybase/client/go/keybase && git checkout v$KEYBASE_VERSION
 RUN go install -tags production github.com/keybase/client/go/keybase
-RUN go build -tags production github.com/keybase/client/go/kbfs/kbfsfuse
-RUN cp kbfsfuse /usr/bin/kbfsfuse
+
+# build kbfsfuse binary (we won't use FUSE but the bot needs KBFS for
+#     exchanging Team config files)
+RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
 
 WORKDIR /bot-sshca
 COPY . ./
@@ -17,24 +27,22 @@ RUN apk update && apk add --no-cache bash openssh sudo
 # add the keybase user
 RUN adduser -s /bin/bash -h /home/keybase -D keybase
 
+RUN chown keybase:keybase /home/keybase
+
 # this folder is needed for kbfsfuse
 RUN mkdir /keybase && chown -R keybase:keybase /keybase
-
-RUN chown keybase:keybase /usr/local/bin
-RUN chown keybase:keybase /home/keybase
 
 USER keybase
 WORKDIR /home/keybase
 
 # copy the keybase binaries from previous build step 
-COPY --from=builder /go/bin/keybase /usr/local/bin/
-COPY --from=builder /usr/bin/kbfsfuse /usr/local/bin/
-COPY --from=builder /bot-sshca/bin/keybaseca bin/
+COPY --from=builder --chown=keybase:keybase /go/bin/keybase /usr/local/bin/
+COPY --from=builder --chown=keybase:keybase /go/bin/kbfsfuse /usr/local/bin/
+COPY --from=builder --chown=keybase:keybase /bot-sshca/bin/keybaseca bin/
 
 # copy in entrypoint scripts and fix permissions
 COPY ./docker/entrypoint-generate.sh .
 COPY ./docker/entrypoint-server.sh .
-RUN chown -R keybase:keybase /home/keybase
 
 # Run container as root but only to be able to chown the Docker bind-mount, 
 # then immediately step down to the keybase user via sudo in the entrypoint scripts
