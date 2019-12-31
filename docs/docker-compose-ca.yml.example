@@ -1,0 +1,19 @@
+# Example docker-compose file for the SSH CA. Mounting the entrypoint scripts for
+# easy iterative development.
+version: '3.7'
+services:
+  kbsshca:
+    image: ca:latest
+    container_name: kbsshca
+    #command: ["./docker/entrypoint-server.sh"]
+    #command: ["./docker/entrypoint-generate.sh"]
+    command: ["sh", "-c", "sleep 1000"]
+    environment:
+      TEAMS: 'list,of,teams'
+      KEYBASE_USERNAME: 'yourusername'
+      KEYBASE_PAPERKEY: 'your paper key'
+      FORCE_WRITE: 'false'
+    volumes:
+      - "./docker/entrypoint-server.sh:/home/keybase/docker/entrypoint-server.sh"
+      - "./docker/entrypoint-generate.sh:/home/keybase/docker/entrypoint-generate.sh"
+      - "./docker/example-keybaseca-volume:/mnt"
