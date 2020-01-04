@@ -1,0 +1,16 @@
+# Example docker-compose file for the SSH CA.
+version: '3.7'
+services:
+  kbsshca:
+    image: ca:latest
+    container_name: kbsshca
+    # use the corresponding entrypoint script for your purpose
+    command: ["./docker/entrypoint-generate.sh"]
+    #command: ["./docker/entrypoint-server.sh"]
+    environment:
+      TEAMS: 'list,of,teams'
+      KEYBASE_USERNAME: 'yourusername'
+      KEYBASE_PAPERKEY: 'your paper key' # ideally, add this as a docker secret, and not in plaintext here
+      FORCE_WRITE: 'false'
+    volumes: 
+      - "./docker/example-keybaseca-volume:/mnt"
