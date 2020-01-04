@@ -10,7 +10,7 @@ touch /shared/.keep
 mkdir -p tests/generated-env
 ls tests/envFiles/ | xargs -I {} -- bash -c 'cat tests/envFiles/{} | envsubst > tests/generated-env/{}'
 
-nohup bash -c "KEYBASE_RUN_MODE=prod kbfsfuse /keybase | grep -v 'KBFS failed to FUSE mount' &"
+nohup bash -c "KEYBASE_RUN_MODE=prod kbfsfuse /keybase | grep -v 'ERROR Mounting the filesystem failed' &"
 sleep 3
 keybase oneshot --username $BOT_USERNAME --paperkey "$BOT_PAPERKEY"
 touch /shared/ready
