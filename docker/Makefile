@@ -15,7 +15,7 @@ build: reset-permissions
 
 # Generate a new CA key
 generate: env-file-exists build
-	docker run -e FORCE_WRITE=$(FORCE_WRITE) -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-generate.sh
+	docker run -e FORCE_WRITE=$(FORCE_WRITE) -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-generate.sh
 	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
 	@echo "useradd developer && mkdir -p /home/developer && chown developer:developer /home/developer  # The user that will be used for non-root logins"
 	@echo "echo \"`cat $(CURDIR)/example-keybaseca-volume/keybase-ca-key.pub`\" > /etc/ssh/ca.pub"
@@ -26,8 +26,8 @@ generate: env-file-exists build
 	@echo -e "\nSee the getting started docs for information on how to define which teams are allowed to access which servers"
 
 # Start the CA chatbot in the background
-serve: env-file-exists ca-key-exists build
-	docker run -d --restart unless-stopped -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest docker/entrypoint-server.sh
+serve: env-file-exists ca-key-exists
+	docker run -d --restart unless-stopped -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
 	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
 
 # Stop the service
