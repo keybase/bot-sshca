@@ -24,8 +24,8 @@ On a secured server (note that this server only needs docker installed) that you
 ```bash
 git clone git@github.com:keybase/bot-sshca.git
 cd bot-sshca/docker/
-cp env.sh.example env.sh
-nano env.sh         # Fill in the values including the previously generated paper key
+cp env.list.example env.list
+nano env.list       # Fill in the values including the previously generated paper key
 make generate       # Generate a new CA key
 ```
 
@@ -71,4 +71,5 @@ We recommend building kssh yourself and distributing the binary among your team 
 If you update any environment variables, it is necessary to restart the keybaseca service. This can be done 
 by running `make restart`. Note that it is not required to re-run `make generate`. 
 
-Note that this means `kssh` will not work for a brief period of time while the container restarts. 
+Note that this means `kssh` will not work for a brief period of time while the container restarts.
+
