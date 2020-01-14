@@ -41,8 +41,9 @@ COPY --from=builder --chown=keybase:keybase /go/bin/keybase /usr/local/bin/
 COPY --from=builder --chown=keybase:keybase /go/bin/kbfsfuse /usr/local/bin/
 COPY --from=builder --chown=keybase:keybase /bot-sshca/bin/keybaseca bin/
 
-# copy in entrypoint scripts and env.sh
-COPY --chown=keybase:keybase ./docker ./
+# copy in entrypoint scripts
+COPY --chown=keybase:keybase ./docker/entrypoint-generate.sh ./
+COPY --chown=keybase:keybase ./docker/entrypoint-server.sh ./
 
 # Run container as root but only to be able to chown the Docker bind-mount, 
 # then immediatetly step down to the keybase user via sudo in the entrypoint scripts

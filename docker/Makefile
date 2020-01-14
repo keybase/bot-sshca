@@ -15,7 +15,7 @@ build: reset-permissions
 
 # Generate a new CA key
 generate: env-file-exists build
-	docker run -e FORCE_WRITE=$(FORCE_WRITE) -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-generate.sh
+	docker run -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-generate.sh
 	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
 	@echo "useradd developer && mkdir -p /home/developer && chown developer:developer /home/developer  # The user that will be used for non-root logins"
 	@echo "echo \"`cat $(CURDIR)/example-keybaseca-volume/keybase-ca-key.pub`\" > /etc/ssh/ca.pub"
@@ -27,14 +27,14 @@ generate: env-file-exists build
 
 # Start the CA chatbot in the background
 serve: env-file-exists ca-key-exists
-	docker run -d --restart unless-stopped -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
+	docker run -d --restart unless-stopped --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
 	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
 
 # Stop the service
 stop:
 	docker kill `docker ps -q --filter ancestor=ca`
 
-# Restart the service (useful if you updated env.sh)
+# Restart the service (useful if you updated env.list)
 restart: stop serve
 
 # Wipe all data
@@ -52,9 +52,9 @@ reset-permissions:
 	# Avoid prompting for sudo unless the permissions actually need to be chnaged by piping find to xargs
 	find example-keybaseca-volume/ -not -user $$USER | xargs -I {} -- sudo chown -R $$USER {}
 
-# Asserts that env.sh exists
+# Asserts that env.list exists
 env-file-exists:
-	@test -e "env.sh" || (echo "You must create and fill in env.sh prior to running make" && exit 1)
+	@test -e "env.list" || (echo "You must create and fill in env.list prior to running make" && exit 1)
 
 # Assert that a CA key exists
 ca-key-exists:
