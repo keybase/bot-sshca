@@ -28,7 +28,7 @@ generate: env-file-exists build
 # Start the CA chatbot in the background
 serve: env-file-exists ca-key-exists
 	docker run -d --restart unless-stopped --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
-	@echo "Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it"
+	@echo 'Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it'
 
 # Stop the service
 stop:
