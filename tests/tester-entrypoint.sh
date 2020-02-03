@@ -2,6 +2,9 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+export "KEYBASE_USERNAME=$KSSH_USERNAME"
+export "KEYBASE_PAPERKEY=$KSSH_PAPERKEY"
+
 nohup bash -c "run_keybase -g &"
 
 # Sleep until the CA bot has started
@@ -12,7 +15,7 @@ done
 echo ""
 sleep 2
 
-keybase oneshot --username $KSSH_USERNAME --paperkey "$KSSH_PAPERKEY"
+keybase oneshot
 
 echo "========================= Launched Keybase, starting tests... ========================="
 
