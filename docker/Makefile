@@ -5,10 +5,6 @@ else
 FORCE_WRITE := false
 endif
 
-
-
-
-
 SHELL := /bin/bash
 
 .PHONY: build generate serve clean reset-permissions confirm-clean env-file-exists ca-key-exists
