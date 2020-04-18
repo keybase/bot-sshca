@@ -11,7 +11,13 @@ SHELL := /bin/bash
 
 # Build a new docker image for the CA bot
 build: reset-permissions
+ifdef DOCKER_IMAGE
+	docker pull $(DOCKER_IMAGE)
+	docker tag $(DOCKER_IMAGE) ca
+else
 	docker build -t ca -f Dockerfile-ca ..
+endif
+
 
 # Generate a new CA key
 generate: env-file-exists build
