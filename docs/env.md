@@ -106,6 +106,19 @@ export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! I'm currently lis
 export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! Being in {CURRENT_TEAM} will grant you SSH access to certain servers. Reach out to @dworken for more information."
 ```
 
+### Timeout
+
+The `KEYBASE_TIMEOUT` environment specifies the number of seconds to wait for Keybase operations. If you are running 
+the bot on an especially slow computer (ie a Raspberry Pi) or with a high latency internet connection, you may need
+to tune this. Defaults to 5 seconds. 
+
+Examples:
+
+```bash
+export KEYBASE_TIMEOUT="5"
+export KEYBASE_TIMEOUT="15"
+```
+
 ## Developer Options
 
 These environment variables are mainly useful for dev work. For security reasons, it is recommended always to run a 
