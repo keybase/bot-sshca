@@ -156,7 +156,7 @@ func SignKey(caKeyLocation, keyID, principals, expiration, publicKey string) (si
 // attacker would be able to provision SSH keys for environments that they should not have access to.
 func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, error) {
 	// Start by getting the list of teams the user is in
-	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve the list of teams the user is in: %v", err)
 	}

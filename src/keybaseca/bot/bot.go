@@ -20,7 +20,7 @@ import (
 
 // Get a running instance of the keybase chat API. Will use the configured credentials if necessary.
 func GetKBChat(conf config.Config) (*kbchat.API, error) {
-	return botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
+	return botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
 }
 
 // Get the username of the user that the keybaseca bot is running as
