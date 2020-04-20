@@ -190,7 +190,7 @@ func sendAnnouncementMessage(conf config.Config, kbc *kbchat.API) error {
 				Teams:       conf.GetTeams()})
 
 		var channel *string
-		_, err := kbc.SendMessageByTeamName(team, announcement, channel)
+		_, err := kbc.SendMessageByTeamName(team, channel, announcement)
 		if err != nil {
 			return err
 		}
