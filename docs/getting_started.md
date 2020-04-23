@@ -52,7 +52,11 @@ Now on the server where you wish to run the chatbot, start the chatbot itself:
 make serve    # Runs inside of docker for ease of use
 ```
 
-Now download the kssh binary and start SSHing! See https://github.com/keybase/bot-sshca/releases to download the most 
+You can confirm that the bot is running by sending the message `ping @bot_username` in any of the configured team chat 
+channels (if CHAT_CHANNEL is configured, the message must be sent in that specific channel). The bot should reply with 
+`pong @your_username`. 
+
+Now you can download the kssh binary and start SSHing! See https://github.com/keybase/bot-sshca/releases to download the most 
 recent version of kssh for your platform. 
 
 ```bash

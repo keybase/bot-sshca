@@ -16,6 +16,13 @@ class TestMultiTeamStrictLogging:
     def test_config(self):
         return TestConfig.getDefaultTestConfig()
 
+    def test_ping_pong_command(self, test_config):
+        run_command(f"keybase chat send --channel ssh-provision {test_config.subteam}.ssh 'ping @{test_config.bot_username}'")
+        time.sleep(5)
+        recent_messages = run_command(f"keybase chat list-unread --since 1m")
+        print(recent_messages)
+        assert (b"pong @%s" % test_config.username.encode('utf-8')) in recent_messages
+
     def test_kssh_staging_user(self, test_config):
         # Test ksshing into staging as user
         with outputs_audit_log(test_config, filename=test_env_1_log_filename, expected_number=1):

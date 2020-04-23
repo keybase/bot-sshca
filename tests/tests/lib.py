@@ -127,7 +127,7 @@ def outputs_audit_log(tc: TestConfig, filename: str, expected_number: int):
     yield
 
     # And sleep to give KBFS some time
-    time.sleep(1.5)
+    time.sleep(2.5)
 
     # Then see if there are new lines using set difference. This is only safe/reasonable since we include a
     # timestamp in audit log lines.
