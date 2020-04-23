@@ -6,12 +6,14 @@ package botwrapper
 // dependency cycle.
 
 import (
+	"time"
+
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 
 // Get a running instance of the keybase chat API. Will use the supplied credentials if necessary. If possible, it
 // is preferred to reference the `GetKBChat` method in the `bot` package instead
-func GetKBChat(keybaseHomeDir, keybasePaperKey, keybaseUsername string) (*kbchat.API, error) {
+func GetKBChat(keybaseHomeDir, keybasePaperKey, keybaseUsername string, keybaseTimeout time.Duration) (*kbchat.API, error) {
 	runOptions := kbchat.RunOptions{}
 	if keybaseHomeDir != "" {
 		runOptions.HomeDir = keybaseHomeDir
@@ -19,5 +21,10 @@ func GetKBChat(keybaseHomeDir, keybasePaperKey, keybaseUsername string) (*kbchat
 	if keybasePaperKey != "" && keybaseUsername != "" {
 		runOptions.Oneshot = &kbchat.OneshotOptions{PaperKey: keybasePaperKey, Username: keybaseUsername}
 	}
-	return kbchat.Start(runOptions)
+	api, err := kbchat.Start(runOptions)
+	if err != nil {
+		return nil, err
+	}
+	api.Timeout = keybaseTimeout
+	return api, nil
 }

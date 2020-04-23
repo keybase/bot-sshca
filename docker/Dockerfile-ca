@@ -8,7 +8,7 @@ RUN apk update && apk add --no-cache go curl git musl-dev gcc
 # build keybase binary
 WORKDIR /go
 ENV GOPATH=/go
-ENV KEYBASE_VERSION=5.0.0
+ENV KEYBASE_VERSION=5.4.0
 RUN go get -d github.com/keybase/client/go/keybase
 RUN cd src/github.com/keybase/client/go/keybase && git checkout v$KEYBASE_VERSION
 RUN go install -tags production github.com/keybase/client/go/keybase
