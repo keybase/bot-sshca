@@ -11,7 +11,7 @@ export "TEAMS=$TEAMS"
 export "KEYBASE_USERNAME=$KEYBASE_USERNAME"
 export "KEYBASE_PAPERKEY=$KEYBASE_PAPERKEY"
 nohup bash -c "KEYBASE_RUN_MODE=prod kbfsfuse /keybase | grep -v 'ERROR Mounting the filesystem failed' &"
-sleep ${KEYBASE_TIMEOUT:-3}
+sleep ${KEYBASE_TIMEOUT:-5}
 keybase oneshot
 bin/keybaseca service
 EOF
