@@ -21,10 +21,9 @@ func GetKBChat(keybaseHomeDir, keybasePaperKey, keybaseUsername string, keybaseT
 	if keybasePaperKey != "" && keybaseUsername != "" {
 		runOptions.Oneshot = &kbchat.OneshotOptions{PaperKey: keybasePaperKey, Username: keybaseUsername}
 	}
-	api, err := kbchat.Start(runOptions)
+	api, err := kbchat.Start(runOptions, kbchat.CustomTimeout(keybaseTimeout))
 	if err != nil {
 		return nil, err
 	}
-	api.Timeout = keybaseTimeout
 	return api, nil
 }
