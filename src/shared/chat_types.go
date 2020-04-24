@@ -82,21 +82,21 @@ func IsAckResponse(msg string) bool {
 }
 
 // Generate a ping request message
-func GeneratePingRequest(botname string) string {
-	return fmt.Sprintf("ping @%s", botname)
+func GeneratePingRequest(username string) string {
+	return fmt.Sprintf("ping @%s", username)
 }
 
 // Returns whether the given message is a ping request
 func IsPingRequest(msg, botUsername string) bool {
-	return strings.TrimSpace(msg) == fmt.Sprintf("ping @%s", botUsername)
+	return strings.TrimSpace(msg) == GeneratePingRequest(botUsername)
 }
 
 // Generate a ping response message
-func GeneratePingResponse(botname string) string {
-	return fmt.Sprintf("pong @%s", botname)
+func GeneratePingResponse(username string) string {
+	return fmt.Sprintf("pong @%s", username)
 }
 
 // Returns whether the given message is a ping response
 func IsPingResponse(msg, localUsername string) bool {
-	return strings.TrimSpace(msg) == fmt.Sprintf("pong @%s", localUsername)
+	return strings.TrimSpace(msg) == GeneratePingResponse(localUsername)
 }
