@@ -53,7 +53,7 @@ make serve    # Runs inside of docker for ease of use
 ```
 
 You can confirm that the bot is running by sending the message `ping @bot_username` in any of the configured team chat 
-channels (if CHAT_CHANNEL is configured, the message must be sent in that specific channel). The bot should reply with 
+channels (if `CHAT_CHANNEL` is configured, the message must be sent in that specific channel). The bot should reply with 
 `pong @your_username`. 
 
 Now you can download the kssh binary and start SSHing! See https://github.com/keybase/bot-sshca/releases to download the most 
@@ -76,4 +76,3 @@ If you update any environment variables, it is necessary to restart the keybasec
 by running `make restart`. Note that it is not required to re-run `make generate`. 
 
 Note that this means `kssh` will not work for a brief period of time while the container restarts.
-
