@@ -20,7 +20,6 @@ class TestMultiTeamStrictLogging:
         run_command(f"keybase chat send --channel ssh-provision {test_config.subteam}.ssh 'ping @{test_config.bot_username}'")
         time.sleep(5)
         recent_messages = run_command(f"keybase chat list-unread --since 1m")
-        print(recent_messages)
         assert (b"pong @%s" % test_config.username.encode('utf-8')) in recent_messages
 
     def test_kssh_staging_user(self, test_config):
