@@ -88,7 +88,7 @@ func StartBot(conf config.Config) error {
 		if shared.IsPingRequest(messageBody, kbc.GetUsername()) {
 			// Respond to messages of the form `ping @botName` with `pong @senderName`
 			log.Debug("Responding to ping with pong")
-			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, fmt.Sprintf(shared.GeneratePingResponse(msg.Message.Sender.Username)))
+			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GeneratePingResponse(msg.Message.Sender.Username))
 			if err != nil {
 				LogError(conf, kbc, msg, err)
 				continue
