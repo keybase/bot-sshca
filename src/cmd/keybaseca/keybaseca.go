@@ -23,6 +23,7 @@ import (
 	"github.com/keybase/bot-sshca/src/kssh"
 	"github.com/keybase/bot-sshca/src/shared"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -34,6 +35,10 @@ func main() {
 	app.Usage = "An SSH CA built on top of Keybase"
 	app.Version = VersionNumber
 	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "Log debug information",
+		},
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",
 			Hidden: true,
@@ -50,21 +55,19 @@ func main() {
 			Name:   "backup",
 			Usage:  "Print the current CA private key to stdout for backup purposes",
 			Action: backupAction,
+			Before: beforeAction,
 		},
 		{
-			Name:  "generate",
-			Usage: "Generate a new CA key",
-			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name: "overwrite-existing-key",
-				},
-			},
+			Name:   "generate",
+			Usage:  "Generate a new CA key",
 			Action: generateAction,
+			Before: beforeAction,
 		},
 		{
 			Name:   "service",
 			Usage:  "Start the CA service in the foreground",
 			Action: serviceAction,
+			Before: beforeAction,
 		},
 		{
 			Name:  "sign",
@@ -81,6 +84,7 @@ func main() {
 				},
 			},
 			Action: signAction,
+			Before: beforeAction,
 		},
 	}
 	app.Action = mainAction
@@ -125,7 +129,7 @@ func generateAction(c *cli.Context) error {
 		return err
 	}
 	captureControlCToDeleteClientConfig(conf)
-	err = sshutils.Generate(conf, c.Bool("overwrite-existing-key") || os.Getenv("FORCE_WRITE") == "true")
+	err = sshutils.Generate(conf, strings.ToLower(os.Getenv("FORCE_WRITE")) == "true")
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new key: %v", err)
 	}
@@ -186,6 +190,14 @@ func signAction(c *cli.Context) error {
 	} else {
 		fmt.Printf("Provisioned new certificate. Place this in %s in order to use it with ssh.\n", certPath)
 		fmt.Printf("\n```\n%s```\n", signature)
+	}
+	return nil
+}
+
+// A global before action that handles the --debug flag by setting the logrus logging level
+func beforeAction(c *cli.Context) error {
+	if c.GlobalBool("debug") {
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 	return nil
 }
@@ -280,6 +292,8 @@ func writeClientConfig(conf config.Config) error {
 		}
 	}
 
+	logrus.Debugf("Wrote kssh client config files for the teams: %v", teams)
+
 	return nil
 }
 
@@ -299,6 +313,9 @@ func deleteClientConfig(conf config.Config) error {
 			return err
 		}
 	}
+
+	logrus.Debugf("Deleted kssh client config files for the teams: %v", teams)
+
 	return nil
 }
 

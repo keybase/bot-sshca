@@ -14,10 +14,16 @@ import (
 func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
 	empty := shared.SignatureResponse{}
 
+	// Start communicating with the Keybase chat API
 	runOptions := kbchat.RunOptions{KeybaseLocation: GetKeybaseBinaryPath()}
 	kbc, err := kbchat.Start(runOptions)
 	if err != nil {
 		return empty, fmt.Errorf("error starting Keybase chat: %v", err)
+	}
+
+	// Validate that the bot user is different than the current user
+	if config.BotName == kbc.GetUsername() {
+		return empty, fmt.Errorf("cannot run kssh and keybaseca as the same user: %s", config.BotName)
 	}
 
 	sub, err := kbc.ListenForNewTextMessages()
@@ -42,7 +48,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			default:
 
 			}
-			_, err = kbc.SendMessageByTeamName(config.TeamName, shared.GenerateAckRequest(kbc.GetUsername()), getChannel(config))
+			_, err = kbc.SendMessageByTeamName(config.TeamName, getChannel(config), shared.GenerateAckRequest(kbc.GetUsername()))
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)
 			}
@@ -62,7 +68,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			return empty, fmt.Errorf("failed to read message: %v", err)
 		}
 
-		if msg.Message.Content.Type != "text" {
+		if msg.Message.Content.TypeName != "text" {
 			continue
 		}
 
@@ -80,7 +86,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			if err != nil {
 				return empty, err
 			}
-			_, err = kbc.SendMessageByTeamName(config.TeamName, shared.SignatureRequestPreamble+string(marshaledRequest), getChannel(config))
+			_, err = kbc.SendMessageByTeamName(config.TeamName, getChannel(config), shared.SignatureRequestPreamble+string(marshaledRequest))
 			if err != nil {
 				return empty, err
 			}

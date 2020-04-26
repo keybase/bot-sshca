@@ -16,6 +16,12 @@ class TestMultiTeamStrictLogging:
     def test_config(self):
         return TestConfig.getDefaultTestConfig()
 
+    def test_ping_pong_command(self, test_config):
+        run_command(f"keybase chat send --channel ssh-provision {test_config.subteam}.ssh 'ping @{test_config.bot_username}'")
+        time.sleep(5)
+        recent_messages = run_command(f"keybase chat list-unread --since 1m")
+        assert (b"pong @%s" % test_config.username.encode('utf-8')) in recent_messages
+
     def test_kssh_staging_user(self, test_config):
         # Test ksshing into staging as user
         with outputs_audit_log(test_config, filename=test_env_1_log_filename, expected_number=1):
@@ -121,11 +127,10 @@ class TestMultiTeamStrictLogging:
                 if "----" in line and "PRIVATE" in line and "BEGIN" in line:
                     add = True
                 if add:
-                    keyLines.append(line)
+                    keyLines.append(line.strip())
                 if "----" in line and "PRIVATE" in line and "END" in line:
                     add = False
-        key = '\n'.join(keyLines)
-        print(key)
+        key = '\n'.join(keyLines) + '\n'
         with open('/tmp/ssh/cakey', 'w+') as f:
             f.write(key)
         run_command("chmod 0600 /tmp/ssh/cakey")

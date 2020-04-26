@@ -3,13 +3,16 @@ module github.com/keybase/bot-sshca
 go 1.12
 
 require (
-	github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681
-	github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/google/uuid v1.1.1
-	github.com/keybase/go-keybase-chat-bot v0.0.0-20190812134859-bc54fd9cf83b
-	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.3.0
-	github.com/urfave/cli v1.21.0
-	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
-	golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e // indirect
+	github.com/keybase/go-keybase-chat-bot v0.0.0-20200424150524-0f0e2ab404cb
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/sirupsen/logrus v1.5.0
+	github.com/stretchr/testify v1.5.1
+	github.com/urfave/cli v1.22.4
+	golang.org/x/crypto v0.0.0-20200420104511-884d27f42877
+	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

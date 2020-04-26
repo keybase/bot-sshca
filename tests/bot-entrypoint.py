@@ -23,15 +23,15 @@ def load_env():
         ". %s\n"
         "bin/keybaseca --wipe-all-configs\n"
         "bin/keybaseca --wipe-logs || true\n"
-        "bin/keybaseca generate --overwrite-existing-key\n"
+        "FORCE_WRITE=true bin/keybaseca generate\n"
         # The output from this backup is tested in test_env_1.py
         "echo yes | bin/keybaseca backup > /shared/cakey.backup\n"
         # The output from this sign operation is tested in test_env_1.py
         "ssh-keygen -t ed25519 -f /shared/userkey -N '' && bin/keybaseca sign --public-key /shared/userkey.pub > /shared/keybaseca-sign.out\n"
-        "bin/keybaseca service &"
+        "bin/keybaseca --debug service > /tmp/debug.out &"
     ) % (shlex.quote(path)))
     # Sleep so keybaseca has time to start
-    time.sleep(5)
+    time.sleep(10)
     return "OK"
 
 if __name__ == '__main__':

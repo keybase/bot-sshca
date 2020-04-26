@@ -8,6 +8,15 @@ if [ -z "$CIRCLECI" ]; then
   go test ./... 2>&1 | grep -v 'no test files'
 fi
 
+# Attempt to build the docs
+set +u
+if [ -z "$CIRCLECI" ]; then
+  cd docs/
+  make html 2>&1 > /dev/null
+  echo "Successfully built documentation"
+  cd ../
+fi
+
 # Ensure we have the correct environment variables
 if [[ -f "tests/env.sh" ]]; then
   echo "env.sh already exists, skipping configuring new accounts..."
@@ -31,8 +40,7 @@ NC='\033[0m'
 indent() { sed 's/^/    /'; }
 # Reset docker and wipe all volumes
 reset_docker() {
-    docker-compose down -v
-    docker system prune -f
+    docker-compose down -v --remove-orphans --rmi local
 }
 
 cd tests/

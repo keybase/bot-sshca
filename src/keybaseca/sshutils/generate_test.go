@@ -19,7 +19,7 @@ func TestGenerateNewSSHKey(t *testing.T) {
 	require.NoError(t, err)
 
 	err = GenerateNewSSHKey(filename, false, false)
-	require.Errorf(t, err, "Refusing to overwrite existing key (try with --overwrite-existing-key or FORCE_WRITE=true if you're sure): "+filename)
+	require.Errorf(t, err, "Refusing to overwrite existing key (try with FORCE_WRITE=true if you're sure): "+filename)
 
 	err = GenerateNewSSHKey(filename, true, false)
 	require.NoError(t, err)
@@ -31,5 +31,5 @@ func TestGenerateNewSSHKey(t *testing.T) {
 	bytes, err = ioutil.ReadFile(shared.KeyPathToPubKey(filename))
 	require.NoError(t, err)
 	require.False(t, strings.Contains(string(bytes), "PRIVATE"))
-	require.True(t, strings.HasPrefix(string(bytes), "ssh-"))
+	require.True(t, strings.HasPrefix(string(bytes), "ssh-ed25519") || strings.HasPrefix(string(bytes), "ecdsa-sha2-nistp256"))
 }

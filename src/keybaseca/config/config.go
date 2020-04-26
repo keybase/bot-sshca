@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
+	"time"
+
 	"github.com/keybase/bot-sshca/src/keybaseca/constants"
+
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
+
 	"github.com/keybase/bot-sshca/src/shared"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Represents a loaded and validated config for keybaseca
@@ -22,11 +29,20 @@ type Config interface {
 	GetChannelName() string
 	GetLogLocation() string
 	GetStrictLogging() bool
+	GetAnnouncement() string
+	DebugString() string
+	GetKeybaseTimeout() time.Duration
 }
 
 // Validate the given config file. If offline, do so without connecting to keybase (used in code that is meant
 // to function without any reliance on Keybase).
 func ValidateConfig(conf EnvConfig, offline bool) error {
+	if conf.getKeybaseTimeout() != "" {
+		_, err := strconv.Atoi(conf.getKeybaseTimeout())
+		if err != nil {
+			return fmt.Errorf("failed to validate KEYBASE_TIMEOUT, value is not an integer: %v", err)
+		}
+	}
 	if len(conf.GetTeams()) == 0 {
 		return fmt.Errorf("must specify at least one team via the TEAMS environment variable")
 	}
@@ -55,13 +71,43 @@ func ValidateConfig(conf EnvConfig, offline bool) error {
 			return fmt.Errorf("STRICT_LOGGING must be either 'true' or 'false', '%s' is not valid", conf.getStrictLogging())
 		}
 	}
+	if conf.GetKeybaseUsername() != "" || conf.GetKeybasePaperKey() != "" {
+		if conf.GetKeybaseUsername() == "" && conf.GetKeybasePaperKey() != "" {
+			return fmt.Errorf("you must set set a username if you set a paper key (username='%s', key='%s')", conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+		}
+		if conf.GetKeybasePaperKey() == "" && conf.GetKeybaseUsername() != "" {
+			return fmt.Errorf("you must set set a paper key if you set a username (username='%s', key='%s')", conf.GetKeybaseUsername(), conf.GetKeybasePaperKey())
+		}
+		if !offline {
+			err := validateUsernamePaperkey(conf.GetKeybaseHomeDir(), conf.GetKeybaseUsername(), conf.GetKeybasePaperKey(), conf.GetKeybaseTimeout())
+			if err != nil {
+				return fmt.Errorf("failed to validate KEYBASE_USERNAME and KEYBASE_PAPERKEY: %v", err)
+			}
+		}
+	}
+	log.Debugf("Validated config: %s", conf.DebugString())
+	return nil
+}
+
+func validateUsernamePaperkey(homedir, username, paperkey string, keybaseTimeout time.Duration) error {
+	api, err := botwrapper.GetKBChat(homedir, username, paperkey, keybaseTimeout)
+	if err != nil {
+		return err
+	}
+	validatedUsername := api.GetUsername()
+	if validatedUsername == "" {
+		return fmt.Errorf("failed to get a username from kbChat, got an empty string")
+	}
+	if validatedUsername != username {
+		return fmt.Errorf("validated_username=%s and expected_username=%s do not match", validatedUsername, username)
+	}
 	return nil
 }
 
 // Validates the given teamName and channelName to determine whether or not the given channelName is the name
 // of a channel inside the given team. Returns nil if everything validates.
 func validateChannel(conf Config, teamName string, channelName string) error {
-	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
 	if err != nil {
 		return err
 	}
@@ -212,6 +258,37 @@ func (ef *EnvConfig) GetChannelName() string {
 		panic("Failed to retrieve channel name! This should never happen due to config validation...")
 	}
 	return channel
+}
+
+// Get the announcement string used when the bot is started up. May be empty.
+func (ef *EnvConfig) GetAnnouncement() string {
+	return os.Getenv("ANNOUNCEMENT")
+}
+
+// Get the timeout for interacting with Keybase specified as a string. May be empty.
+func (ef *EnvConfig) getKeybaseTimeout() string {
+	return os.Getenv("KEYBASE_TIMEOUT")
+}
+
+// Get the timeout for interacting with Keybase as a time.Duration. Defaults to 5 seconds.
+func (ef *EnvConfig) GetKeybaseTimeout() time.Duration {
+	timeoutStr := ef.getKeybaseTimeout()
+	if timeoutStr == "" {
+		return 5 * time.Second
+	}
+	timeoutInt, err := strconv.Atoi(timeoutStr)
+	if err != nil {
+		panic("Found non-int in the keybase timeout field! This should never happen due to config validation...")
+	}
+	return time.Duration(timeoutInt) * time.Second
+}
+
+// Dump this EnvConfig to a string for debugging purposes
+func (ef *EnvConfig) DebugString() string {
+	return fmt.Sprintf("CAKeyLocation='%s'; KeybaseHomeDir='%s'; KeybasePaperKey='%s'; KeybaseUsername='%s'; "+
+		"KeyExpiration='%s'; Teams='%s'; ChatTeam='%s'; ChannelName='%s'; LogLocation='%s'; StrictLogging='%s'",
+		ef.GetCAKeyLocation(), ef.GetKeybaseHomeDir(), ef.GetKeybasePaperKey(), ef.GetKeybaseUsername(),
+		ef.GetKeyExpiration(), ef.GetTeams(), ef.GetChatTeam(), ef.GetChannelName(), ef.GetLogLocation(), ef.getStrictLogging())
 }
 
 // Split a teamChannel of the form team.foo.bar#chan into "team.foo.bar", "chan"

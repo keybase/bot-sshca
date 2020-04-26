@@ -1,7 +1,9 @@
-# Keybase SSH CA Bot Configuration
+# Advanced Configuration
 
 The SSH CA bot is configured via environment variables. This documents lists the different environment variables 
 used by the bot and their purpose. 
+
+## Environment Variables
 
 ### TEAMS
 
@@ -84,9 +86,42 @@ export CHAT_CHANNEL="team.prod#ssh-provision"
 export CHAT_CHANNEL="team.ssh_bot#general"
 ```
 
-### Developer Options
+### Announcement
 
-These environment variables are mainly useful for dev work. For security reasons, it is recommended to always run a 
+The `ANNOUNCEMENT` environment variable contains a string that will be announced in all of the configured teams when
+the bot is started. This is useful if you would like the bot to announce the fact it has started and granted access in 
+a given team. The `ANNOUNCEMENT` environment variable supports a number of templating variables that will be instantiated
+based off of the current config. These are:
+
+* `{USERNAME}` will be replaced with the username of the bot
+* `{CURRENT_TEAM}` will be replaced with the team that the message is being sent in
+* `{TEAMS}` will be replaced with the comma separated list of teams that the bot is running in
+
+Examples:
+
+```bash
+export ANNOUNCEMENT="SSH CA bot starting up..."
+export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! See github.com/keybase/bot-sshca for information on using Keybase for SSH."
+export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! I'm currently listening in {TEAMS}."
+export ANNOUNCEMENT="Hello! I'm {USERNAME} and I'm an SSH bot! Being in {CURRENT_TEAM} will grant you SSH access to certain servers. Reach out to @dworken for more information."
+```
+
+### Timeout
+
+The `KEYBASE_TIMEOUT` environment specifies the number of seconds to wait for Keybase operations. If you are running 
+the bot on an especially slow computer (ie a Raspberry Pi) or with a high latency internet connection, you may need
+to tune this. Defaults to 5 seconds. 
+
+Examples:
+
+```bash
+export KEYBASE_TIMEOUT="5"
+export KEYBASE_TIMEOUT="15"
+```
+
+## Developer Options
+
+These environment variables are mainly useful for dev work. For security reasons, it is recommended always to run a 
 production CA chat bot on an isolated machine. These options make it possible to run a CA chat bot on a machine where 
 you currently are logged into another account. 
 

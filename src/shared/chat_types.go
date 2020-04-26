@@ -59,9 +59,11 @@ func ParseSignatureResponse(body string) (SignatureResponse, error) {
 	return sr, err
 }
 
+const AckRequestPrefix = "AckRequest--"
+
 // Generate an AckRequest for the given username
 func GenerateAckRequest(username string) string {
-	return "AckRequest--" + username
+	return AckRequestPrefix + username
 }
 
 // Generate an AckResponse in response to the given ack request
@@ -71,10 +73,30 @@ func GenerateAckResponse(ackRequest string) string {
 
 // Returns whether the given message is an ack request
 func IsAckRequest(msg string) bool {
-	return strings.HasPrefix(msg, "AckRequest--")
+	return strings.HasPrefix(msg, AckRequestPrefix)
 }
 
 // Returns whether the given message is an ack response
 func IsAckResponse(msg string) bool {
 	return strings.HasPrefix(msg, "Ack--")
+}
+
+// Generate a ping request message
+func GeneratePingRequest(username string) string {
+	return fmt.Sprintf("ping @%s", username)
+}
+
+// Returns whether the given message is a ping request
+func IsPingRequest(msg, botUsername string) bool {
+	return strings.TrimSpace(msg) == GeneratePingRequest(botUsername)
+}
+
+// Generate a ping response message
+func GeneratePingResponse(username string) string {
+	return fmt.Sprintf("pong @%s", username)
+}
+
+// Returns whether the given message is a ping response
+func IsPingResponse(msg, localUsername string) bool {
+	return strings.TrimSpace(msg) == GeneratePingResponse(localUsername)
 }

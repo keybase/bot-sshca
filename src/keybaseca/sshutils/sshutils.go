@@ -28,7 +28,7 @@ func GenerateNewSSHKey(filename string, overwrite bool, printPubKey bool) error 
 				return err
 			}
 		} else {
-			return fmt.Errorf("Refusing to overwrite existing key (try with --overwrite-existing-key or FORCE_WRITE=true if you're sure): %s", filename)
+			return fmt.Errorf("Refusing to overwrite existing key (try with FORCE_WRITE=true if you're sure): %s", filename)
 		}
 	}
 
@@ -156,7 +156,7 @@ func SignKey(caKeyLocation, keyID, principals, expiration, publicKey string) (si
 // attacker would be able to provision SSH keys for environments that they should not have access to.
 func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, error) {
 	// Start by getting the list of teams the user is in
-	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername())
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve the list of teams the user is in: %v", err)
 	}
@@ -170,7 +170,7 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 	for _, result := range results {
 		if result.Role != 0 {
 			// result.Role == 0 means they are an impicit admin in the team and are not actually a member
-			teamToMembership[result.TeamName] = true
+			teamToMembership[result.FqName] = true
 		}
 	}
 
