@@ -42,7 +42,7 @@ func main() {
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",
 			Hidden: true,
-			Usage:  "Used in the integration tests to clean all client configs from KBFS",
+			Usage:  "Clean all client configs the CA Keybase user can find from KBFS",
 		},
 		cli.BoolFlag{
 			Name:   "wipe-logs",
@@ -214,6 +214,8 @@ func mainAction(c *cli.Context) error {
 		semaphore := sync.WaitGroup{}
 		semaphore.Add(len(teams))
 		boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
+		teamsFound := []string{}
+		teamsFoundMutex := sync.Mutex{}
 		for _, team := range teams {
 			go func(team string) {
 				// Blocks until there is room in boundChan
@@ -226,6 +228,9 @@ func mainAction(c *cli.Context) error {
 					if err != nil {
 						fmt.Printf("%v\n", err)
 					}
+					teamsFoundMutex.Lock()
+					teamsFound = append(teamsFound, team)
+					teamsFoundMutex.Unlock()
 				}
 				semaphore.Done()
 
@@ -234,6 +239,7 @@ func mainAction(c *cli.Context) error {
 			}(team)
 		}
 		semaphore.Wait()
+		fmt.Printf("Deleted configs found in these teams: %+v\n", teamsFound)
 	case c.Bool("wipe-logs"):
 		conf, err := loadServerConfig()
 		if err != nil {

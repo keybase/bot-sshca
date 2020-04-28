@@ -3,6 +3,8 @@ keybaseca.config
 nohup.out
 env.list
 __pycache__
+**/.mypy_cache/
+tests/env.sh
 
 # sphinx generated files:
 _build

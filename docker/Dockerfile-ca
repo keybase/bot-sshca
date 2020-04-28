@@ -44,6 +44,7 @@ COPY --from=builder --chown=keybase:keybase /bot-sshca/bin/keybaseca bin/
 # copy in entrypoint scripts
 COPY --chown=keybase:keybase ./docker/entrypoint-generate.sh ./
 COPY --chown=keybase:keybase ./docker/entrypoint-server.sh ./
+COPY --chown=keybase:keybase ./docker/entrypoint-cleanup.sh ./
 
 # Run container as root but only to be able to chown the Docker bind-mount, 
 # then immediatetly step down to the keybase user via sudo in the entrypoint scripts

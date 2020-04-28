@@ -21,7 +21,7 @@ endif
 
 # Generate a new CA key
 generate: env-file-exists build
-	docker run -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-generate.sh
+	docker run --init -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-generate.sh
 	@echo -e "\nRun these commands on each server that you wish to use with the CA chatbot\n"
 	@echo "useradd developer && mkdir -p /home/developer && chown developer:developer /home/developer  # The user that will be used for non-root logins"
 	@echo "echo \"`cat $(CURDIR)/example-keybaseca-volume/keybase-ca-key.pub`\" > /etc/ssh/ca.pub"
@@ -33,17 +33,21 @@ generate: env-file-exists build
 
 # Start the CA chatbot in the background
 serve: env-file-exists ca-key-exists
-	docker run -d --restart unless-stopped --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
+	docker run -d --init --restart unless-stopped --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-server.sh
 	@echo 'Started CA bot service in the background... Use `docker ps` and `docker logs` to monitor it'
 
 # Stop the service
-stop:
+stop: clean-kssh
 	docker kill `docker ps -q --filter ancestor=ca`
 
 # Restart the service (useful if you updated env.list)
 restart: stop serve
 
-# Wipe all data
+# Delete all kssh config files
+clean-kssh: env-file-exists
+	docker run --init -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-cleanup.sh
+
+# Delete all CA data
 clean: confirm-clean reset-permissions
 	@# Sudo since it is likely owned by another use since it was written from a docker container
 	sudo rm -rf example-keybaseca-volume/keybaseca*
