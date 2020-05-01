@@ -10,23 +10,83 @@ import (
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
 
-// Get a signed SSH key from interacting with the CA chatbot
-func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.SignatureResponse, error) {
-	empty := shared.SignatureResponse{}
+type Bot struct {
+	api *kbchat.API
+}
 
+type ConfiguredBot struct {
+	conf Config
+	api  *kbchat.API
+}
+
+func NewBot() (bot Bot, err error) {
 	// Start communicating with the Keybase chat API
 	runOptions := kbchat.RunOptions{KeybaseLocation: GetKeybaseBinaryPath()}
-	kbc, err := kbchat.Start(runOptions)
+	api, err := kbchat.Start(runOptions)
 	if err != nil {
-		return empty, fmt.Errorf("error starting Keybase chat: %v", err)
+		return bot, fmt.Errorf("error starting Keybase chat: %v", err)
 	}
+	return Bot{api: api}, nil
+}
+
+// Get the kssh.Config. botName is the team specified via --bot if one was specified, otherwise the empty string
+func (b *Bot) Configure(botName string) (cbot ConfiguredBot, err error) {
+	// They specified
+	conf, err := b.getConfig(botName)
+	return ConfiguredBot{conf: conf, api: b.api}, nil
+}
+
+// Get the kssh.Config. botName is the team specified via --bot if one was specified, otherwise the empty string
+func (b *Bot) getConfig(botName string) (conf Config, err error) {
+	// They specified a bot via `kssh --bot cabot ...`
+	if botName != "" {
+		conf, err = b.LoadConfigForBot(botName)
+		if err != nil {
+			return Config{}, fmt.Errorf("Failed to load config file for team=%s: %v", conf.TeamName, err)
+		}
+		return conf, nil
+	}
+
+	// Check if they set a default bot and retrieve the config for that bot/team if so
+	defaultBot, defaultTeam, err := GetDefaultBotAndTeam()
+	if err != nil {
+		return Config{}, err
+	}
+	if defaultBot != "" && defaultTeam != "" {
+		conf, err := b.LoadConfig(defaultTeam)
+		if err != nil || conf == nil {
+			return Config{}, fmt.Errorf("Failed to load config file for default bot=%s, team=%s: %v", defaultBot, defaultTeam, err)
+		}
+		return *conf, nil
+	}
+
+	// No specified bot and no default bot, fallback and load all the configs
+	configs, botNames, err := b.LoadConfigs()
+	if err != nil {
+		return Config{}, fmt.Errorf("Failed to load config file(s): %v", err)
+	}
+	switch len(configs) {
+	case 0:
+		return Config{}, fmt.Errorf("Did not find any config files in KBFS (is `keybaseca service` running?)")
+	case 1:
+		return configs[0], nil
+	default:
+		noDefaultTeamMessage := fmt.Sprintf("Found %v config files (%s). No default bot is configured. \n"+
+			"Either specify a team via `kssh --bot cabotName` or set a default bot via `kssh --set-default-bot cabotName`", len(configs), strings.Join(botNames, ", "))
+		return Config{}, fmt.Errorf(noDefaultTeamMessage)
+	}
+}
+
+// Get a signed SSH key from interacting with the CA chatbot
+func (cb *ConfiguredBot) GetSignedKey(request shared.SignatureRequest) (shared.SignatureResponse, error) {
+	empty := shared.SignatureResponse{}
 
 	// Validate that the bot user is different than the current user
-	if config.BotName == kbc.GetUsername() {
-		return empty, fmt.Errorf("cannot run kssh and keybaseca as the same user: %s", config.BotName)
+	if cb.conf.BotName == cb.api.GetUsername() {
+		return empty, fmt.Errorf("cannot run kssh and keybaseca as the same user: %s", cb.conf.BotName)
 	}
 
-	sub, err := kbc.ListenForNewTextMessages()
+	sub, err := cb.api.ListenForNewTextMessages()
 	if err != nil {
 		return empty, fmt.Errorf("error subscribing to messages: %v", err)
 	}
@@ -48,7 +108,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			default:
 
 			}
-			_, err = kbc.SendMessageByTeamName(config.TeamName, getChannel(config), shared.GenerateAckRequest(kbc.GetUsername()))
+			_, err = cb.api.SendMessageByTeamName(cb.conf.TeamName, cb.getChannel(), shared.GenerateAckRequest(cb.api.GetUsername()))
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)
 			}
@@ -72,7 +132,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			continue
 		}
 
-		if msg.Message.Sender.Username != config.BotName {
+		if msg.Message.Sender.Username != cb.conf.BotName {
 			continue
 		}
 
@@ -86,7 +146,7 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 			if err != nil {
 				return empty, err
 			}
-			_, err = kbc.SendMessageByTeamName(config.TeamName, getChannel(config), shared.SignatureRequestPreamble+string(marshaledRequest))
+			_, err = cb.api.SendMessageByTeamName(cb.conf.TeamName, cb.getChannel(), shared.SignatureRequestPreamble+string(marshaledRequest))
 			if err != nil {
 				return empty, err
 			}
@@ -109,10 +169,10 @@ func GetSignedKey(config ConfigFile, request shared.SignatureRequest) (shared.Si
 
 // Get the configured channel name from the given config file. Returns either a pointer to the channel name string
 // or a null pointer.
-func getChannel(config ConfigFile) *string {
+func (cb *ConfiguredBot) getChannel() *string {
 	var channel *string
-	if config.ChannelName != "" {
-		channel = &config.ChannelName
+	if cb.conf.ChannelName != "" {
+		channel = &cb.conf.ChannelName
 	}
 	return channel
 }

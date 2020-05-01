@@ -3,9 +3,13 @@ package bot
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/keybase/bot-sshca/src/keybaseca/botwrapper"
+	"github.com/keybase/bot-sshca/src/kssh"
 
 	auditlog "github.com/keybase/bot-sshca/src/keybaseca/log"
 
@@ -15,40 +19,40 @@ import (
 	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
-// Get a running instance of the keybase chat API. Will use the configured credentials if necessary.
-func GetKBChat(conf config.Config) (*kbchat.API, error) {
-	return botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
+type Bot struct {
+	conf config.Config
+	api  *kbchat.API
 }
 
-// Get the username of the user that the keybaseca bot is running as
-func GetUsername(conf config.Config) (string, error) {
-	kbChat, err := GetKBChat(conf)
+// create new
+// Get a running instance of the keybase chat API. Will use the configured credentials if necessary.
+func NewBot(conf config.Config) (bot Bot, err error) {
+	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
 	if err != nil {
-		return "", fmt.Errorf("failed to start Keybase chat: %v", err)
+		return bot, fmt.Errorf("error starting Keybase chat: %v", err)
 	}
-	username := kbChat.GetUsername()
-	if username == "" {
-		return "", fmt.Errorf("failed to get a username from kbChat, got an empty string")
-	}
-	return username, nil
+	return Bot{conf: conf, api: api}, nil
 }
 
 // Start the keybaseca bot in an infinite loop. Does not return unless it encounters an unrecoverable error.
-func StartBot(conf config.Config) error {
-	kbc, err := GetKBChat(conf)
+func (b *Bot) Start() error {
+	err := b.writeClientConfig()
 	if err != nil {
-		return fmt.Errorf("error starting Keybase chat: %v", err)
+		return fmt.Errorf("failed to start bot due to error while writing client config: %v", err)
 	}
+	b.captureControlCToDeleteClientConfig()
+	defer b.DeleteAllClientConfigs()
 
-	err = sendAnnouncementMessage(conf, kbc)
+	err = b.sendAnnouncementMessage()
 	if err != nil {
 		return fmt.Errorf("failed to start bot due to error while sending announcement: %v", err)
 	}
 
-	sub, err := kbc.ListenForNewTextMessages()
+	sub, err := b.api.ListenForNewTextMessages()
 	if err != nil {
 		return fmt.Errorf("error subscribing to messages: %v", err)
 	}
@@ -68,7 +72,7 @@ func StartBot(conf config.Config) error {
 
 		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, messageBody)
 
-		if msg.Message.Sender.Username == kbc.GetUsername() {
+		if msg.Message.Sender.Username == b.api.GetUsername() {
 			log.Debug("Skipping message since it comes from the bot user")
 			if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
 				log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
@@ -80,49 +84,49 @@ func StartBot(conf config.Config) error {
 		// Note that this line is one of the main security barriers around the SSH bot. If this line were removed
 		// or had a bug, it would cause the SSH bot to respond to any SignatureRequest messages in any channels. This
 		// would allow an attacker to provision SSH keys even though they are not in the listed channels.
-		if !isConfiguredTeam(conf, msg.Message.Channel.Name, msg.Message.Channel.TopicName) {
+		if !b.isConfiguredTeam(msg.Message.Channel.Name, msg.Message.Channel.TopicName) {
 			log.Debug("Skipping message since it is not in a configured team")
 			continue
 		}
 
-		if shared.IsPingRequest(messageBody, kbc.GetUsername()) {
+		if shared.IsPingRequest(messageBody, b.api.GetUsername()) {
 			// Respond to messages of the form `ping @botName` with `pong @senderName`
 			log.Debug("Responding to ping with pong")
-			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GeneratePingResponse(msg.Message.Sender.Username))
+			_, err = b.api.SendMessageByConvID(msg.Message.ConvID, shared.GeneratePingResponse(msg.Message.Sender.Username))
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				b.LogError(msg, err)
 				continue
 			}
 		} else if shared.IsAckRequest(messageBody) {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
-			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
+			_, err = b.api.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				b.LogError(msg, err)
 				continue
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureRequestPreamble) {
 			log.Debug("Responding to SignatureRequest")
 			signatureRequest, err := shared.ParseSignatureRequest(messageBody)
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				b.LogError(msg, err)
 				continue
 			}
 			signatureRequest.Username = msg.Message.Sender.Username
 			signatureRequest.DeviceName = msg.Message.Sender.DeviceName
-			signatureResponse, err := sshutils.ProcessSignatureRequest(conf, signatureRequest)
+			signatureResponse, err := sshutils.ProcessSignatureRequest(b.conf, signatureRequest)
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				b.LogError(msg, err)
 				continue
 			}
 
 			response, err := json.Marshal(signatureResponse)
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				b.LogError(msg, err)
 				continue
 			}
-			_, err = kbc.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
+			_, err = b.api.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
 			if err != nil {
-				LogError(conf, kbc, msg, err)
+				b.LogError(msg, err)
 				continue
 			}
 		} else {
@@ -133,23 +137,23 @@ func StartBot(conf config.Config) error {
 
 // Log the given error to Keybase chat and to the configured log file. Used so that the chatbot does not crash
 // due to an error caused by a malformed message.
-func LogError(conf config.Config, kbc *kbchat.API, msg kbchat.SubscriptionMessage, err error) {
+func (b *Bot) LogError(msg kbchat.SubscriptionMessage, err error) {
 	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.Id, err)
-	auditlog.Log(conf, message)
-	_, e := kbc.SendMessageByConvID(msg.Message.ConvID, message)
+	auditlog.Log(b.conf, message)
+	_, e := b.api.SendMessageByConvID(msg.Message.ConvID, message)
 	if e != nil {
-		auditlog.Log(conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
+		auditlog.Log(b.conf, fmt.Sprintf("failed to log an error to chat (something is probably very wrong): %v", err))
 	}
 }
 
 // Whether the given team is one of the specified teams in the config. Note that this function is a security boundary
 // since it ensures that bots will not respond to messages outside of the configured teams.
-func isConfiguredTeam(conf config.Config, teamName string, channelName string) bool {
-	if conf.GetChatTeam() != "" {
-		return conf.GetChatTeam() == teamName && conf.GetChannelName() == channelName
+func (b *Bot) isConfiguredTeam(teamName string, channelName string) bool {
+	if b.conf.GetChatTeam() != "" {
+		return b.conf.GetChatTeam() == teamName && b.conf.GetChannelName() == channelName
 	}
 	// If they didn't specify a chat team/channel, we just check whether the message was in one of the listed teams
-	for _, team := range conf.GetTeams() {
+	for _, team := range b.conf.GetTeams() {
 		if team == teamName {
 			return true
 		}
@@ -178,22 +182,131 @@ func buildAnnouncement(template string, values AnnouncementTemplateValues) strin
 	return templatedMessage
 }
 
-func sendAnnouncementMessage(conf config.Config, kbc *kbchat.API) error {
-	if conf.GetAnnouncement() == "" {
+func (b *Bot) sendAnnouncementMessage() error {
+	if b.conf.GetAnnouncement() == "" {
 		// No announcement to send
 		return nil
 	}
-	for _, team := range conf.GetTeams() {
-		announcement := buildAnnouncement(conf.GetAnnouncement(),
-			AnnouncementTemplateValues{Username: kbc.GetUsername(),
+	for _, team := range b.conf.GetTeams() {
+		announcement := buildAnnouncement(b.conf.GetAnnouncement(),
+			AnnouncementTemplateValues{Username: b.api.GetUsername(),
 				CurrentTeam: team,
-				Teams:       conf.GetTeams()})
+				Teams:       b.conf.GetTeams()})
 
 		var channel *string
-		_, err := kbc.SendMessageByTeamName(team, channel, announcement)
+		_, err := b.api.SendMessageByTeamName(team, channel, announcement)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// Write a kssh config file such that kssh will find it and use it
+func (b *Bot) writeClientConfig() error {
+	username := b.api.GetUsername()
+	if username == "" {
+		return fmt.Errorf("failed to get a username from kbChat, got an empty string")
+	}
+
+	teams := b.conf.GetTeams()
+	if b.conf.GetChatTeam() != "" {
+		// Make sure we place a client config file in the chat team which may not be in the list of teams
+		teams = append(teams, b.conf.GetChatTeam())
+	}
+
+	// If they configured a chat team, have messages go there
+	config := kssh.Config{TeamName: b.conf.GetChatTeam(), BotName: username, ChannelName: b.conf.GetChannelName()}
+
+	for _, team := range teams {
+		if b.conf.GetChatTeam() == "" {
+			// If they didn't configure a chat team, messages should be sent to any channel. This is done by having each
+			// client config reference the team it is found in
+			config.TeamName = team
+			config.ChannelName = ""
+		}
+
+		var bytes []byte
+		bytes, err := json.Marshal(config)
+		if err != nil {
+			return err
+		}
+		_, err = b.api.PutEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey, string(bytes))
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Debugf("Wrote kssh client config files for the teams: %v", teams)
+	return nil
+}
+
+// Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale
+// client config files
+func (b *Bot) deleteClientConfig(teams []string) (found []string, err error) {
+	for _, team := range teams {
+		_, err := b.api.DeleteEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey)
+		if err != nil {
+			if err.(kbchat.Error).Code == kbchat.DeleteNonExistentErrorCode {
+				logrus.Debugf("Did not find kssh client config file to delete for the team: %v", team)
+			} else {
+				// unexpected error
+				return found, err
+			}
+		} else {
+			found = append(found, team)
+		}
+	}
+	logrus.Debugf("Deleted kssh client config files for the teams: %v", found)
+	return found, nil
+}
+
+// Set up a signal handler in order to catch SIGTERMS that will delete all client config files
+// when it receives a sigterm. This ensures that a simple Control-C does not create stale
+// client config files
+func (b *Bot) captureControlCToDeleteClientConfig() {
+	signalChan := make(chan os.Signal)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-signalChan
+		fmt.Println("Losing CA bot, now deleting client configs...")
+		teams := b.conf.GetTeams()
+		if b.conf.GetChatTeam() != "" {
+			// Make sure we delete the client config file in the chat team which may not be in the list of teams
+			teams = append(teams, b.conf.GetChatTeam())
+		}
+		_, err := b.deleteClientConfig(teams)
+		if err != nil {
+			fmt.Printf("Failed to delete client config: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
+}
+
+// Delete all client config files.
+func (b *Bot) DeleteAllClientConfigs() error {
+	teams, err := b.getAllTeams()
+	if err != nil {
+		fmt.Printf("Failed to delete client configs: %v", err)
+		return err
+	}
+	_, err = b.deleteClientConfig(teams)
+	if err != nil {
+		fmt.Printf("Failed to delete client configs: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (b *Bot) getAllTeams() (teams []string, err error) {
+	memberships, err := b.api.ListUserMemberships(b.api.GetUsername())
+	if err != nil {
+		fmt.Printf("Failed to delete client configs: %v", err)
+		return teams, err
+	}
+	for _, m := range memberships {
+		teams = append(teams, m.FqName)
+	}
+	return teams, nil
 }

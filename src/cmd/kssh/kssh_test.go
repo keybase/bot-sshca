@@ -43,13 +43,3 @@ func TestIsValidCert(t *testing.T) {
 	copyKeyFromTestFixture(t, "expired", certTestFilename)
 	require.False(t, isValidCert(certTestFilename))
 }
-
-func BenchmarkLoadConfigs(b *testing.B) {
-	os.Remove("~/.ssh/kssh-config.json")
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		_, err := getConfig("")
-		require.NoError(b, err)
-	}
-}

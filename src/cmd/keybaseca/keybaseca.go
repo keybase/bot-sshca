@@ -1,26 +1,20 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/signal"
-	"path/filepath"
 	"strings"
-	"sync"
-	"syscall"
 
+	"github.com/keybase/bot-sshca/src/keybaseca/bot"
 	"github.com/keybase/bot-sshca/src/keybaseca/constants"
 
 	"github.com/google/uuid"
 
-	"github.com/keybase/bot-sshca/src/keybaseca/bot"
 	"github.com/keybase/bot-sshca/src/keybaseca/config"
 	klog "github.com/keybase/bot-sshca/src/keybaseca/log"
 	"github.com/keybase/bot-sshca/src/keybaseca/sshutils"
-	"github.com/keybase/bot-sshca/src/kssh"
 	"github.com/keybase/bot-sshca/src/shared"
 
 	"github.com/sirupsen/logrus"
@@ -128,7 +122,6 @@ func generateAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	captureControlCToDeleteClientConfig(conf)
 	err = sshutils.Generate(conf, strings.ToLower(os.Getenv("FORCE_WRITE")) == "true")
 	if err != nil {
 		return fmt.Errorf("Failed to generate a new key: %v", err)
@@ -138,16 +131,19 @@ func generateAction(c *cli.Context) error {
 
 // The action for the `keybaseca service` subcommand
 func serviceAction(c *cli.Context) error {
-	conf, err := loadServerConfigAndWriteClientConfig()
+	conf, err := loadServerConfig()
 	if err != nil {
 		return err
 	}
-	captureControlCToDeleteClientConfig(conf)
-	err = bot.StartBot(conf)
+	cabot, err := bot.NewBot(conf)
+	if err != nil {
+		return err
+	}
+	err = cabot.Start()
 	if err != nil {
 		return fmt.Errorf("CA chatbot crashed: %v", err)
 	}
-	return deleteClientConfig(conf)
+	return nil
 }
 
 // The action for the `keybaseca sign` subcommand
@@ -206,40 +202,17 @@ func beforeAction(c *cli.Context) error {
 func mainAction(c *cli.Context) error {
 	switch {
 	case c.Bool("wipe-all-configs"):
-		teams, err := constants.GetDefaultKBFSOperationsStruct().KBFSList("/keybase/team/")
+		conf, err := loadServerConfig()
 		if err != nil {
 			return err
 		}
-
-		semaphore := sync.WaitGroup{}
-		semaphore.Add(len(teams))
-		boundChan := make(chan interface{}, shared.BoundedParallelismLimit)
-		teamsFound := []string{}
-		teamsFoundMutex := sync.Mutex{}
-		for _, team := range teams {
-			go func(team string) {
-				// Blocks until there is room in boundChan
-				boundChan <- 0
-
-				filename := fmt.Sprintf("/keybase/team/%s/%s", team, shared.ConfigFilename)
-				exists, _ := constants.GetDefaultKBFSOperationsStruct().KBFSFileExists(filename)
-				if exists {
-					err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(filename)
-					if err != nil {
-						fmt.Printf("%v\n", err)
-					}
-					teamsFoundMutex.Lock()
-					teamsFound = append(teamsFound, team)
-					teamsFoundMutex.Unlock()
-				}
-				semaphore.Done()
-
-				// Make room in boundChan
-				<-boundChan
-			}(team)
+		cabot, err := bot.NewBot(conf)
+		if err != nil {
+			return err
 		}
-		semaphore.Wait()
-		fmt.Printf("Deleted configs found in these teams: %+v\n", teamsFound)
+		if err = cabot.DeleteAllClientConfigs(); err != nil {
+			return err
+		}
 	case c.Bool("wipe-logs"):
 		conf, err := loadServerConfig()
 		if err != nil {
@@ -264,85 +237,6 @@ func mainAction(c *cli.Context) error {
 	return nil
 }
 
-// Write a kssh config file such that kssh will find it and use it
-func writeClientConfig(conf config.Config) error {
-	username, err := bot.GetUsername(conf)
-	if err != nil {
-		return err
-	}
-
-	teams := conf.GetTeams()
-	if conf.GetChatTeam() != "" {
-		// Make sure we place a client config file in the chat team which may not be in the list of teams
-		teams = append(teams, conf.GetChatTeam())
-	}
-	for _, team := range teams {
-		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
-
-		var content []byte
-		if conf.GetChatTeam() == "" {
-			// If they didn't configure a chat team, messages should be sent to any channel. This is done by having each
-			// client config reference the team it is found in
-			content, err = json.Marshal(kssh.ConfigFile{TeamName: team, BotName: username, ChannelName: ""})
-		} else {
-			// If they configured a chat team, have messages go there
-			content, err = json.Marshal(kssh.ConfigFile{TeamName: conf.GetChatTeam(), BotName: username, ChannelName: conf.GetChannelName()})
-		}
-		if err != nil {
-			return err
-		}
-
-		err = constants.GetDefaultKBFSOperationsStruct().KBFSWrite(filename, string(content), false)
-		if err != nil {
-			return err
-		}
-	}
-
-	logrus.Debugf("Wrote kssh client config files for the teams: %v", teams)
-
-	return nil
-}
-
-// Delete the client config file. Run when the CA bot is terminating so that KBFS does not contain any stale
-// client config files
-func deleteClientConfig(conf config.Config) error {
-	teams := conf.GetTeams()
-	if conf.GetChatTeam() != "" {
-		// Make sure we delete the client config file in the chat team which may not be in the list of teams
-		teams = append(teams, conf.GetChatTeam())
-	}
-
-	for _, team := range teams {
-		filename := filepath.Join("/keybase/team/", team, shared.ConfigFilename)
-		err := constants.GetDefaultKBFSOperationsStruct().KBFSDelete(filename)
-		if err != nil {
-			return err
-		}
-	}
-
-	logrus.Debugf("Deleted kssh client config files for the teams: %v", teams)
-
-	return nil
-}
-
-// Set up a signal handler in order to catch SIGTERMS that will delete all client config files
-// when it receives a sigterm. This ensures that a simple Control-C does not create stale
-// client config files
-func captureControlCToDeleteClientConfig(conf config.Config) {
-	signalChan := make(chan os.Signal)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-signalChan
-		fmt.Println("losing CA bot...")
-		err := deleteClientConfig(conf)
-		if err != nil {
-			fmt.Printf("Failed to delete client config: %v", err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}()
-}
-
 // Load and validate a server config object from the environment
 func loadServerConfig() (config.Config, error) {
 	conf := config.EnvConfig{}
@@ -351,16 +245,4 @@ func loadServerConfig() (config.Config, error) {
 		return nil, fmt.Errorf("Failed to validate config: %v", err)
 	}
 	return &conf, nil
-}
-
-func loadServerConfigAndWriteClientConfig() (config.Config, error) {
-	conf, err := loadServerConfig()
-	if err != nil {
-		return nil, err
-	}
-	err = writeClientConfig(conf)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to write the client config: %v", err)
-	}
-	return conf, nil
 }
