@@ -18,8 +18,9 @@ jobs:
     docker:
       - image: circleci/python:3.6.8
     steps:
-      - run: "isort -rc . --check-only"
-      - run: "flake8 ."
+      - run: pip3 install isort flake8
+      - run: "! isort -rc . --check-only"
+      - run: "! flake8 ."
   unit:
     docker:
       - image: circleci/golang:1.11
