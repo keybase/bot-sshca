@@ -36,7 +36,7 @@ func main() {
 		cli.BoolFlag{
 			Name:   "wipe-all-configs",
 			Hidden: true,
-			Usage:  "Clean all client configs the CA Keybase user can find from KBFS",
+			Usage:  "Clean all client configs the CA Keybase user can find from KV stores",
 		},
 		cli.BoolFlag{
 			Name:   "wipe-logs",

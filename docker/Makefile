@@ -18,7 +18,6 @@ else
 	docker build -t ca -f Dockerfile-ca ..
 endif
 
-
 # Generate a new CA key
 generate: env-file-exists build
 	docker run --init -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-generate.sh

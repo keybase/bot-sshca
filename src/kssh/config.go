@@ -28,17 +28,19 @@ func (b *Bot) LoadConfigs() (configs []Config, botNames []string, err error) {
 	}
 	botNameToConfig := make(map[string]Config)
 	for _, team := range teams {
+		fmt.Printf("......trying to load config for team %+v\n", team)
 		conf, err := b.LoadConfig(team)
 		if err != nil {
 			return nil, nil, err
 		}
 		if conf != nil {
+			// conf was found
 			botNameToConfig[conf.BotName] = *conf
 		}
 	}
 	for _, config := range botNameToConfig {
-		botNames = append(botNames, config.BotName)
 		configs = append(configs, config)
+		botNames = append(botNames, config.BotName)
 	}
 	return configs, botNames, nil
 }
@@ -51,6 +53,7 @@ func (b *Bot) LoadConfig(teamName string) (*Config, error) {
 		// error getting the entry
 		return nil, err
 	}
+	fmt.Printf("loaded config for team %+v: res = %+v\n", teamName, res)
 	if res.Revision > 0 && len(res.EntryValue) > 0 {
 		// then this entry exists
 		var conf Config
@@ -58,7 +61,7 @@ func (b *Bot) LoadConfig(teamName string) (*Config, error) {
 			return nil, fmt.Errorf("Failed to parse config for team %s: %v", teamName, err)
 		}
 		if conf.TeamName == "" || conf.BotName == "" {
-			return nil, fmt.Errorf("found a config for team %s that is missing data: %s", teamName, res.EntryValue)
+			return nil, fmt.Errorf("Found a config for team %s with missing data: %s", teamName, res.EntryValue)
 		}
 		return &conf, nil
 	}

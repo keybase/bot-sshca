@@ -1,18 +1,6 @@
 version: 2
 jobs:
-  integration:
-    machine:
-      image: circleci/classic:latest
-    steps:
-      - checkout
-      - run: "./integrationTest.sh"
-  unit:
-    docker:
-      - image: circleci/golang:1.11
-    steps:
-      - checkout
-      - run: go test ./...
-  lint:
+  go-lint:
     docker:
       - image: circleci/golang:1.11
     steps:
@@ -26,6 +14,24 @@ jobs:
       - run: "! go mod tidy ./... 2>&1 | read"
       - run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.25.0
       - run: "! golangci-lint 2>&1 | read"
+  py-lint:
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - isort -rc . --check-only
+      - flake8 .
+  unit:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - checkout
+      - run: go test ./...
+  integration:
+    machine:
+      image: circleci/classic:latest
+    steps:
+      - checkout
+      - run: "./integrationTest.sh"
   sphinx-build:
     docker:
       - image: circleci/python:2.7.16
@@ -48,9 +54,10 @@ workflows:
   version: 2
   build:
     jobs:
-      - integration
+      - go-lint
+      - py-lint
       - unit
-      - lint
+      - integration
       - sphinx-build
       - publish-github-release:
           requires:

@@ -46,6 +46,7 @@ func (cb *ConfiguredBot) GetSignedKey(request shared.SignatureRequest) (shared.S
 			default:
 
 			}
+			fmt.Printf("getchannel = %+v\n", cb.getChannel())
 			_, err = cb.api.SendMessageByTeamName(cb.conf.TeamName, cb.getChannel(), shared.GenerateAckRequest(cb.api.GetUsername()))
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)
@@ -108,9 +109,8 @@ func (cb *ConfiguredBot) GetSignedKey(request shared.SignatureRequest) (shared.S
 // Get the configured channel name from the given config file. Returns either a pointer to the channel name string
 // or a null pointer.
 func (cb *ConfiguredBot) getChannel() *string {
-	var channel *string
 	if cb.conf.ChannelName != "" {
-		channel = &cb.conf.ChannelName
+		return &cb.conf.ChannelName
 	}
-	return channel
+	return nil
 }
