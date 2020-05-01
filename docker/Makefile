@@ -57,7 +57,7 @@ restart: stop serve
 
 # Delete all kssh config files
 clean-kssh: env-file-exists
-	docker run --init -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-cleanup.sh
+	docker run --init --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-cleanup.sh
 
 # Delete all CA data
 clean: confirm-clean reset-permissions

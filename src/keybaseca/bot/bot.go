@@ -184,8 +184,8 @@ func (b *Bot) writeClientConfig() error {
 }
 
 // Attempts to delete the kssh configs for the specified teams.
-func (b *Bot) deleteClientConfig(teams []string) error {
-	var found []string
+func (b *Bot) deleteClientConfig(teams []string) (found []string, err error) {
+	log.Debugf("Attempting to delete kssh configs for the teams: %v", teams)
 	for _, team := range teams {
 		_, err := b.api.DeleteEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey)
 		if err != nil {
@@ -194,14 +194,14 @@ func (b *Bot) deleteClientConfig(teams []string) error {
 				log.Debugf("Did not find kssh config to delete for the team: %v", team)
 			} else {
 				// unexpected error
-				return err
+				return found, err
 			}
 		} else {
 			found = append(found, team)
 		}
 	}
 	log.Debugf("Deleted kssh configs for the teams: %v", found)
-	return nil
+	return found, nil
 }
 
 // Set up a signal handler in order to catch SIGTERMS that will delete all kssh
@@ -219,11 +219,12 @@ func (b *Bot) captureControlCToDeleteClientConfig() {
 			// be in the list of teams
 			teams = append(teams, b.conf.GetChatTeam())
 		}
-		err := b.deleteClientConfig(teams)
+		found, err := b.deleteClientConfig(teams)
 		if err != nil {
-			fmt.Printf("Failed to delete client config: %v", err)
+			fmt.Printf("Failed to delete client configs: %v", err)
 			os.Exit(1)
 		}
+		fmt.Printf("Deleted kssh configs for the teams: %v", found)
 		os.Exit(0)
 	}()
 }
@@ -236,11 +237,12 @@ func (b *Bot) DeleteAllClientConfigs() error {
 		fmt.Printf("Failed to get teams to delete client configs: %v", err)
 		return err
 	}
-	err = b.deleteClientConfig(teams)
+	found, err := b.deleteClientConfig(teams)
 	if err != nil {
 		fmt.Printf("Failed to delete client configs: %v", err)
 		return err
 	}
+	fmt.Printf("Deleted kssh configs for the teams: %v", found)
 	return nil
 }
 
