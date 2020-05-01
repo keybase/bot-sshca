@@ -47,7 +47,7 @@ class TestConfig:
             getDefaultExpectedHash(),
             [
                 os.environ["SUBTEAM"] + postfix
-                for postfix in [".ssh.prod", ".ssh.staging", ".ssh.root_everywhere", ]
+                for postfix in [".ssh.prod", ".ssh.staging", ".ssh.root_everywhere"]
             ],
         )
 
