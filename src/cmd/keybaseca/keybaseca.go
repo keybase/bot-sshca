@@ -139,6 +139,7 @@ func serviceAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Starting CA bot...")
 	err = cabot.Start()
 	if err != nil {
 		return fmt.Errorf("CA chatbot crashed: %v", err)

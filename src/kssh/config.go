@@ -10,31 +10,18 @@ import (
 	"github.com/keybase/bot-sshca/src/shared"
 )
 
-// A Config that is provided by the keybaseca server process and lives in kbfs. It is used to share configuration
-// information about how kssh should communicate with the keybaseca chatbot.
+// Config is provided by the keybaseca server and lives in the KV store.  It is
+// used to share configuration information about how kssh should communicate
+// with the keybaseca chat bot.
 type Config struct {
 	TeamName    string `json:"teamname"`
 	ChannelName string `json:"channelname"`
 	BotName     string `json:"botname"`
 }
 
-//TODO dedup
-func (b *Bot) getAllTeams() (teams []string, err error) {
-	memberships, err := b.api.ListUserMemberships(b.api.GetUsername())
-	if err != nil {
-		fmt.Printf("Failed to delete client configs: %v", err)
-		return teams, err
-	}
-	for _, m := range memberships {
-		teams = append(teams, m.FqName)
-	}
-	return teams, nil
-}
-
-// LoadConfigs loads client configs from KBFS. Returns a (listOfConfigs, listOfBotNames, err)
-// Both lists are deduplicated based on Config.BotName. Runs the KBFS operations in parallel
-// to speed up loading configs.
-func (b *Bot) LoadConfigs() ([]Config, []string, error) {
+// LoadConfigs loads kssh configs from the KV store. Returns a (listOfConfigs,
+// listOfBotNames, err). Both lists are deduplicated based on Config.BotName.
+func (b *Bot) LoadConfigs() (configs []Config, botNames []string, err error) {
 	teams, err := b.getAllTeams()
 	if err != nil {
 		return nil, nil, err
@@ -49,20 +36,23 @@ func (b *Bot) LoadConfigs() ([]Config, []string, error) {
 			botNameToConfig[conf.BotName] = *conf
 		}
 	}
-
-	var configs []Config
-	var botnames []string
 	for _, config := range botNameToConfig {
-		botnames = append(botnames, config.BotName)
+		botNames = append(botNames, config.BotName)
 		configs = append(configs, config)
 	}
-
-	return configs, botnames, nil
+	return configs, botNames, nil
 }
 
+// LoadConfig loads the kssh config for the given teamName. Will return a nil
+// Config if no config was found for the teamName (and no error occurred)
 func (b *Bot) LoadConfig(teamName string) (*Config, error) {
 	res, err := b.api.GetEntry(&teamName, shared.SSHCANamespace, shared.SSHCAConfigKey)
-	if err == nil && (res.Revision > 0 && len(res.EntryValue) > 0) {
+	if err != nil {
+		// error getting the entry
+		return nil, err
+	}
+	if res.Revision > 0 && len(res.EntryValue) > 0 {
+		// then this entry exists
 		var conf Config
 		if err := json.Unmarshal([]byte(res.EntryValue), &conf); err != nil {
 			return nil, fmt.Errorf("Failed to parse config for team %s: %v", teamName, err)
@@ -72,19 +62,36 @@ func (b *Bot) LoadConfig(teamName string) (*Config, error) {
 		}
 		return &conf, nil
 	}
+	// then entry doesn't exist; no config found
 	return nil, nil
 }
 
-// A LocalConfig is a file that lives on the FS of the computer running kssh. By default (and for most users), this
-// file is not used.
+func (b *Bot) getAllTeams() (teams []string, err error) {
+	// TODO: dedup with same method in keybaseca/bot
+	memberships, err := b.api.ListUserMemberships(b.api.GetUsername())
+	if err != nil {
+		return teams, err
+	}
+	for _, m := range memberships {
+		teams = append(teams, m.FqName)
+	}
+	return teams, nil
+}
+
+// A LocalConfig is a file that lives on the FS of the computer running kssh.
+// By default (and for most users), this file is not used.
 //
-// If a user of kssh is in in multiple teams that are running the CA bot they can configure a default bot to communicate
-// with. Note that we store the team in here (even though it wasn't specified by the user) so that we can avoid doing
-// a call to `LoadConfigs` if a default is set (since `LoadConfigs can be very slow if the user is in a large number of teams).
-// This is controlled via `kssh --set-default-bot foo`.
+// If a user of kssh is in in multiple teams that are running the CA bot they
+// can configure a default bot to communicate with. Note that we store the team
+// in here (even though it wasn't specified by the user) so that we can avoid
+// doing a call to `LoadConfigs` if a default is set (since `LoadConfigs can be
+// very slow if the user is in a large number of teams).  This is controlled
+// via `kssh --set-default-bot foo`.
 //
-// If a user of kssh wishes to configure a default ssh user to use (see README.md for a description of why this may
-// be useful) this is also stored in the local config file. This is controlled via `kssh --set-default-user foo`.
+// If a user of kssh wishes to configure a default ssh user to use (see
+// README.md for a description of why this may be useful) this is also stored
+// in the local config file. This is controlled via `kssh --set-default-user
+// foo`.
 type LocalConfig struct {
 	DefaultBotName string `json:"default_bot"`
 	DefaultBotTeam string `json:"default_team"`
@@ -104,7 +111,8 @@ func GetKeybaseBinaryPath() string {
 	return "keybase"
 }
 
-// Where to store the local config file. Just stash it in ~/.ssh rather than making a ~/.kssh folder
+// Where to store the local config file. Just stash it in ~/.ssh rather than
+// making a ~/.kssh folder
 var localConfigLocation = shared.ExpandPathWithTilde("~/.ssh/kssh-config.json")
 
 // Get the default SSH user to use for kssh connections. Empty if no user is configured.
@@ -179,11 +187,40 @@ func getCurrentConfig() (lcf LocalConfig, err error) {
 	return lcf, nil
 }
 
+// GetDefaultBotAndTeam gets the default bot and team for kssh from the local
+// config file.
+func GetDefaultBotAndTeam() (string, string, error) {
+	lcf, err := getCurrentConfig()
+	if err != nil {
+		return "", "", err
+	}
+	return lcf.DefaultBotName, lcf.DefaultBotTeam, nil
+}
+
+// LoadConfigForBot gets the Config associated with the given botName. Will
+// need to find and load all configs from KV store.
+func (b *Bot) LoadConfigForBot(botName string) (Config, error) {
+	configs, _, err := b.LoadConfigs()
+	if err != nil {
+		return Config{}, err
+	}
+	for _, config := range configs {
+		if config.BotName == botName {
+			return config, nil
+		}
+	}
+	return Config{}, fmt.Errorf("did not find a client config file matching botName=%s (is the CA bot running and are you in the correct teams?)", botName)
+}
+
+// ClearDefaultBot clears the default bot and team.
 func ClearDefaultBot() error {
 	return SetDefaultBot("")
 }
 
-// Set the default keybaseca bot to communicate with.
+// SetDefaultBot sets the default keybaseca bot and team to communicate with.
+// If given a botName, will need to start a Keybase bot to find and load all
+// configs from KV store, in order to find the team associated with the given
+// botName.
 func SetDefaultBot(botName string) error {
 	teamName := ""
 	if botName != "" {
@@ -207,27 +244,4 @@ func SetDefaultBot(botName string) error {
 	lcf.DefaultBotTeam = teamName
 
 	return writeConfig(lcf)
-}
-
-// Get the default bot and team for kssh
-func GetDefaultBotAndTeam() (string, string, error) {
-	lcf, err := getCurrentConfig()
-	if err != nil {
-		return "", "", err
-	}
-	return lcf.DefaultBotName, lcf.DefaultBotTeam, nil
-}
-
-// Get the teamname associated with the given botName
-func (b *Bot) LoadConfigForBot(botName string) (Config, error) {
-	configs, _, err := b.LoadConfigs()
-	if err != nil {
-		return Config{}, err
-	}
-	for _, config := range configs {
-		if config.BotName == botName {
-			return config, nil
-		}
-	}
-	return Config{}, fmt.Errorf("did not find a client config file matching botName=%s (is the CA bot running and are you in the correct teams?)", botName)
 }

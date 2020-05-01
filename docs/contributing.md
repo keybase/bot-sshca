@@ -4,8 +4,8 @@ There are two separate binaries built from the code in this repo:
 
 ## keybaseca 
 
-`keybaseca` is the CA server that exposes an interface through Keybase chat. This binary is meant to be run in a secure
-location. 
+`keybaseca` is the CA server that exposes an interface through Keybase chat.
+This binary is meant to be run in a secure location. 
 
 ```
 NAME:
@@ -30,7 +30,8 @@ GLOBAL OPTIONS:
 
 ## kssh
 
-`kssh` is the replacement SSH binary. kssh handles provisioning (via the keybaseca-bot) new temporary SSH keys and is meant to be installed on each
+`kssh` is the replacement SSH binary. kssh handles provisioning (via the
+keybaseca-bot) new temporary SSH keys and is meant to be installed on each
 user's laptop. 
 
 ```
@@ -63,46 +64,61 @@ GLOBAL OPTIONS:
 
 #### Config
 
-Keybaseca is configured using environment variables (see docs/env.md for information on all of the options). When keybaseca 
-starts, it writes a client config file to `/keybase/team/{teamname for teamname in $TEAMS}/kssh-client.config`. This 
-client config file is how kssh determines which teams are using kssh and the needed information about the bot (eg the
-channel name, the name of the bot, etc). When keybaseca stops, it deletes all of the client config files. 
+Keybaseca is configured using environment variables (see docs/env.md for
+information on all of the options). When keybaseca starts, it writes a client
+config JSON blob to the [KV store](https://keybase.io/docs/bots/kvstore) for
+each team in `$TEAMS`, at namespace `__sshca`, entry key `kssh_config`. This
+client config is how kssh determines which teams are using kssh and the needed
+information about the bot (eg the channel name, the name of the bot, etc). When
+keybaseca stops, it deletes all of the client configs. 
 
-kssh reads the client config file in order to determine how to interact with a bot. kssh does not have any user controlled
-configuration. It does have one local config file stored in `~/.ssh/kssh-config.json` that is used to store a few settings 
-for kssh. By default, this config file is not used. It is only created and meant to be interacted with via the 
-`--set-default-bot`, `--clear-default-bot`, `--set-default-user`, `--clear-default-user` flags. 
+kssh reads the client config in order to determine how to interact with a
+bot. kssh does not have any user controlled configuration. It does have one
+local config file stored in `~/.ssh/kssh-config.json` that is used to store a
+few settings for kssh. By default, this config file is not used. It is only
+created and meant to be interacted with via the `--set-default-bot`,
+`--clear-default-bot`, `--set-default-user`, `--clear-default-user` flags. 
 
 #### Communication
 
-kssh and keybaseca communicate with each other over Keybase chat. If the `CHAT_CHANNEL` environment variable is 
-specified in keybaseca's environment, keybaseca will only accept communication in the specified team and channel. 
-This configuration is passed to kssh clients via the client config file(s) stored in KBFS. If the `CHAT_CHANNEL` environment variable
-is not specified then keybaseca will accept messages in any channel of any team listed in the `TEAMS` environment variable.
-All communication happens via the Go chatbot library. 
+kssh and keybaseca communicate with each other over Keybase chat. If the
+`CHAT_CHANNEL` environment variable is specified in keybaseca's environment,
+keybaseca will only accept communication in the specified team and channel.
+This configuration is passed to kssh clients via the client configs stored in
+the [KV store](https://keybase.io/docs/bots/kvstore).  If the `CHAT_CHANNEL`
+environment variable is not specified then keybaseca will accept messages in
+any channel of any team listed in the `TEAMS` environment variable.  All
+communication happens via the Go chat bot library. 
 
-Prior to sending a `SignatureRequest`, kssh sends a series of `AckRequest` messages. An `AckRequest` message is sent until 
-kssh receives an `Ack` from keybaseca. This is done in order to ensure that kssh has correctly connected to the chat channel
-and that the bot is responding to messages. Afterwards, a `SignatureRequest` packet is sent and keybaseca parses it and 
-returns a signed key. Note that only public keys and signatures are sent over Keybase chat and private keys never 
-leave the devices they were generated on. 
+Prior to sending a `SignatureRequest`, kssh sends a series of `AckRequest`
+messages. An `AckRequest` message is sent until kssh receives an `Ack` from
+keybaseca. This is done in order to ensure that kssh has correctly connected to
+the chat channel and that the bot is responding to messages. Afterwards, a
+`SignatureRequest` packet is sent and keybaseca parses it and returns a signed
+key. Note that only public keys and signatures are sent over Keybase chat and
+private keys never leave the devices they were generated on. 
 
 #### SSH Operations
 
-When the ssh-keygen command is available, ssh keys are generated via the ssh-keygen command. In this case, generated
-SSH keys are ed25519 keys. If the ssh-keygen command is not available, SSH keys are generated in pure go code and are 
-ecdsa keys. 
+When the ssh-keygen command is available, ssh keys are generated via the
+ssh-keygen command. In this case, generated SSH keys are ed25519 keys. If the
+ssh-keygen command is not available, SSH keys are generated in pure go code and
+are ecdsa keys. 
 
-keybaseca uses the ssh-keygen binary in order to complete all key signing operations. 
+keybaseca uses the ssh-keygen binary in order to complete all key signing
+operations. 
 
 #### KBFS
 
-In order to ensure that keybaseca can run inside of docker (which does not support FUSE filesystems without adding
-the CAP_SYS_ADMIN permission), all KBFS interactions are done via `keybase fs ...` commands. This makes it so that 
+In order to ensure that keybaseca can run inside of docker (which does not
+support FUSE filesystems without adding the CAP_SYS_ADMIN permission), all KBFS
+interactions are done via `keybase fs ...` commands. This makes it so that
 keybaseca can run in unprivileged docker containers. 
 
 ## Integration Tests
 
-This project contains integration tests that can be run via `./integrationTest.sh`. The integration tests depend on 
-docker and docker-compose. The first time you run them, they will walk you through creating two new live keybase accounts to be 
-used in the tests. The credentials for these accounts will be stored in `tests/env.sh`. 
+This project contains integration tests that can be run via
+`./integrationTest.sh`. The integration tests depend on docker and
+docker-compose. The first time you run them, they will walk you through
+creating two new live keybase accounts to be used in the tests. The credentials
+for these accounts will be stored in `tests/env.sh`. 

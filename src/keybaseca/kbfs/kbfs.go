@@ -1,4 +1,4 @@
-package shared
+package kbfs
 
 import (
 	"fmt"
