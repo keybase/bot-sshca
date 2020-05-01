@@ -16,10 +16,7 @@ import time
 
 def secure_random_str(len):
     return "".join(
-        [
-            random.SystemRandom().choice(string.ascii_lowercase)
-            for _ in range(len)
-        ]
+        [random.SystemRandom().choice(string.ascii_lowercase) for _ in range(len)]
     )
 
 
@@ -43,9 +40,7 @@ class User:
         self._oneshot_login()
 
     def _run_command(self, *args):
-        return subprocess.check_output(
-            ["keybase", "--home", self.home_dir, *args]
-        )
+        return subprocess.check_output(["keybase", "--home", self.home_dir, *args])
 
     def _oneshot_login(self):
         output = self._run_command(
@@ -54,9 +49,7 @@ class User:
         assert output == b"", "Failed to login via keybase oneshot"
         assert (
             b"Username:      " + self.username.encode("utf-8")
-        ) in self._run_command(
-            "status"
-        ), "Failed to verify login via keybase oneshot"
+        ) in self._run_command("status"), "Failed to verify login via keybase oneshot"
 
     def create_team(self, team):
         """
@@ -174,16 +167,12 @@ if __name__ == "__main__":
     ca_user.create_team_and_invite(parent_team + ".ssh", kssh_user.username)
     ca_user.create_channel(parent_team + ".ssh", "ssh-provision")
     kssh_user.join_channel(parent_team + ".ssh", "ssh-provision")
-    ca_user.create_team_and_invite(
-        parent_team + ".ssh.staging", kssh_user.username
-    )
+    ca_user.create_team_and_invite(parent_team + ".ssh.staging", kssh_user.username)
     ca_user.create_team(parent_team + ".ssh.prod")
     ca_user.create_team_and_invite(
         parent_team + ".ssh.root_everywhere", kssh_user.username
     )
 
-    ca_user.create_team_and_invite(
-        parent_team + ".secondary", kssh_user.username
-    )
+    ca_user.create_team_and_invite(parent_team + ".secondary", kssh_user.username)
 
     write_env_files(kssh_user, ca_user, parent_team)

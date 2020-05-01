@@ -221,7 +221,7 @@ func mainAction(c *cli.Context) error {
 		}
 		logLocation := conf.GetLogLocation()
 		if strings.HasPrefix(logLocation, "/keybase/") {
-			err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(logLocation)
+			err = constants.GetDefaultKBFSOperationsStruct().Delete(logLocation)
 			if err != nil {
 				return fmt.Errorf("Failed to delete log file at %s: %v", logLocation, err)
 			}

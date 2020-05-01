@@ -3,14 +3,19 @@ import subprocess
 import time
 
 import pytest
-from lib import (TestConfig, assert_contains_hash, get_principals, load_env,
-                 outputs_audit_log, run_command, run_command_with_agent,
-                 simulate_two_teams)
+from lib import (
+    TestConfig,
+    assert_contains_hash,
+    get_principals,
+    load_env,
+    outputs_audit_log,
+    run_command,
+    run_command_with_agent,
+    simulate_two_teams,
+)
 
 defaultTeamName = TestConfig.getDefaultTestConfig().subteam
-test_env_1_log_filename = (
-    f"/keybase/team/" f"{defaultTeamName}.ssh.staging/ca.log"
-)
+test_env_1_log_filename = f"/keybase/team/" f"{defaultTeamName}.ssh.staging/ca.log"
 
 
 class TestMultiTeamStrictLogging:
@@ -29,9 +34,7 @@ class TestMultiTeamStrictLogging:
         )
         time.sleep(5)
         recent_messages = run_command(f"keybase chat list-unread --since 1m")
-        assert (
-            b"pong @%s" % test_config.username.encode("utf-8")
-        ) in recent_messages
+        assert (b"pong @%s" % test_config.username.encode("utf-8")) in recent_messages
 
     def test_kssh_staging_user(self, test_config):
         # Test ksshing into staging as user
@@ -289,9 +292,7 @@ class TestMultiTeamStrictLogging:
         )
 
         # Checking that it actually contains the correct principals
-        assert get_principals("/shared/userkey-cert.pub") == set(
-            test_config.subteams
-        )
+        assert get_principals("/shared/userkey-cert.pub") == set(test_config.subteams)
 
     def test_kssh_default_user(self, test_config):
         # Set the default user to root

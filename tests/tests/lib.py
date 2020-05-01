@@ -47,11 +47,7 @@ class TestConfig:
             getDefaultExpectedHash(),
             [
                 os.environ["SUBTEAM"] + postfix
-                for postfix in [
-                    ".ssh.prod",
-                    ".ssh.staging",
-                    ".ssh.root_everywhere",
-                ]
+                for postfix in [".ssh.prod", ".ssh.staging", ".ssh.root_everywhere", ]
             ],
         )
 
@@ -131,9 +127,7 @@ def load_env(filename: str):
     # the python test script
     env_name = os.path.basename(filename).split(".")[0]
     return (
-        requests.get(
-            f"http://ca-bot:8080/load_env?filename={env_name}"
-        ).content
+        requests.get(f"http://ca-bot:8080/load_env?filename={env_name}").content
         == b"OK"
     )
 

@@ -34,7 +34,7 @@ func Log(conf config.Config, str string) {
 // the local filesystem
 func appendToFile(filename string, str string) error {
 	if strings.HasPrefix(filename, "/keybase/") {
-		return constants.GetDefaultKBFSOperationsStruct().KBFSWrite(filename, str, true)
+		return constants.GetDefaultKBFSOperationsStruct().Write(filename, str, true)
 	}
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {

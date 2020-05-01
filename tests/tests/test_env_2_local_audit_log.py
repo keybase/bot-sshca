@@ -1,6 +1,11 @@
 import pytest
-from lib import (TestConfig, assert_contains_hash, load_env, outputs_audit_log,
-                 run_command_with_agent)
+from lib import (
+    TestConfig,
+    assert_contains_hash,
+    load_env,
+    outputs_audit_log,
+    run_command_with_agent,
+)
 
 
 class TestEnv2LocalAuditLog:

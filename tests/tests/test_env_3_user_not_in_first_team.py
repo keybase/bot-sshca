@@ -1,6 +1,12 @@
 import pytest
-from lib import (TestConfig, assert_contains_hash, clear_keys, load_env,
-                 outputs_audit_log, run_command_with_agent)
+from lib import (
+    TestConfig,
+    assert_contains_hash,
+    clear_keys,
+    load_env,
+    outputs_audit_log,
+    run_command_with_agent,
+)
 
 
 class TestEnv3UserNotInFirstTeam:

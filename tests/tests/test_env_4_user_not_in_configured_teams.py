@@ -2,8 +2,13 @@ import json
 import subprocess
 
 import pytest
-from lib import (TestConfig, load_env, outputs_audit_log, run_command,
-                 run_command_with_agent)
+from lib import (
+    TestConfig,
+    load_env,
+    outputs_audit_log,
+    run_command,
+    run_command_with_agent,
+)
 
 
 class TestEnv4UserNotInConfiguredTeams:
@@ -57,7 +62,8 @@ class TestEnv4UserNotInConfiguredTeams:
             )
 
             for s in [
-                "user@sshd-staging" "root@sshd-staging",  # ,
+                "user@sshd-staging",
+                "root@sshd-staging",
                 "user@sshd-prod",
                 "root@sshd-prod",
             ]:

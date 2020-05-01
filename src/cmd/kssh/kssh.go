@@ -247,7 +247,7 @@ func isValidCert(keyPath string) bool {
 }
 
 // Provision a new signed SSH key with the given config
-func provisionNewKey(bot kssh.ConfiguredBot, keyPath string) error {
+func provisionNewKey(cbot kssh.ConfiguredBot, keyPath string) error {
 	log.Debug("Generating a new SSH key...")
 
 	// Make ~/.ssh/ in case it doesn't exist
@@ -273,7 +273,7 @@ func provisionNewKey(bot kssh.ConfiguredBot, keyPath string) error {
 	}
 
 	log.Debug("Requesting signature from the CA....")
-	resp, err := bot.GetSignedKey(shared.SignatureRequest{
+	resp, err := cbot.GetSignedKey(shared.SignatureRequest{
 		UUID:         randomUUID.String(),
 		SSHPublicKey: string(pubKey),
 	})
