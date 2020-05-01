@@ -46,7 +46,6 @@ func (cb *ConfiguredBot) GetSignedKey(request shared.SignatureRequest) (shared.S
 			default:
 
 			}
-			fmt.Printf("getchannel = %+v\n", cb.getChannel())
 			_, err = cb.api.SendMessageByTeamName(cb.conf.TeamName, cb.getChannel(), shared.GenerateAckRequest(cb.api.GetUsername()))
 			if err != nil {
 				fmt.Printf("Failed to send AckRequest: %v\n", err)

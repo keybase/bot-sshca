@@ -28,7 +28,6 @@ func (b *Bot) LoadConfigs() (configs []Config, botNames []string, err error) {
 	}
 	botNameToConfig := make(map[string]Config)
 	for _, team := range teams {
-		fmt.Printf("......trying to load config for team %+v\n", team)
 		conf, err := b.LoadConfig(team)
 		if err != nil {
 			return nil, nil, err
@@ -53,7 +52,6 @@ func (b *Bot) LoadConfig(teamName string) (*Config, error) {
 		// error getting the entry
 		return nil, err
 	}
-	fmt.Printf("loaded config for team %+v: res = %+v\n", teamName, res)
 	if res.Revision > 0 && len(res.EntryValue) > 0 {
 		// then this entry exists
 		var conf Config
