@@ -61,9 +61,10 @@ workflows:
       - sphinx-build
       - publish-github-release:
           requires:
-            - integration
+            - go-lint
+            - py-lint
             - unit
-            - lint
+            - integration
           filters:
             branches:
               only: master
