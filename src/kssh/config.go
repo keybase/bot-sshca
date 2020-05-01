@@ -79,7 +79,7 @@ func (b *Bot) getAllTeams() (teams []string, err error) {
 	return teams, nil
 }
 
-// A LocalConfig is a file that lives on the FS of the computer running kssh.
+// A LocalConfigFile is a file that lives on the FS of the computer running kssh.
 // By default (and for most users), this file is not used.
 //
 // If a user of kssh is in in multiple teams that are running the CA bot they
@@ -93,7 +93,7 @@ func (b *Bot) getAllTeams() (teams []string, err error) {
 // README.md for a description of why this may be useful) this is also stored
 // in the local config file. This is controlled via `kssh --set-default-user
 // foo`.
-type LocalConfig struct {
+type LocalConfigFile struct {
 	DefaultBotName string `json:"default_bot"`
 	DefaultBotTeam string `json:"default_team"`
 	DefaultSSHUser string `json:"default_ssh_user"`
@@ -101,7 +101,7 @@ type LocalConfig struct {
 }
 
 func GetKeybaseBinaryPath() string {
-	lcf, err := getCurrentConfig()
+	lcf, err := getCurrentConfigFile()
 	if err != nil {
 		return "keybase"
 	}
@@ -114,11 +114,11 @@ func GetKeybaseBinaryPath() string {
 
 // Where to store the local config file. Just stash it in ~/.ssh rather than
 // making a ~/.kssh folder
-var localConfigLocation = shared.ExpandPathWithTilde("~/.ssh/kssh-config.json")
+var localConfigFileLocation = shared.ExpandPathWithTilde("~/.ssh/kssh-config.json")
 
 // Get the default SSH user to use for kssh connections. Empty if no user is configured.
 func GetDefaultSSHUser() (string, error) {
-	lcf, err := getCurrentConfig()
+	lcf, err := getCurrentConfigFile()
 	if err != nil {
 		return "", err
 	}
@@ -128,13 +128,13 @@ func GetDefaultSSHUser() (string, error) {
 
 // Set the default SSH user to use for kssh connections.
 func SetKeybaseBinaryPath(path string) error {
-	lcf, err := getCurrentConfig()
+	lcf, err := getCurrentConfigFile()
 	if err != nil {
 		return err
 	}
 
 	lcf.KeybaseBinPath = path
-	return writeConfig(lcf)
+	return writeConfigFile(lcf)
 }
 
 // Set the default SSH user to use for kssh connections.
@@ -143,17 +143,17 @@ func SetDefaultSSHUser(username string) error {
 		return fmt.Errorf("invalid username: %s", username)
 	}
 
-	lcf, err := getCurrentConfig()
+	lcf, err := getCurrentConfigFile()
 	if err != nil {
 		return err
 	}
 
 	lcf.DefaultSSHUser = username
-	return writeConfig(lcf)
+	return writeConfigFile(lcf)
 }
 
 // Write the given config file to disk
-func writeConfig(lcf LocalConfig) error {
+func writeConfigFile(lcf LocalConfigFile) error {
 	bytes, err := json.Marshal(&lcf)
 	if err != nil {
 		return fmt.Errorf("failed to marshal json into config file: %v", err)
@@ -165,7 +165,7 @@ func writeConfig(lcf LocalConfig) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(localConfigLocation, bytes, 0600)
+	err = ioutil.WriteFile(localConfigFileLocation, bytes, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write config file: %v", err)
 	}
@@ -173,11 +173,11 @@ func writeConfig(lcf LocalConfig) error {
 }
 
 // Get the current kssh config file
-func getCurrentConfig() (lcf LocalConfig, err error) {
-	if _, err := os.Stat(localConfigLocation); os.IsNotExist(err) {
+func getCurrentConfigFile() (lcf LocalConfigFile, err error) {
+	if _, err := os.Stat(localConfigFileLocation); os.IsNotExist(err) {
 		return lcf, nil
 	}
-	bytes, err := ioutil.ReadFile(localConfigLocation)
+	bytes, err := ioutil.ReadFile(localConfigFileLocation)
 	if err != nil {
 		return lcf, fmt.Errorf("failed to read local config file: %v", err)
 	}
@@ -191,7 +191,7 @@ func getCurrentConfig() (lcf LocalConfig, err error) {
 // GetDefaultBotAndTeam gets the default bot and team for kssh from the local
 // config file.
 func GetDefaultBotAndTeam() (string, string, error) {
-	lcf, err := getCurrentConfig()
+	lcf, err := getCurrentConfigFile()
 	if err != nil {
 		return "", "", err
 	}
@@ -237,12 +237,12 @@ func SetDefaultBot(botName string) error {
 		teamName = conf.TeamName
 	}
 
-	lcf, err := getCurrentConfig()
+	lcf, err := getCurrentConfigFile()
 	if err != nil {
 		return err
 	}
 	lcf.DefaultBotName = botName
 	lcf.DefaultBotTeam = teamName
 
-	return writeConfig(lcf)
+	return writeConfigFile(lcf)
 }

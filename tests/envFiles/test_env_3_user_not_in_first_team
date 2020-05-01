@@ -1,5 +1,6 @@
-# Used to test the behavior of the chatbot when the user is not in the first listed team. This used to not work
-# due to the choice of only placing config files in the first team.
+# Used to test the behavior of the chatbot when the user is not in the first
+# listed team. This used to not work due to the choice of only writing config
+# in the first team.
 export KEY_EXPIRATION="+1h"
 export LOG_LOCATION="/shared/ca.log"
 export TEAMS="$SUBTEAM.ssh.prod,$SUBTEAM.ssh.staging,$SUBTEAM.ssh.root_everywhere"

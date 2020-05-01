@@ -20,8 +20,8 @@ class TestEnv4UserNotInConfiguredTeams:
     def test_config(self):
         return TestConfig.getDefaultTestConfig()
 
-    def test_kssh_no_config_files(self, test_config):
-        # Test that it can't find any config files
+    def test_kssh_no_configs(self, test_config):
+        # Test that it can't find any configs
         with outputs_audit_log(
             test_config, filename="/shared/ca.log", expected_number=0
         ):

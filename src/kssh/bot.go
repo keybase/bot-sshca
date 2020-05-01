@@ -68,7 +68,7 @@ func (b *Bot) getConfig(botName string) (conf Config, err error) {
 	case 1:
 		return configs[0], nil
 	default:
-		noDefaultTeamMessage := fmt.Sprintf("Found %d config files (%s). No default bot is configured. \n"+
+		noDefaultTeamMessage := fmt.Sprintf("Found %d configs (%s). No default bot is configured. \n"+
 			"Either specify a team via `kssh --bot cabotName` or set a default bot via `kssh --set-default-bot cabotName`", len(configs), strings.Join(botNames, ", "))
 		return empty, fmt.Errorf(noDefaultTeamMessage)
 	}

@@ -171,7 +171,7 @@ class TestMultiTeamStrictLogging:
                 run_command_with_agent("bin/kssh root@sshd-prod")
                 assert False
             except subprocess.CalledProcessError as e:
-                assert b"Found 2 config files" in e.output
+                assert b"Found 2 configs" in e.output
 
     def test_kssh_bot_flag(self, test_config):
         # Test that kssh works with the --bot flag
@@ -232,7 +232,7 @@ class TestMultiTeamStrictLogging:
                 run_command_with_agent("bin/kssh root@sshd-prod")
                 assert False
             except subprocess.CalledProcessError as e:
-                assert b"Found 2 config files" in e.output
+                assert b"Found 2 configs" in e.output
 
     def test_keybaseca_backup(self):
         # Test the keybaseca backup command by reading and verifying the
