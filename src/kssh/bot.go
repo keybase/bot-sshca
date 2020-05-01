@@ -26,7 +26,7 @@ func NewBot() (bot Bot, err error) {
 func (b *Bot) Configure(botName string) (cbot ConfiguredBot, err error) {
 	conf, err := b.getConfig(botName)
 	if err != nil {
-		return cbot, fmt.Errorf("failed to configure bot: %+v\n", err)
+		return cbot, fmt.Errorf("failed to configure bot: %+v", err)
 	}
 	return ConfiguredBot{conf: conf, api: b.api}, nil
 }
@@ -37,7 +37,6 @@ func (b *Bot) getConfig(botName string) (conf Config, err error) {
 	empty := Config{}
 	// They specified a bot via `kssh --bot cabot ...`
 	if botName != "" {
-		fmt.Printf(">>>BOTNAME= %+v\n", botName)
 		conf, err = b.LoadConfigForBot(botName)
 		if err != nil {
 			return empty, fmt.Errorf("Failed to load config file for bot=%s: %v", botName, err)
@@ -51,7 +50,6 @@ func (b *Bot) getConfig(botName string) (conf Config, err error) {
 		return empty, err
 	}
 	if defaultBot != "" && defaultTeam != "" {
-		fmt.Printf(">>>DEFUALT BOTJjllwww= %+v\n", defaultBot)
 		conf, err := b.LoadConfig(defaultTeam)
 		if err != nil || conf == nil {
 			return empty, fmt.Errorf("Failed to load config file for default bot=%s, team=%s: %v", defaultBot, defaultTeam, err)
@@ -64,7 +62,6 @@ func (b *Bot) getConfig(botName string) (conf Config, err error) {
 	if err != nil {
 		return empty, fmt.Errorf("Failed to load config(s): %v", err)
 	}
-	fmt.Printf(">>>>>>>>>>>>>>>>>>>> LOADED CONFIGS = %+v\n", configs)
 	switch len(configs) {
 	case 0:
 		return empty, fmt.Errorf("Did not find any configs (is `keybaseca service` running?)")

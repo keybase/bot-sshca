@@ -46,7 +46,11 @@ func (b *Bot) Start() error {
 	}
 	// don't let stale kssh configs stick around
 	b.captureControlCToDeleteClientConfig()
-	defer b.DeleteAllClientConfigs()
+	defer func() {
+		if err = b.DeleteAllClientConfigs(); err != nil {
+			fmt.Printf("Failed to delete all client configs on exit: %+v\n", err)
+		}
+	}()
 
 	err = b.sendAnnouncementMessage()
 	if err != nil {
@@ -179,9 +183,9 @@ func (b *Bot) writeClientConfig() error {
 	return nil
 }
 
-// Attempts to delete the kssh configs for the specified teams. Returns list of
-// teams it found and deleted a config for.
-func (b *Bot) deleteClientConfig(teams []string) (found []string, err error) {
+// Attempts to delete the kssh configs for the specified teams.
+func (b *Bot) deleteClientConfig(teams []string) error {
+	var found []string
 	for _, team := range teams {
 		_, err := b.api.DeleteEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey)
 		if err != nil {
@@ -190,14 +194,14 @@ func (b *Bot) deleteClientConfig(teams []string) (found []string, err error) {
 				log.Debugf("Did not find kssh config to delete for the team: %v", team)
 			} else {
 				// unexpected error
-				return found, err
+				return err
 			}
 		} else {
 			found = append(found, team)
 		}
 	}
 	log.Debugf("Deleted kssh configs for the teams: %v", found)
-	return found, nil
+	return nil
 }
 
 // Set up a signal handler in order to catch SIGTERMS that will delete all kssh
@@ -215,7 +219,7 @@ func (b *Bot) captureControlCToDeleteClientConfig() {
 			// be in the list of teams
 			teams = append(teams, b.conf.GetChatTeam())
 		}
-		_, err := b.deleteClientConfig(teams)
+		err := b.deleteClientConfig(teams)
 		if err != nil {
 			fmt.Printf("Failed to delete client config: %v", err)
 			os.Exit(1)
@@ -232,7 +236,7 @@ func (b *Bot) DeleteAllClientConfigs() error {
 		fmt.Printf("Failed to get teams to delete client configs: %v", err)
 		return err
 	}
-	_, err = b.deleteClientConfig(teams)
+	err = b.deleteClientConfig(teams)
 	if err != nil {
 		fmt.Printf("Failed to delete client configs: %v", err)
 		return err
