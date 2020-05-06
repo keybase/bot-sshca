@@ -110,10 +110,11 @@ operations.
 
 #### KBFS
 
-In order to ensure that keybaseca can run inside of docker (which does not
-support FUSE filesystems without adding the CAP_SYS_ADMIN permission), all KBFS
-interactions are done via `keybase fs ...` commands. This makes it so that
-keybaseca can run in unprivileged docker containers. 
+keybaseca supports logging to a local or KBFS file. In order to ensure that
+keybaseca can run inside of docker (which does not support FUSE filesystems
+without adding the CAP_SYS_ADMIN permission), all KBFS interactions are done
+via `keybase fs ...` commands. This makes it so that keybaseca can run in
+unprivileged docker containers. 
 
 ## Integration Tests
 

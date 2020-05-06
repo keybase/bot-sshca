@@ -23,8 +23,9 @@ def secure_random_str(len):
 def start_service():
     """
     Start a new keybase service process in a randomly generated home directory
-    and return the home directory :return: str: The home directory to be used
-    with future invocations of keybase commands
+    and return the home directory
+    :return: str: The home directory to be used with future invocations of
+    keybase commands
     """
     home_dir = f"/tmp/keybase-{secure_random_str(10)}"
     os.system(f"keybase --home {home_dir} service &")

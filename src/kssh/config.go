@@ -85,9 +85,8 @@ func (b *Bot) getAllTeams() (teams []string, err error) {
 // If a user of kssh is in in multiple teams that are running the CA bot they
 // can configure a default bot to communicate with. Note that we store the team
 // in here (even though it wasn't specified by the user) so that we can avoid
-// doing a call to `LoadConfigs` if a default is set (since `LoadConfigs can be
-// very slow if the user is in a large number of teams).  This is controlled
-// via `kssh --set-default-bot foo`.
+// doing a call to `LoadConfigs` if a default is set.  This is controlled via
+// `kssh --set-default-bot foo`.
 //
 // If a user of kssh wishes to configure a default ssh user to use (see
 // README.md for a description of why this may be useful) this is also stored
