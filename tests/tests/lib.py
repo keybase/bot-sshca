@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import signal
 import subprocess
@@ -50,6 +51,39 @@ class TestConfig:
                 for postfix in [".ssh.prod", ".ssh.staging", ".ssh.root_everywhere"]
             ],
         )
+
+
+def run_put_kvstore_command(team: str, config: str) -> bytes:
+    """
+    Run a "keybase kvstore api" command to write the kssh_config for the
+    given team
+    :param team:    The team to write the config for
+    :return:        The stdout of the process
+    """
+    # the extra json.dumps is to add the expected quotation marks
+    return run_command(
+        f'echo \'{{"method":"put", "params": {{'
+        f'"options": {{"team": "{team}", '
+        f'"namespace": "__sshca", "entryKey": "kssh_config",'
+        f'"entryValue": {json.dumps(config)} }}}}}}\' | '
+        f"xargs -0 -I put keybase kvstore api -m put"
+    )
+
+
+def run_delete_kvstore_command(team: str) -> bytes:
+    """
+    Run a "keybase kvstore api" command to delete the kssh_config from the
+    given team
+    :param team:    The team to delete the config from
+    :return:        The stdout of the process
+    """
+    return run_command(
+        f'echo \'{{"method": "del", '
+        f'"params": {{"options": {{"team": '
+        f'"{team}", "namespace": "__sshca", '
+        f'"entryKey": "kssh_config"}}}}}}\' | '
+        f"xargs -0 -I del keybase kvstore api -m del || true"
+    )
 
 
 def run_command_with_agent(cmd: str) -> bytes:
@@ -140,30 +174,20 @@ def assert_contains_hash(expected_hash: bytes, output: bytes):
 def simulate_two_teams(tc: TestConfig):
     # A context manager that simulates running the given function in an
     # environment with two teams set up
-    run_command(
+    get_res = run_command(
         f'echo \'{{"method": "get", "params": {{"options": {{"team": '
         f'"{tc.subteam}.ssh.staging", "namespace": "__sshca", '
         f'"entryKey": "kssh_config"}}}}}}\' | '
-        f"xargs -0 -I get keybase kvstore api -m get | "
-        f"jq '.result' | "
-        f"sed 's/{tc.subteam}.ssh.staging/{tc.subteam_secondary}/g' | "
-        f"sed 's/{tc.bot_username}/otherbotname/g' | "
-        f"jq '. | "
-        f'{{"method":"put", "params": {{"options": {{"team": '
-        f'.teamName, "namespace": .namespace, "entryKey": .entryKey,'
-        f'"entryValue":.entryValue}}}}}}\' | '
-        f"xargs -0 -I put keybase kvstore api -m put"
+        f"xargs -0 -I get keybase kvstore api -m get"
     )
+    config = json.loads(json.loads(get_res)["result"]["entryValue"])
+    config["teamname"] = tc.subteam_secondary
+    config["botname"] = "otherbotname"
+    run_put_kvstore_command(tc.subteam_secondary, json.dumps(config))
     try:
         yield
     finally:
-        run_command(
-            f'echo \'{{"method": "del", '
-            f'"params": {{"options": {{"team": '
-            f'"{tc.subteam_secondary}", "namespace": "__sshca", '
-            f'"entryKey": "kssh_config"}}}}}}\' | '
-            f"xargs -0 -I del keybase kvstore api -m del"
-        )
+        run_delete_kvstore_command(tc.subteam_secondary)
 
 
 @contextmanager

@@ -126,7 +126,7 @@ def make_user(purpose):
     :return: A User object
     """
     answer = input(
-        "TEST SETUP - Would you like to create a new user (or do you already \
+        "TEST SETUP - Would you like to create a new user (or do you already \n\
         have one with a paperkey) to use for ** %s **? [y/n] "
         % purpose
     ).lower()

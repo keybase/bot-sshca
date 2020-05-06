@@ -6,8 +6,8 @@ from lib import (
     TestConfig,
     load_env,
     outputs_audit_log,
-    run_command,
     run_command_with_agent,
+    run_put_kvstore_command,
 )
 
 
@@ -53,13 +53,7 @@ class TestEnv4UserNotInConfiguredTeams:
                     "botname": test_config.bot_username,
                 }
             )
-            run_command(
-                f'echo \'{{"method":"put", "params": {{'
-                f'"options": {{"team": "{test_config.subteam}.ssh", '
-                f'"namespace": "__sshca", "entryKey": "kssh_config",'
-                f'"entryValue": {json.dumps(client_config)} }}}}}}\' | '
-                f"xargs -0 -I put keybase kvstore api -m put"
-            )
+            run_put_kvstore_command(f"{test_config.subteam}.ssh", client_config)
 
             for s in [
                 "user@sshd-staging",

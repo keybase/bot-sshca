@@ -34,18 +34,7 @@ func main() {
 		doAction(action, keyPath, remainingArgs)
 		os.Exit(0)
 	}
-
-	bot, err := kssh.NewBot()
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-	cbot, err := bot.Configure(botName)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-	err = provisionNewKey(cbot, keyPath)
+	err = provisionNewKey(botName, keyPath)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(1)
@@ -246,12 +235,21 @@ func isValidCert(keyPath string) bool {
 	return time.Now().After(validAfter) && time.Now().Before(validBefore)
 }
 
-// Provision a new signed SSH key with the given config
-func provisionNewKey(cbot kssh.ConfiguredBot, keyPath string) error {
+// Provision a new signed SSH key :with the given config
+func provisionNewKey(botName string, keyPath string) error {
 	log.Debug("Generating a new SSH key...")
 
+	bot, err := kssh.NewBot()
+	if err != nil {
+		return err
+	}
+	cbot, err := bot.Configure(botName)
+	if err != nil {
+		return err
+	}
+
 	// Make ~/.ssh/ in case it doesn't exist
-	err := kssh.MakeDotSSH()
+	err = kssh.MakeDotSSH()
 	if err != nil {
 		return err
 	}

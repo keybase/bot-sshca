@@ -1,5 +1,5 @@
 import pytest
-from lib import TestConfig, clear_keys, clear_local_config, run_command
+from lib import TestConfig, clear_keys, clear_local_config, run_delete_kvstore_command
 
 
 @pytest.fixture(autouse=True)
@@ -14,38 +14,8 @@ def pytest_sessionfinish(session, exitstatus):
     # Automatically run after all tests in order to ensure that no kssh-client
     # configs stick around
     tc = TestConfig.getDefaultTestConfig()
-    run_command(
-        f'echo \'{{"method": "del", '
-        f'"params": {{"options": {{"team": '
-        f'"{tc.subteam}.ssh", "namespace": "__sshca", '
-        f'"entryKey": "kssh_config"}}}}}}\' | '
-        f"xargs -0 -I del keybase kvstore api -m del || true"
-    )
-    run_command(
-        f'echo \'{{"method": "del", '
-        f'"params": {{"options": {{"team": '
-        f'"{tc.subteam}.ssh.staging", "namespace": "__sshca", '
-        f'"entryKey": "kssh_config"}}}}}}\' | '
-        f"xargs -0 -I del keybase kvstore api -m del || true"
-    )
-    run_command(
-        f'echo \'{{"method": "del", '
-        f'"params": {{"options": {{"team": '
-        f'"{tc.subteam}.ssh.prod", "namespace": "__sshca", '
-        f'"entryKey": "kssh_config"}}}}}}\' | '
-        f"xargs -0 -I del keybase kvstore api -m del || true"
-    )
-    run_command(
-        f'echo \'{{"method": "del", '
-        f'"params": {{"options": {{"team": '
-        f'"{tc.subteam}.ssh.root_everywhere", "namespace": "__sshca", '
-        f'"entryKey": "kssh_config"}}}}}}\' | '
-        f"xargs -0 -I del keybase kvstore api -m del || true"
-    )
-    run_command(
-        f'echo \'{{"method": "del", '
-        f'"params": {{"options": {{"team": '
-        f'"{tc.subteam_secondary}", "namespace": "__sshca", '
-        f'"entryKey": "kssh_config"}}}}}}\' | '
-        f"xargs -0 -I del keybase kvstore api -m del || true"
-    )
+    run_delete_kvstore_command(f"{tc.subteam}.ssh")
+    run_delete_kvstore_command(f"{tc.subteam}.ssh.staging")
+    run_delete_kvstore_command(f"{tc.subteam}.ssh.prod")
+    run_delete_kvstore_command(f"{tc.subteam}.ssh.root_everywhere")
+    run_delete_kvstore_command(tc.subteam_secondary)
