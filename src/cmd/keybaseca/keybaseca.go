@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/keybase/bot-sshca/src/keybaseca/ca"
+	"github.com/keybase/bot-sshca/src/keybaseca/bot"
 	"github.com/keybase/bot-sshca/src/keybaseca/constants"
 
 	"github.com/google/uuid"
@@ -143,12 +143,12 @@ func serviceAction(c *cli.Context) error {
 }
 
 func startCA(conf config.Config) error {
-	cabot, err := ca.New(conf)
+	ca, err := bot.New(conf)
 	if err != nil {
 		return err
 	}
 	fmt.Println("Starting CA bot...")
-	return cabot.Start()
+	return ca.Start()
 }
 
 // The action for the `keybaseca sign` subcommand
@@ -239,7 +239,7 @@ func mainAction(c *cli.Context) error {
 }
 
 func deleteAllClientConfigs(conf config.Config) error {
-	cabot, err := ca.New(conf)
+	cabot, err := bot.New(conf)
 	if err != nil {
 		return err
 	}

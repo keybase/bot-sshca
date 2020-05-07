@@ -1,4 +1,4 @@
-package ca
+package bot
 
 import (
 	"testing"

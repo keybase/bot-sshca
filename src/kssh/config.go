@@ -162,7 +162,8 @@ func SetDefaultBot(botName string) error {
 		if err != nil {
 			return err
 		}
-		// Get the team associated with it and cache that too in order to avoid looking it up everytime
+		// Get the team associated with it and cache that too in order to avoid
+		// looking it up everytime
 		conf, err := requester.LoadConfigForBot(botName)
 		if err != nil {
 			return err
