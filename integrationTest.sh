@@ -12,7 +12,7 @@ fi
 set +u
 if [ -z "$CIRCLECI" ]; then
   cd docs/
-  #make html 2>&1 > /dev/null
+  make html 2>&1 > /dev/null
   echo "Successfully built documentation"
   cd ../
 fi
