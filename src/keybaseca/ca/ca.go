@@ -1,4 +1,4 @@
-package bot
+package ca
 
 import (
 	"encoding/json"
@@ -22,42 +22,42 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Bot is a SSH CA Keybase-backed bot
-type Bot struct {
+// CertAuthority is a SSH CA Keybase-backed bot
+type CertAuthority struct {
 	conf config.Config
 	api  *kbchat.API
 }
 
-// NewBot creates a new Keybase chat API with the given config
-func NewBot(conf config.Config) (bot Bot, err error) {
+// New creates a new CertAuthority with a Keybase chat API
+func New(conf config.Config) (ca CertAuthority, err error) {
 	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
 	if err != nil {
-		return bot, fmt.Errorf("error starting Keybase chat: %v", err)
+		return ca, fmt.Errorf("error starting Keybase chat: %v", err)
 	}
-	return Bot{conf: conf, api: api}, nil
+	return CertAuthority{conf: conf, api: api}, nil
 }
 
 // Start the SSH CA bot in an infinite loop. Does not return unless it
 // encounters an unrecoverable error.
-func (b *Bot) Start() error {
-	err := b.writeClientConfig()
+func (ca *CertAuthority) Start() error {
+	err := ca.writeClientConfig()
 	if err != nil {
-		return fmt.Errorf("failed to start bot due to error while writing client config: %v", err)
+		return fmt.Errorf("failed to start CA bot due to error while writing client config: %v", err)
 	}
 	// don't let stale kssh configs stick around
-	b.captureControlCToDeleteClientConfig()
+	ca.captureControlCToDeleteClientConfig()
 	defer func() {
-		if err = b.DeleteAllClientConfigs(); err != nil {
+		if err = ca.DeleteAllClientConfigs(); err != nil {
 			fmt.Printf("Failed to delete all client configs on exit: %+v\n", err)
 		}
 	}()
 
-	err = b.sendAnnouncementMessage()
+	err = ca.sendAnnouncementMessage()
 	if err != nil {
-		return fmt.Errorf("failed to start bot due to error while sending announcement: %v", err)
+		return fmt.Errorf("failed to start CA bot due to error while sending announcement: %v", err)
 	}
 
-	sub, err := b.api.ListenForNewTextMessages()
+	sub, err := ca.api.ListenForNewTextMessages()
 	if err != nil {
 		return fmt.Errorf("error subscribing to messages: %v", err)
 	}
@@ -77,63 +77,63 @@ func (b *Bot) Start() error {
 
 		log.Debugf("Received message in %s#%s: %s", msg.Message.Channel.Name, msg.Message.Channel.TopicName, messageBody)
 
-		if msg.Message.Sender.Username == b.api.GetUsername() {
-			log.Debug("Skipping message since it comes from the bot user")
+		if msg.Message.Sender.Username == ca.api.GetUsername() {
+			log.Debug("Skipping message since it comes from the CA bot user")
 			if strings.Contains(messageBody, shared.AckRequestPrefix) || strings.Contains(messageBody, shared.SignatureRequestPreamble) {
-				log.Warn("Ignoring AckRequest/SignatureRequest coming from the bot user! Are you trying to run the bot " +
+				log.Warn("Ignoring AckRequest/SignatureRequest coming from the CA bot user! Are you trying to run the CA bot " +
 					"and kssh as the same user?")
 			}
 			continue
 		}
 
 		// Note that this line is one of the main security barriers around the SSH
-		// bot. If this line were removed or had a bug, it would cause the SSH bot
-		// to respond to any SignatureRequest messages in any channels. This would
-		// allow an attacker to provision SSH keys even though they are not in the
-		// listed channels.
-		if !b.isConfiguredTeam(msg.Message.Channel.Name, msg.Message.Channel.TopicName) {
+		// CA bot. If this line were removed or had a bug, it would cause the SSH
+		// CA bot to respond to any SignatureRequest messages in any channels. This
+		// would allow an attacker to provision SSH keys even though they are not
+		// in the listed channels.
+		if !ca.isConfiguredTeam(msg.Message.Channel.Name, msg.Message.Channel.TopicName) {
 			log.Debug("Skipping message since it is not in a configured team")
 			continue
 		}
 
-		if shared.IsPingRequest(messageBody, b.api.GetUsername()) {
+		if shared.IsPingRequest(messageBody, ca.api.GetUsername()) {
 			// Respond to messages of the form `ping @botName` with `pong @senderName`
 			log.Debug("Responding to ping with pong")
-			_, err = b.api.SendMessageByConvID(msg.Message.ConvID, shared.GeneratePingResponse(msg.Message.Sender.Username))
+			_, err = ca.api.SendMessageByConvID(msg.Message.ConvID, shared.GeneratePingResponse(msg.Message.Sender.Username))
 			if err != nil {
-				b.LogError(msg, err)
+				ca.LogError(msg, err)
 				continue
 			}
 		} else if shared.IsAckRequest(messageBody) {
 			// Ack any AckRequests so that kssh can determine whether it has fully connected
-			_, err = b.api.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
+			_, err = ca.api.SendMessageByConvID(msg.Message.ConvID, shared.GenerateAckResponse(messageBody))
 			if err != nil {
-				b.LogError(msg, err)
+				ca.LogError(msg, err)
 				continue
 			}
 		} else if strings.HasPrefix(messageBody, shared.SignatureRequestPreamble) {
 			log.Debug("Responding to SignatureRequest")
 			signatureRequest, err := shared.ParseSignatureRequest(messageBody)
 			if err != nil {
-				b.LogError(msg, err)
+				ca.LogError(msg, err)
 				continue
 			}
 			signatureRequest.Username = msg.Message.Sender.Username
 			signatureRequest.DeviceName = msg.Message.Sender.DeviceName
-			signatureResponse, err := sshutils.ProcessSignatureRequest(b.conf, signatureRequest)
+			signatureResponse, err := sshutils.ProcessSignatureRequest(ca.conf, signatureRequest)
 			if err != nil {
-				b.LogError(msg, err)
+				ca.LogError(msg, err)
 				continue
 			}
 
 			response, err := json.Marshal(signatureResponse)
 			if err != nil {
-				b.LogError(msg, err)
+				ca.LogError(msg, err)
 				continue
 			}
-			_, err = b.api.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
+			_, err = ca.api.SendMessageByConvID(msg.Message.ConvID, shared.SignatureResponsePreamble+string(response))
 			if err != nil {
-				b.LogError(msg, err)
+				ca.LogError(msg, err)
 				continue
 			}
 		} else {
@@ -143,24 +143,25 @@ func (b *Bot) Start() error {
 }
 
 // Write kssh config for kssh to use
-func (b *Bot) writeClientConfig() error {
-	username := b.api.GetUsername()
+func (ca *CertAuthority) writeClientConfig() error {
+	username := ca.api.GetUsername()
 	if username == "" {
 		return fmt.Errorf("failed to get a username from kbChat, got an empty string")
 	}
 
-	teams := b.conf.GetTeams()
-	if b.conf.GetChatTeam() != "" {
+	teams := ca.conf.GetTeams()
+	if ca.conf.GetChatTeam() != "" {
 		// Make sure we write the kssh config in the chat team, which may not be in
 		// the list of teams
-		teams = append(teams, b.conf.GetChatTeam())
+		teams = append(teams, ca.conf.GetChatTeam())
 	}
+	log.Debugf("Attempting to write kssh configs for the teams: %v", teams)
 
 	// If they configured a chat team, have messages go there
-	config := kssh.Config{TeamName: b.conf.GetChatTeam(), BotName: username, ChannelName: b.conf.GetChannelName()}
+	config := kssh.Config{TeamName: ca.conf.GetChatTeam(), BotName: username, ChannelName: ca.conf.GetChannelName()}
 
 	for _, team := range teams {
-		if b.conf.GetChatTeam() == "" {
+		if ca.conf.GetChatTeam() == "" {
 			// If they didn't configure a chat team, messages should be sent to any
 			// channel. This is done by having each client config reference the team
 			// it is found in.
@@ -171,10 +172,12 @@ func (b *Bot) writeClientConfig() error {
 		var bytes []byte
 		bytes, err := json.Marshal(config)
 		if err != nil {
+			log.Debugf("Failed to serialize kssh config (%v) for team %+v: %v", config, team, err)
 			return err
 		}
-		_, err = b.api.PutEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey, string(bytes))
+		_, err = ca.api.PutEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey, string(bytes))
 		if err != nil {
+			log.Debugf("Failed to write kssh config (%v) for team %v: %v", config, team, err)
 			return err
 		}
 	}
@@ -184,16 +187,18 @@ func (b *Bot) writeClientConfig() error {
 }
 
 // Attempts to delete the kssh configs for the specified teams.
-func (b *Bot) deleteClientConfig(teams []string) (found []string, err error) {
+func (ca *CertAuthority) deleteClientConfig(teams []string) (found []string, err error) {
 	log.Debugf("Attempting to delete kssh configs for the teams: %v", teams)
 	for _, team := range teams {
-		_, err := b.api.DeleteEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey)
+		_, err := ca.api.DeleteEntry(&team, shared.SSHCANamespace, shared.SSHCAConfigKey)
 		if err != nil {
-			if err.(kbchat.Error).Code == kbchat.DeleteNonExistentErrorCode {
+			kerr, ok := err.(kbchat.Error)
+			if ok && kerr.Code == kbchat.DeleteNonExistentErrorCode {
 				// ignore if we couldn't find the kssh config for this team
 				log.Debugf("Did not find kssh config to delete for the team: %v", team)
 			} else {
 				// unexpected error
+				log.Debugf("Unexpected error deleting kssh config for the team: %v", team)
 				return found, err
 			}
 		} else {
@@ -207,19 +212,19 @@ func (b *Bot) deleteClientConfig(teams []string) (found []string, err error) {
 // Set up a signal handler in order to catch SIGTERMS that will delete all kssh
 // configs for the configured teams when it receives a sigterm. This ensures
 // that a simple Control-C does not leave behind stale kssh configs.
-func (b *Bot) captureControlCToDeleteClientConfig() {
+func (ca *CertAuthority) captureControlCToDeleteClientConfig() {
 	signalChan := make(chan os.Signal)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-signalChan
 		fmt.Println("Losing CA bot, now deleting client configs...")
-		teams := b.conf.GetTeams()
-		if b.conf.GetChatTeam() != "" {
+		teams := ca.conf.GetTeams()
+		if ca.conf.GetChatTeam() != "" {
 			// Make sure we delete the client config in the chat team which may not
 			// be in the list of teams
-			teams = append(teams, b.conf.GetChatTeam())
+			teams = append(teams, ca.conf.GetChatTeam())
 		}
-		found, err := b.deleteClientConfig(teams)
+		found, err := ca.deleteClientConfig(teams)
 		if err != nil {
 			fmt.Printf("Failed to delete client configs: %v", err)
 			os.Exit(1)
@@ -230,14 +235,14 @@ func (b *Bot) captureControlCToDeleteClientConfig() {
 }
 
 // DeleteAllClientConfigs deletes all found kssh configs for all teams the
-// bot is a member of
-func (b *Bot) DeleteAllClientConfigs() error {
-	teams, err := b.getAllTeams()
+// CA bot is a member of
+func (ca *CertAuthority) DeleteAllClientConfigs() error {
+	teams, err := ca.getAllTeams()
 	if err != nil {
 		fmt.Printf("Failed to get teams to delete client configs: %v", err)
 		return err
 	}
-	found, err := b.deleteClientConfig(teams)
+	found, err := ca.deleteClientConfig(teams)
 	if err != nil {
 		fmt.Printf("Failed to delete client configs: %v", err)
 		return err
@@ -246,8 +251,8 @@ func (b *Bot) DeleteAllClientConfigs() error {
 	return nil
 }
 
-func (b *Bot) getAllTeams() (teams []string, err error) {
-	memberships, err := b.api.ListUserMemberships(b.api.GetUsername())
+func (ca *CertAuthority) getAllTeams() (teams []string, err error) {
+	memberships, err := ca.api.ListUserMemberships(ca.api.GetUsername())
 	if err != nil {
 		return teams, err
 	}
@@ -258,27 +263,27 @@ func (b *Bot) getAllTeams() (teams []string, err error) {
 }
 
 // LogError logs the given error to Keybase chat and to the configured log file. Used so
-// that the chatbot does not crash due to an error caused by a malformed
+// that the SSHCA bot does not crash due to an error caused by a malformed
 // message.
-func (b *Bot) LogError(msg kbchat.SubscriptionMessage, err error) {
+func (ca *CertAuthority) LogError(msg kbchat.SubscriptionMessage, err error) {
 	message := fmt.Sprintf("Encountered error while processing message from %s (messageID:%d): %v", msg.Message.Sender.Username, msg.Message.Id, err)
-	auditlog.Log(b.conf, message)
-	_, e := b.api.SendMessageByConvID(msg.Message.ConvID, message)
+	auditlog.Log(ca.conf, message)
+	_, e := ca.api.SendMessageByConvID(msg.Message.ConvID, message)
 	if e != nil {
-		auditlog.Log(b.conf, fmt.Sprintf("Failed to log an error to chat (something is probably very wrong): %v", err))
+		auditlog.Log(ca.conf, fmt.Sprintf("Failed to log an error to chat (something is probably very wrong): %v", err))
 	}
 }
 
 // Whether the given team is one of the specified teams in the config. Note
-// that this function is a security boundary since it ensures that bots will
+// that this function is a security boundary since it ensures that CA bots will
 // not respond to messages outside of the configured teams.
-func (b *Bot) isConfiguredTeam(teamName string, channelName string) bool {
-	if b.conf.GetChatTeam() != "" {
-		return b.conf.GetChatTeam() == teamName && b.conf.GetChannelName() == channelName
+func (ca *CertAuthority) isConfiguredTeam(teamName string, channelName string) bool {
+	if ca.conf.GetChatTeam() != "" {
+		return ca.conf.GetChatTeam() == teamName && ca.conf.GetChannelName() == channelName
 	}
 	// If they didn't specify a chat team/channel, we just check whether the
 	// message was in one of the listed teams
-	for _, team := range b.conf.GetTeams() {
+	for _, team := range ca.conf.GetTeams() {
 		if team == teamName {
 			return true
 		}
@@ -307,19 +312,19 @@ func buildAnnouncement(template string, values AnnouncementTemplateValues) strin
 	return templatedMessage
 }
 
-func (b *Bot) sendAnnouncementMessage() error {
-	if b.conf.GetAnnouncement() == "" {
+func (ca *CertAuthority) sendAnnouncementMessage() error {
+	if ca.conf.GetAnnouncement() == "" {
 		// No announcement to send
 		return nil
 	}
-	for _, team := range b.conf.GetTeams() {
-		announcement := buildAnnouncement(b.conf.GetAnnouncement(),
-			AnnouncementTemplateValues{Username: b.api.GetUsername(),
+	for _, team := range ca.conf.GetTeams() {
+		announcement := buildAnnouncement(ca.conf.GetAnnouncement(),
+			AnnouncementTemplateValues{Username: ca.api.GetUsername(),
 				CurrentTeam: team,
-				Teams:       b.conf.GetTeams()})
+				Teams:       ca.conf.GetTeams()})
 
 		var channel *string
-		_, err := b.api.SendMessageByTeamName(team, channel, announcement)
+		_, err := ca.api.SendMessageByTeamName(team, channel, announcement)
 		if err != nil {
 			return err
 		}

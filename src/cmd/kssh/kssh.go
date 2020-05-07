@@ -239,11 +239,7 @@ func isValidCert(keyPath string) bool {
 func provisionNewKey(botName string, keyPath string) error {
 	log.Debug("Generating a new SSH key...")
 
-	bot, err := kssh.NewBot()
-	if err != nil {
-		return err
-	}
-	cbot, err := bot.Configure(botName)
+	requester, err := kssh.NewRequester()
 	if err != nil {
 		return err
 	}
@@ -271,7 +267,7 @@ func provisionNewKey(botName string, keyPath string) error {
 	}
 
 	log.Debug("Requesting signature from the CA....")
-	resp, err := cbot.GetSignedKey(shared.SignatureRequest{
+	resp, err := requester.GetSignedKey(botName, shared.SignatureRequest{
 		UUID:         randomUUID.String(),
 		SSHPublicKey: string(pubKey),
 	})

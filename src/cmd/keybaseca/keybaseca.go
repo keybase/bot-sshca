@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/keybase/bot-sshca/src/keybaseca/bot"
+	"github.com/keybase/bot-sshca/src/keybaseca/ca"
 	"github.com/keybase/bot-sshca/src/keybaseca/constants"
 
 	"github.com/google/uuid"
@@ -135,16 +135,20 @@ func serviceAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	cabot, err := bot.NewBot(conf)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Starting CA bot...")
-	err = cabot.Start()
+	err = startCA(conf)
 	if err != nil {
 		return fmt.Errorf("CA chatbot crashed: %v", err)
 	}
 	return nil
+}
+
+func startCA(conf config.Config) error {
+	cabot, err := ca.New(conf)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Starting CA bot...")
+	return cabot.Start()
 }
 
 // The action for the `keybaseca sign` subcommand
@@ -207,11 +211,7 @@ func mainAction(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		cabot, err := bot.NewBot(conf)
-		if err != nil {
-			return err
-		}
-		if err = cabot.DeleteAllClientConfigs(); err != nil {
+		if err = deleteAllClientConfigs(conf); err != nil {
 			return err
 		}
 	case c.Bool("wipe-logs"):
@@ -236,6 +236,14 @@ func mainAction(c *cli.Context) error {
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 	return nil
+}
+
+func deleteAllClientConfigs(conf config.Config) error {
+	cabot, err := ca.New(conf)
+	if err != nil {
+		return err
+	}
+	return cabot.DeleteAllClientConfigs()
 }
 
 // Load and validate a server config object from the environment
