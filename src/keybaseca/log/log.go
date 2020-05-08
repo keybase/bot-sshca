@@ -11,8 +11,9 @@ import (
 	"github.com/keybase/bot-sshca/src/keybaseca/config"
 )
 
-// Log attempts to log the given string to a file. If conf.GetStrictLogging() it will panic if it fails
-// to log to the file. If conf.GetStrictLogging() is false, it may silently fail
+// Log attempts to log the given string to a file. If conf.GetStrictLogging()
+// it will panic if it fails to log to the file. If conf.GetStrictLogging() is
+// false, it may silently fail
 func Log(conf config.Config, str string) {
 	strWithTs := fmt.Sprintf("[%s] %s", time.Now().String(), str)
 
@@ -30,11 +31,11 @@ func Log(conf config.Config, str string) {
 	}
 }
 
-// Append to the file at the given filename via either Keybase simple fs commands or via standard interactions with
-// the local filesystem
+// Append to the file at the given filename via either Keybase simple fs
+// commands or via standard interactions with the local filesystem
 func appendToFile(filename string, str string) error {
 	if strings.HasPrefix(filename, "/keybase/") {
-		return constants.GetDefaultKBFSOperationsStruct().KBFSWrite(filename, str, true)
+		return constants.GetDefaultKBFSOperationsStruct().Write(filename, str, true)
 	}
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {

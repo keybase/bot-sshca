@@ -32,6 +32,7 @@ USER root
 RUN add-apt-repository ppa:gophers/archive -y
 RUN apt-get update -y
 RUN apt-get install golang-1.11-go git sudo python3 python3-pip sudo -y
+RUN apt-get install jq -y
 RUN pip3 install pytest requests
 
 # Make it so the keybase user has passwordless sudo so it can move the keybase binary around

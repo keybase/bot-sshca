@@ -1,31 +1,34 @@
 version: 2
+commands:
 jobs:
-  integration:
-    machine:
-      image: circleci/classic:latest
+  go-lint:
+    docker:
+      - image: circleci/golang:1.11
     steps:
       - checkout
-      - run: "./integrationTest.sh"
+      - run: "! go mod tidy -v 2>&1 | read"
+      - run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.25.0
+      - run: "golangci-lint run"
+  py-lint:
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - run: sudo pip3 install isort flake8 black
+      - run: "isort -rc . --check-only"
+      - run: "flake8 . --max-line-length=88"
+      - run: "black . --check"
   unit:
     docker:
       - image: circleci/golang:1.11
     steps:
       - checkout
       - run: go test ./...
-  lint:
-    docker:
-      - image: circleci/golang:1.11
+  integration:
+    machine:
+      image: circleci/classic:latest
     steps:
       - checkout
-      - run: "! go fmt ./... 2>&1 | read"
-      - run: "! go vet ./... 2>&1 | read"
-      - run: go get -u golang.org/x/lint/golint
-      - run: "! golint ./... 2>&1 | read"
-      - run: go get golang.org/x/tools/cmd/goimports
-      - run: "! goimports ./... 2>&1 | read"
-      - run: "! go mod tidy ./... 2>&1 | read"
-      - run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.25.0
-      - run: "! golangci-lint 2>&1 | read"
+      - run: "./integrationTest.sh"
   sphinx-build:
     docker:
       - image: circleci/python:2.7.16
@@ -48,15 +51,17 @@ workflows:
   version: 2
   build:
     jobs:
-      - integration
+      - go-lint
+      - py-lint
       - unit
-      - lint
+      - integration
       - sphinx-build
       - publish-github-release:
           requires:
-            - integration
+            - go-lint
+            - py-lint
             - unit
-            - lint
+            - integration
           filters:
             branches:
               only: master

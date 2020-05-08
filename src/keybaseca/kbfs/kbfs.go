@@ -1,4 +1,4 @@
-package shared
+package kbfs
 
 import (
 	"fmt"
@@ -22,15 +22,15 @@ func supportsFuse() bool {
 	return err1 == nil && err2 == nil && err3 == nil && err4 == nil
 }
 
-type KBFSOperation struct {
+type Operation struct {
 	KeybaseBinaryPath string
 }
 
 // Returns whether the given KBFS file exists
-func (ko *KBFSOperation) KBFSFileExists(kbfsFilename string) (bool, error) {
+func (ko *Operation) FileExists(filename string) (bool, error) {
 	if supportsFuse() {
 		// Note that this code is not tested via integration tests since fuse does not run in docker. Handle with care.
-		_, err := os.Stat(kbfsFilename)
+		_, err := os.Stat(filename)
 		if err == nil {
 			return true, nil
 		}
@@ -40,7 +40,7 @@ func (ko *KBFSOperation) KBFSFileExists(kbfsFilename string) (bool, error) {
 		return false, err
 	}
 
-	cmd := exec.Command(ko.KeybaseBinaryPath, "fs", "stat", kbfsFilename)
+	cmd := exec.Command(ko.KeybaseBinaryPath, "fs", "stat", filename)
 	bytes, err := cmd.CombinedOutput()
 	if err == nil {
 		return true, nil
@@ -48,25 +48,25 @@ func (ko *KBFSOperation) KBFSFileExists(kbfsFilename string) (bool, error) {
 	if strings.Contains(string(bytes), "ERROR file does not exist") {
 		return false, nil
 	}
-	return false, fmt.Errorf("failed to stat %s: %s (%v)", kbfsFilename, strings.TrimSpace(string(bytes)), err)
+	return false, fmt.Errorf("failed to stat %s: %s (%v)", filename, strings.TrimSpace(string(bytes)), err)
 }
 
 // Reads the specified KBFS file into a byte array
-func (ko *KBFSOperation) KBFSRead(kbfsFilename string) ([]byte, error) {
+func (ko *Operation) Read(filename string) ([]byte, error) {
 	if supportsFuse() {
 		// Note that this code is not tested via integration tests since fuse does not run in docker. Handle with care.
-		return ioutil.ReadFile(kbfsFilename)
+		return ioutil.ReadFile(filename)
 	}
-	cmd := exec.Command(ko.KeybaseBinaryPath, "fs", "read", kbfsFilename)
+	cmd := exec.Command(ko.KeybaseBinaryPath, "fs", "read", filename)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %s (%v)", kbfsFilename, strings.TrimSpace(string(bytes)), err)
+		return nil, fmt.Errorf("failed to read %s: %s (%v)", filename, strings.TrimSpace(string(bytes)), err)
 	}
 	return bytes, nil
 }
 
 // Delete the specified KBFS file
-func (ko *KBFSOperation) KBFSDelete(filename string) error {
+func (ko *Operation) Delete(filename string) error {
 	cmd := exec.Command(ko.KeybaseBinaryPath, "fs", "rm", filename)
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
@@ -77,13 +77,13 @@ func (ko *KBFSOperation) KBFSDelete(filename string) error {
 
 // Write contents to the specified KBFS file. If appendToFile, appends onto the end of the file. Otherwise, overwrites
 // and truncates the file.
-func (ko *KBFSOperation) KBFSWrite(filename string, contents string, appendToFile bool) error {
+func (ko *Operation) Write(filename string, contents string, appendToFile bool) error {
 	var cmd *exec.Cmd
 	if appendToFile {
 		// `keybase fs write --append` only works if the file already exists so create it if it does not exist
-		exists, err := ko.KBFSFileExists(filename)
+		exists, err := ko.FileExists(filename)
 		if !exists || err != nil {
-			err = ko.KBFSWrite(filename, "", false)
+			err = ko.Write(filename, "", false)
 			if err != nil {
 				return err
 			}
@@ -102,7 +102,7 @@ func (ko *KBFSOperation) KBFSWrite(filename string, contents string, appendToFil
 }
 
 // List KBFS files in the given KBFS path
-func (ko *KBFSOperation) KBFSList(path string) ([]string, error) {
+func (ko *Operation) List(path string) ([]string, error) {
 	cmd := exec.Command(ko.KeybaseBinaryPath, "fs", "ls", "-1", "--nocolor", path)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

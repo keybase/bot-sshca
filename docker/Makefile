@@ -7,7 +7,7 @@ endif
 
 SHELL := /bin/bash
 
-.PHONY: build generate serve clean reset-permissions confirm-clean env-file-exists ca-key-exists
+.PHONY: build lint go-lint py-lint generate serve clean reset-permissions confirm-clean env-file-exists ca-key-exists
 
 # Build a new docker image for the CA bot
 build: reset-permissions
@@ -18,6 +18,18 @@ else
 	docker build -t ca -f Dockerfile-ca ..
 endif
 
+lint: go-lint py-lint
+
+go-lint:
+	go fmt ../...
+	go vet ../...
+	go mod tidy
+	golangci-lint run ../...
+
+py-lint:
+	isort -rc ..
+	flake8 .. --max-line-length=88
+	black ..
 
 # Generate a new CA key
 generate: env-file-exists build
@@ -45,7 +57,7 @@ restart: stop serve
 
 # Delete all kssh config files
 clean-kssh: env-file-exists
-	docker run --init -e FORCE_WRITE=$(FORCE_WRITE) --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-cleanup.sh
+	docker run --init --env-file ./env.list -v $(CURDIR)/example-keybaseca-volume:/mnt:rw ca:latest ./entrypoint-cleanup.sh
 
 # Delete all CA data
 clean: confirm-clean reset-permissions

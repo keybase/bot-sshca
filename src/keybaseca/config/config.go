@@ -134,18 +134,18 @@ func validateChannel(conf Config, teamName string, channelName string) error {
 func validatePath(path string) error {
 	if strings.HasPrefix(path, "/keybase/") {
 		// If it exists it is valid
-		exists, _ := constants.GetDefaultKBFSOperationsStruct().KBFSFileExists(path)
+		exists, _ := constants.GetDefaultKBFSOperationsStruct().FileExists(path)
 		if exists {
 			return nil
 		}
 
 		// Otherwise try to write to it
-		err := constants.GetDefaultKBFSOperationsStruct().KBFSWrite(path, "", false)
+		err := constants.GetDefaultKBFSOperationsStruct().Write(path, "", false)
 		if err != nil {
 			return fmt.Errorf("path is not writable: %v", err)
 		}
 
-		err = constants.GetDefaultKBFSOperationsStruct().KBFSDelete(path)
+		err = constants.GetDefaultKBFSOperationsStruct().Delete(path)
 		if err != nil {
 			return fmt.Errorf("failed to delete temp file: %v", err)
 		}
