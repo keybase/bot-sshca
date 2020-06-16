@@ -8,6 +8,7 @@ import (
 
 	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
+	"github.com/keybase/go-keybase-chat-bot/kbchat/types/keybase1"
 )
 
 type Requester struct {
@@ -94,7 +95,9 @@ func (r *Requester) getAllTeams() (teams []string, err error) {
 		return teams, err
 	}
 	for _, m := range memberships {
-		teams = append(teams, m.FqName)
+		if m.Role != keybase1.TeamRole_NONE {
+			teams = append(teams, m.FqName)
+		}
 	}
 	return teams, nil
 }
