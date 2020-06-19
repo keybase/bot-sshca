@@ -24,7 +24,6 @@ func CanRoleReadTeam(role keybase1.TeamRole) bool {
 // GetAllTeams makes an API call and returns list of team names readable for
 // current user.
 func GetAllTeams(api *kbchat.API) (teams []string, err error) {
-	// TODO: dedup with same method in keybaseca/bot
 	memberships, err := api.ListUserMemberships(api.GetUsername())
 	if err != nil {
 		return teams, err
