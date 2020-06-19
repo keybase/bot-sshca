@@ -151,9 +151,10 @@ func SignKey(caKeyLocation, keyID, principals, expiration, publicKey string) (si
 	return string(signatureBytes), nil
 }
 
-// Get the principals that should be placed in the signed certificate.
-// Note that this function is a security boundary since if it was bypassed an
-// attacker would be able to provision SSH keys for environments that they should not have access to.
+// Get the principals that should be placed in the signed certificate. Note
+// that this function is a security boundary since if it was bypassed an
+// attacker would be able to provision SSH keys for environments that they
+// should not have access to.
 func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, error) {
 	// Start by getting the list of teams the user is in
 	api, err := botwrapper.GetKBChat(conf.GetKeybaseHomeDir(), conf.GetKeybasePaperKey(), conf.GetKeybaseUsername(), conf.GetKeybaseTimeout())
@@ -165,11 +166,13 @@ func getPrincipals(conf config.Config, sr shared.SignatureRequest) (string, erro
 		return "", fmt.Errorf("failed to retrieve the list of teams the user is in: %v", err)
 	}
 
-	// Maps from a team to whether or not the user is in the current team (with writer, admin, or owner permissions)
+	// Maps from a team to whether or not the user is in the current team (with
+	// writer, admin, or owner permissions)
 	teamToMembership := make(map[string]bool)
 	for _, result := range results {
-		if result.Role != 0 {
-			// result.Role == 0 means they are an impicit admin in the team and are not actually a member
+		// Check if the user is actually in the team, and not a restricted bot
+		// or implicit admin.
+		if shared.CanRoleReadTeam(result.Role) {
 			teamToMembership[result.FqName] = true
 		}
 	}

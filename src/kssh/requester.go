@@ -8,7 +8,6 @@ import (
 
 	"github.com/keybase/bot-sshca/src/shared"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
-	"github.com/keybase/go-keybase-chat-bot/kbchat/types/keybase1"
 )
 
 type Requester struct {
@@ -89,17 +88,7 @@ func (r *Requester) LoadConfigForBot(botName string) (Config, error) {
 }
 
 func (r *Requester) getAllTeams() (teams []string, err error) {
-	// TODO: dedup with same method in keybaseca/bot
-	memberships, err := r.api.ListUserMemberships(r.api.GetUsername())
-	if err != nil {
-		return teams, err
-	}
-	for _, m := range memberships {
-		if m.Role != keybase1.TeamRole_NONE {
-			teams = append(teams, m.FqName)
-		}
-	}
-	return teams, nil
+	return shared.GetAllTeams(r.api)
 }
 
 // Get a signed SSH key from interacting with the CA chatbot
