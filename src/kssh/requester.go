@@ -88,15 +88,7 @@ func (r *Requester) LoadConfigForBot(botName string) (Config, error) {
 }
 
 func (r *Requester) getAllTeams() (teams []string, err error) {
-	// TODO: dedup with same method in keybaseca/bot
-	memberships, err := r.api.ListUserMemberships(r.api.GetUsername())
-	if err != nil {
-		return teams, err
-	}
-	for _, m := range memberships {
-		teams = append(teams, m.FqName)
-	}
-	return teams, nil
+	return shared.GetAllTeams(r.api)
 }
 
 // Get a signed SSH key from interacting with the CA chatbot

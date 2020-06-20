@@ -252,14 +252,7 @@ func (b *Bot) DeleteAllClientConfigs() error {
 }
 
 func (b *Bot) getAllTeams() (teams []string, err error) {
-	memberships, err := b.api.ListUserMemberships(b.api.GetUsername())
-	if err != nil {
-		return teams, err
-	}
-	for _, m := range memberships {
-		teams = append(teams, m.FqName)
-	}
-	return teams, nil
+	return shared.GetAllTeams(b.api)
 }
 
 // LogError logs the given error to Keybase chat and to the configured log file. Used so
