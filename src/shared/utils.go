@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"io/ioutil"
+	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
@@ -28,4 +30,21 @@ func ExpandPathWithTilde(path string) string {
 		path = filepath.Join(usr.HomeDir, path[2:])
 	}
 	return path
+}
+
+// Tries to read data from a file from given path.
+// If no file is found, the file read creates an error or is empty,
+// the function will return the value of the `or` parameter instead.
+func ReadFileOrDefault(filePath string, or string) string {
+	if len(filePath) <= 0 {
+		return or
+	}
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return or
+	}
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil || len(data) <= 0 {
+		return or
+	}
+	return string(data)
 }
