@@ -8,13 +8,12 @@ RUN apk update && apk add --no-cache go curl git musl-dev gcc
 # build keybase binary
 WORKDIR /go
 ENV GOPATH=/go
-ENV KEYBASE_VERSION=5.4.0
-RUN go get -d github.com/keybase/client/go/keybase
-RUN cd src/github.com/keybase/client/go/keybase && git checkout v$KEYBASE_VERSION
-RUN go install -tags production github.com/keybase/client/go/keybase
+ENV KEYBASE_VERSION=6.0.2
+RUN git clone https://github.com/keybase/client.git
+RUN cd client/go && go install -tags production github.com/keybase/client/go/keybase
 
 # build kbfsfuse binary (we won't use FUSE but the bot needs KBFS for exchanging Team config files)
-RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
+RUN cd client/go/kbfs/kbfsfuse && go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
 
 # build keybaseca
 WORKDIR /bot-sshca
